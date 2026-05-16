@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Editar Clase — SkedyClass{% endblock %}
+{% block content %}
+<style>
+.edit-wrap{max-width:860px;margin:0 auto;padding-bottom:60px}
+
+/* Glass card */
+.ed-card{position:relative;background:rgba(10,8,24,.55);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border-radius:22px;padding:34px 36px;box-shadow:0 16px 56px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)}
+.ed-card::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(157,78,221,.5),rgba(247,37,133,.38) 55%,rgba(99,102,241,.38));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.ed-card>*{position:relative;z-index:1}
+.ed-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.ed-card-head h2{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:800;color:#f5f3ff;margin:0 0 4px}
+.ed-card-head p{font-size:.85rem;color:#9ca3af;margin:0}
+
+/* Fields */
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ed-grid .ed-full{grid-column:1/-1}
+@media(max-width:600px){.ed-grid{grid-template-columns:1fr}}
+.ed-field{display:flex;flex-direction:column;gap:6px}
+.ed-field label{font-size:.72rem;font-weight:800;color:#c4b5fd;text-transform:uppercase;letter-spacing:.7px}
+.ed-field input,.ed-field select,.ed-field textarea{width:100%;padding:11px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#f5f3ff;font-size:.9rem;font-family:'Lora',serif;transition:border-color .18s,box-shadow .18s;outline:none}
+.ed-field input:focus,.ed-field select:focus,.ed-field textarea:focus{border-color:rgba(247,37,133,.55);box-shadow:0 0 0 3px rgba(247,37,133,.15)}
+.ed-field textarea{resize:vertical;min-height:96px}
+.ed-field select option{background:#1a1830;color:#f5f3ff}
+.ed-err{color:#ff3d8b;font-size:.74rem;margin-top:2px}
+
+/* Tipo de clase — pill selector */
+.tipo-pills{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px}
+@media(max-width:560px){.tipo-pills{grid-template-columns:1fr}}
+.tipo-pill{position:relative}
+.tipo-pill input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.tipo-pill label{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(14,12,30,.55);color:#c4b5fd;cursor:pointer;transition:all .2s;font-size:.88rem;font-weight:700}
+.tipo-pill label:hover{border-color:rgba(157,78,221,.4);color:#f5f3ff;transform:translateY(-2px)}
+.tipo-pill input:checked+label{background:linear-gradient(135deg,rgba(157,78,221,.25),rgba(247,37,133,.16));border-color:rgba(247,37,133,.55);color:#fff;box-shadow:0 6px 22px rgba(247,37,133,.28)}
+.tipo-pill .pill-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tipo-pill.normal .pill-icon{background:linear-gradient(135deg,rgba(99,102,241,.35),rgba(139,92,246,.2));color:#a5b4fc}
+.tipo-pill.dinamica .pill-icon{background:linear-gradient(135deg,rgba(247,37,133,.35),rgba(236,72,153,.22));color:#f9a8d4}
+.tipo-pill.mixta .pill-icon{background:linear-gradient(135deg,rgba(157,78,221,.35),rgba(57,255,122,.18));color:#c4b5fd}
+
+/* Estado selector */
+.estado-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.estado-pill{position:relative}
+.estado-pill input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.estado-pill label{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfc9e6;cursor:pointer;font-size:.82rem;font-weight:700;transition:all .2s}
+.estado-pill label:hover{transform:translateY(-1px)}
+.estado-pill.pending input:checked+label{background:rgba(255,225,77,.12);border-color:rgba(255,225,77,.5);color:#ffe14d;box-shadow:0 0 14px rgba(255,225,77,.25)}
+.estado-pill.in_progress input:checked+label{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.5);color:#a5b4fc;box-shadow:0 0 14px rgba(99,102,241,.25)}
+.estado-pill.completed input:checked+label{background:rgba(57,255,122,.1);border-color:rgba(57,255,122,.5);color:#39ff7a;box-shadow:0 0 14px rgba(57,255,122,.25)}
+.estado-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+
+/* Hint por tipo */
+.tipo-hint{display:none;margin-top:14px;padding:14px 16px;border-radius:12px;font-size:.83rem;line-height:1.65;color:#c4b5fd;border:1px dashed rgba(157,78,221,.28);background:rgba(157,78,221,.06)}
+.tipo-hint.visible{display:block;animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.tipo-hint strong{color:#f5f3ff}
+
+/* Divider */
+.ed-divider{height:1px;background:rgba(255,255,255,.07);margin:24px 0}
+
+/* Actions */
+.ed-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:28px;flex-wrap:wrap}
+.ed-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:12px;font-size:.88rem;font-weight:800;font-family:inherit;cursor:pointer;border:none;text-decoration:none;transition:transform .15s,box-shadow .18s,opacity .18s}
+.ed-btn-primary{background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;box-shadow:0 8px 24px rgba(247,37,133,.35)}
+.ed-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(247,37,133,.5)}
+.ed-btn-ghost{background:rgba(255,255,255,.05);color:#c4b5fd;border:1px solid rgba(255,255,255,.12)}
+.ed-btn-ghost:hover{background:rgba(157,78,221,.12);color:#f5f3ff}
+</style>
+
+<div class="edit-wrap">
+  <div style="margin-bottom:20px">
+    <a href="{% url 'listar_clases' %}" style="color:#9ca3af;text-decoration:none;font-size:.82rem;display:inline-flex;align-items:center;gap:6px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Volver a Clases
+    </a>
+  </div>
+
+  <div class="ed-card">
+    <div class="ed-card-head">
+      <div>
+        <h2>Editar Clase</h2>
+        <p>Actualiza los datos de "{{ clase.titulo }}"</p>
+      </div>
+      <span style="font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:50px;background:rgba(157,78,221,.14);color:#d4b4ff;border:1px solid rgba(157,78,221,.3)">
+        {{ clase.get_tipo_clase_display }}
+      </span>
+    </div>
+
+    <form method="post" id="editForm">
+      {% csrf_token %}
+
+      <!-- Tipo de clase -->
+      <div class="ed-field ed-full" style="margin-bottom:16px">
+        <label>Tipo de clase</label>
+        <div class="tipo-pills">
+          <div class="tipo-pill normal">
+            <input type="radio" name="tipo_clase" id="tipo_normal" value="normal" {% if clase.tipo_clase == 'normal' %}checked{% endif %}>
+            <label for="tipo_normal">
+              <span class="pill-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>
+              </span>
+              Normal
+            </label>
+          </div>
+          <div class="tipo-pill dinamica">
+            <input type="radio" name="tipo_clase" id="tipo_dinamica" value="dinamica" {% if clase.tipo_clase == 'dinamica' %}checked{% endif %}>
+            <label for="tipo_dinamica">
+              <span class="pill-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.39 7.36H22l-6.18 4.5L18.18 21 12 16.5 5.82 21l2.36-7.14L2 9.36h7.61z"/></svg>
+              </span>
+              Dinámica
+            </label>
+          </div>
+          <div class="tipo-pill mixta">
+            <input type="radio" name="tipo_clase" id="tipo_mixta" value="mixta" {% if clase.tipo_clase == 'mixta' %}checked{% endif %}>
+            <label for="tipo_mixta">
+              <span class="pill-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+              </span>
+              Mixta
+            </label>
+          </div>
+        </div>
+        <div class="tipo-hint" id="hint-normal">
+          <strong>Teórica —</strong> Exposición de contenidos, práctica dirigida y evaluación al cierre.
+        </div>
+        <div class="tipo-hint" id="hint-dinamica">
+          <strong>Práctica —</strong> Actividades colaborativas, juegos didácticos y recursos lúdicos interactivos.
+        </div>
+        <div class="tipo-hint" id="hint-mixta">
+          <strong>Híbrida —</strong> Combina momentos expositivos con dinámicas y trabajo en grupo.
+        </div>
+      </div>
+
+      <div class="ed-divider"></div>
+
+      <div class="ed-grid">
+        <div class="ed-field ed-full">
+          <label>Título de la clase *</label>
+          {{ form.titulo }}
+          {% if form.titulo.errors %}<span class="ed-err">{{ form.titulo.errors|join:", " }}</span>{% endif %}
+        </div>
+        <div class="ed-field">
+          <label>Profesor</label>
+          {{ form.profesor_nombre }}
+        </div>
+        <div class="ed-field">
+          <label>Grado</label>
+          {{ form.grado_nombre }}
+        </div>
+        <div class="ed-field">
+          <label>Fecha *</label>
+          {{ form.fecha }}
+          {% if form.fecha.errors %}<span class="ed-err">{{ form.fecha.errors|join:", " }}</span>{% endif %}
+        </div>
+        <div class="ed-field">
+          <label>Hora *</label>
+          {{ form.hora }}
+          {% if form.hora.errors %}<span class="ed-err">{{ form.hora.errors|join:", " }}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="ed-divider"></div>
+
+      <!-- Estado -->
+      <div class="ed-field" style="margin-bottom:18px">
+        <label>Estado</label>
+        <div class="estado-pills">
+          <div class="estado-pill pending">
+            <input type="radio" name="estado" id="est_pending" value="pending" {% if clase.estado == 'pending' %}checked{% endif %}>
+            <label for="est_pending"><span class="estado-dot"></span>Pendiente</label>
+          </div>
+          <div class="estado-pill in_progress">
+            <input type="radio" name="estado" id="est_inprog" value="in_progress" {% if clase.estado == 'in_progress' %}checked{% endif %}>
+            <label for="est_inprog"><span class="estado-dot"></span>En progreso</label>
+          </div>
+          <div class="estado-pill completed">
+            <input type="radio" name="estado" id="est_completed" value="completed" {% if clase.estado == 'completed' %}checked{% endif %}>
+            <label for="est_completed"><span class="estado-dot"></span>Completada</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Objetivos y Notas -->
+      <div class="ed-grid">
+        <div class="ed-field ed-full">
+          <label style="color:#c77dff">Objetivos <span style="color:#9ca3af;font-weight:400;text-transform:none;letter-spacing:0">— metas pedagógicas de la sesión</span></label>
+          {{ form.objetivos }}
+        </div>
+        <div class="ed-field ed-full">
+          <label style="color:#f9a8d4">Notas / Observaciones <span style="color:#9ca3af;font-weight:400;text-transform:none;letter-spacing:0">— logística y recordatorios</span></label>
+          {{ form.notas }}
+        </div>
+      </div>
+
+      <div class="ed-actions">
+        <a href="{% url 'listar_clases' %}" class="ed-btn ed-btn-ghost">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Cancelar
+        </a>
+        <button type="submit" class="ed-btn ed-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var hints = {normal: 'hint-normal', dinamica: 'hint-dinamica', mixta: 'hint-mixta'};
+  function syncHint(val){
+    Object.values(hints).forEach(function(id){
+      document.getElementById(id).classList.remove('visible');
+    });
+    if (hints[val]) document.getElementById(hints[val]).classList.add('visible');
+  }
+  document.querySelectorAll('[name="tipo_clase"]').forEach(function(r){
+    r.addEventListener('change', function(){ syncHint(this.value); });
+  });
+  var checked = document.querySelector('[name="tipo_clase"]:checked');
+  if (checked) syncHint(checked.value);
+
+  // Suprimir widgets nativos de Django que duplicarían tipo_clase y estado
+  ['select[name="tipo_clase"]','select[name="estado"]'].forEach(function(sel){
+    var el = document.querySelector(sel);
+    if (el) { var w = el.closest('.ed-field, .form-group, div'); if (w && w !== document.body) w.style.display = 'none'; else el.style.display = 'none'; }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %} {% block title %}Planificador — SkedyClass{% endblock %} {% block content %}
+<style>
+/* ── PLANIFICADOR LIQUID GLASS ── */
+.pl-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+.pl-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:800;background:linear-gradient(135deg,#c77dff,#f72585);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:4px}
+.pl-sub{font-size:.85rem;color:var(--muted)}
+.pl-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Buttons */
+.btn-new-clase{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:13px;background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;font-size:.85rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(157,78,221,.35);transition:transform .15s,box-shadow .15s;font-family:'Lora',serif}
+.btn-new-clase:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(157,78,221,.45)}
+.btn-cal{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:12px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#818cf8;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .2s,transform .15s;font-family:'Lora',serif}
+.btn-cal:hover{background:rgba(99,102,241,.22);transform:translateY(-1px)}
+.btn-export{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#c4b5fd;font-size:.85rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:'Lora',serif}
+.btn-export:hover{background:rgba(255,255,255,.1);color:#f5f3ff}
+
+/* Glass container */
+.pl-glass{position:relative;background:rgba(10,8,24,.52);border:1px solid transparent;background-clip:padding-box;border-radius:20px;backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);box-shadow:0 12px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
+.pl-glass::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(157,78,221,.5),rgba(247,37,133,.35) 55%,rgba(99,102,241,.4));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.pl-glass>*{position:relative;z-index:1}
+
+/* Search / filter bar */
+.pl-filter-bar{display:flex;gap:10px;padding:18px 20px 0;flex-wrap:wrap;align-items:center}
+.pl-search{flex:1;min-width:200px;padding:9px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);backdrop-filter:blur(10px);font-family:'Lora',serif;font-size:.84rem;color:var(--text);outline:none;transition:border-color .2s}
+.pl-search::placeholder{color:var(--muted)}
+.pl-search:focus{border-color:rgba(157,78,221,.5);box-shadow:0 0 0 3px rgba(157,78,221,.1)}
+.pl-select{padding:9px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text);font-family:'Lora',serif;font-size:.84rem;outline:none;cursor:pointer}
+.pl-select option{background:#1a1535;color:#f5f3ff}
+.pl-filter-btn{padding:9px 20px;border-radius:11px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;font-family:'Lora',serif;font-size:.84rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.pl-filter-btn:hover{opacity:.85}
+.pl-clear-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--muted);font-size:.78rem;font-weight:600;text-decoration:none;transition:background .2s}
+.pl-clear-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+
+/* Table */
+.pl-table-wrap{padding:18px 0 0;overflow-x:auto}
+.pl-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.pl-table th{padding:10px 18px;text-align:left;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#9d95c4;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+.pl-table td{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);color:#ddd8f5;vertical-align:middle}
+.pl-table tbody tr{transition:background .18s}
+.pl-table tbody tr:hover td{background:rgba(157,78,221,.06)}
+.pl-table tbody tr:last-child td{border-bottom:none}
+
+/* Type badge */
+.tipo-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700}
+.tipo-normal{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.tipo-dinamica{background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25)}
+.tipo-mixta{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+
+/* Status badge */
+.pl-status{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:50px;font-size:.72rem;font-weight:800}
+.pl-status.pending{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.pl-status.in_progress{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.pl-status.completed{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+
+/* Action btns */
+.pl-act-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:.73rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:'Lora',serif;transition:opacity .15s,transform .12s}
+.pl-act-btn:hover{opacity:.8;transform:translateY(-1px)}
+.pl-act-edit{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
+.pl-act-del{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
+.pl-act-start{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.25)}
+.pl-act-done{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.2)}
+
+/* Empty */
+.pl-empty{text-align:center;padding:56px 24px;color:var(--muted)}
+.pl-empty-icon{font-size:2.4rem;margin-bottom:14px}
+
+/* Section title */
+.pl-sec{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0}
+.pl-sec-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#f5f3ff}
+.pl-sec-count{font-size:.78rem;color:var(--muted);font-weight:600;background:rgba(255,255,255,.07);padding:3px 10px;border-radius:50px}
+</style>
+
+<!-- ═══ HEADER ═══ -->
+<div class="pl-header">
+  <div>
+    <h1 class="pl-title">Planificador</h1>
+    <p class="pl-sub">Organiza y visualiza tus clases en el tiempo</p>
+  </div>
+  <div class="pl-actions">
+    <a href="{% url 'crear_clase' %}" class="btn-new-clase">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nueva clase
+    </a>
+    <a href="{% url 'calendario' %}" class="btn-cal">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendario
+    </a>
+    <button class="btn-export" onclick="window.print()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Exportar
+    </button>
+  </div>
+</div>
+
+<!-- ═══ GLASS PANEL ═══ -->
+<div class="pl-glass">
+
+  <!-- Section title row -->
+  <div class="pl-sec">
+    <span class="pl-sec-title">Clases programadas</span>
+    <span class="pl-sec-count">{{ clases|length }} clase{{ clases|length|pluralize:"s" }}</span>
+  </div>
+
+  <!-- Filter bar -->
+  <form method="get" class="pl-filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="pl-search" placeholder="Buscar por título o materia...">
+    <select name="estado" class="pl-select">
+      <option value="all" {% if estado_filtro == "all" %}selected{% endif %}>Todos los estados</option>
+      <option value="pending" {% if estado_filtro == "pending" %}selected{% endif %}>Pendiente</option>
+      <option value="in_progress" {% if estado_filtro == "in_progress" %}selected{% endif %}>En progreso</option>
+      <option value="completed" {% if estado_filtro == "completed" %}selected{% endif %}>Completada</option>
+    </select>
+    <button type="submit" class="pl-filter-btn">Filtrar</button>
+    {% if q or estado_filtro != "all" %}<a href="{% url 'planificador' %}" class="pl-clear-btn">✕ Limpiar</a>{% endif %}
+  </form>
+
+  <!-- Table -->
+  <div class="pl-table-wrap">
+    <table class="pl-table">
+      <thead>
+        <tr>
+          <th>Clase</th>
+          <th>Tipo</th>
+          <th>Profesor</th>
+          <th>Grado</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for clase in clases %}
+        <tr>
+          <td>
+            <strong style="color:#f5f3ff;font-weight:700">{{ clase.titulo }}</strong>
+            <div style="font-size:.73rem;color:#9d95c4;margin-top:2px">{{ clase.materia }}</div>
+          </td>
+          <td>
+            <span class="tipo-badge tipo-{{ clase.tipo_clase }}">{{ clase.get_tipo_clase_display }}</span>
+          </td>
+          <td style="color:#c4b5fd">{{ clase.profesor_nombre|default:"—" }}</td>
+          <td style="color:#a5b4fc">{{ clase.grado_nombre|default:"—" }}</td>
+          <td style="font-size:.8rem;color:#9ca3af;white-space:nowrap">{{ clase.fecha }}<br><span style="color:#6b7280">{{ clase.hora }}</span></td>
+          <td>
+            <span class="pl-status {{ clase.estado }}">
+              {{ clase.get_estado_display_spanish }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              {% if clase.google_event_id %}
+              <span title="Sincronizado con Google Calendar" style="display:inline-flex;align-items:center;gap:3px;font-size:.68rem;color:#34d399;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>GCal
+              </span>
+              {% else %}
+              <button onclick="syncClase({{ clase.id }}, this)" title="Sincronizar con Google Calendar" style="display:inline-flex;align-items:center;gap:3px;font-size:.68rem;color:#6b7280;padding:3px 8px;border-radius:7px;background:rgba(107,114,128,.08);border:1px solid rgba(107,114,128,.18);cursor:pointer">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Sync
+              </button>
+              {% endif %}
+              {% if clase.estado != 'in_progress' %}
+              <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="pl-act-btn pl-act-start" style="font:inherit;cursor:pointer">Iniciar</button></form>
+              {% endif %}
+              {% if clase.estado != 'completed' %}
+              <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="pl-act-btn pl-act-done" style="font:inherit;cursor:pointer">✓</button></form>
+              {% endif %}
+              <a href="{% url 'lab' %}?tema={{ clase.titulo|urlencode }}&grado={{ clase.grado_nombre|urlencode }}&modo=quiz" class="pl-act-btn" style="background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.22)" title="Abrir en Lab IA con tema precargado">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+                Lab IA
+              </a>
+              <a href="{% url 'editar_clase' clase.id %}" class="pl-act-btn pl-act-edit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editar
+              </a>
+              <form method="post" action="{% url 'eliminar_clase' clase.id %}" style="display:inline" data-confirm="¿Seguro que quieres eliminar esta clase? Esta acción no se puede deshacer." data-confirm-title="Eliminar clase" data-confirm-btn="Sí, eliminar">
+                {% csrf_token %}
+                <button type="submit" class="pl-act-btn pl-act-del">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Eliminar
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="pl-empty">
+              <div class="pl-empty-icon">📚</div>
+              <p style="font-size:.9rem;font-weight:600;color:#f5f3ff;margin-bottom:6px">No hay clases programadas</p>
+              <p style="font-size:.8rem;margin-bottom:20px">{% if q or estado_filtro != "all" %}Ninguna clase coincide con los filtros aplicados.{% else %}Comienza planificando tu primera clase.{% endif %}</p>
+              <a href="{% url 'crear_clase' %}" class="btn-new-clase" style="text-decoration:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Crear primera clase
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function syncClase(id, btn) {
+  if (!btn) return;
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '…';
+  try {
+    var csrf = document.cookie.match(/csrftoken=([^;]+)/);
+    var token = csrf ? csrf[1] : '';
+    var resp = await fetch('/api/gcal/sync/' + id + '/', {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token},
+    });
+    var json = await resp.json();
+    if (json.ok && json.event_id) {
+      btn.outerHTML = '<span title="Sincronizado" style="display:inline-flex;align-items:center;gap:3px;font-size:.68rem;color:#34d399;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>GCal</span>';
+      if (window.showToast) window.showToast('Clase sincronizada con tu Google Calendar.', 'success');
+    } else {
+      btn.innerHTML = orig;
+      btn.disabled = false;
+      var msg = (json.message && !json.message.includes('no_google')) ? json.message : 'Vincula tu Google en Ajustes → Google Calendar.';
+      if (window.showToast) window.showToast(msg, 'warning');
+    }
+  } catch(e) {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    if (window.showToast) window.showToast('Error de conexión con Google, intenta re-vincular tu cuenta.', 'error');
+  }
+}
+</script>
+{% endblock %}

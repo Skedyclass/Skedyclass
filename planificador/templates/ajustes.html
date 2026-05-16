@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+{% block title %}Ajustes - SkedyClass{% endblock %}
+
+{% block content %}
+<style>
+/* ── Ajustes Layout ── */
+.aj-wrap{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+@media(max-width:820px){.aj-wrap{grid-template-columns:1fr}}
+
+/* Side nav */
+.aj-nav{position:sticky;top:80px;display:flex;flex-direction:column;gap:6px}
+.aj-nav-title{font-size:.65rem;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:1.2px;padding:0 12px 8px;margin-top:4px}
+.aj-nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;border:none;background:transparent;color:#c4b5fd;cursor:pointer;font-size:.875rem;font-weight:700;font-family:'Lora',serif;text-align:left;transition:background .18s,color .18s,transform .18s,box-shadow .18s;width:100%}
+.aj-nav-item svg{flex-shrink:0;opacity:.75;transition:opacity .18s}
+.aj-nav-item:hover{background:rgba(157,78,221,.12);color:#f5f3ff;transform:translateX(3px)}
+.aj-nav-item:hover svg{opacity:1}
+.aj-nav-item.active{background:linear-gradient(135deg,rgba(157,78,221,.25),rgba(247,37,133,.15));color:#fff;box-shadow:0 4px 18px rgba(157,78,221,.2),inset 0 1px 0 rgba(255,255,255,.08)}
+.aj-nav-item.active svg{opacity:1;filter:drop-shadow(0 0 6px rgba(157,78,221,.7))}
+.aj-nav-sep{height:1px;background:rgba(255,255,255,.07);margin:8px 12px}
+
+/* Panels */
+.aj-panel{display:none}
+.aj-panel.active{display:block}
+
+/* Panel header */
+.aj-panel-head{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.aj-panel-icon{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.aj-panel-icon.purple{background:linear-gradient(135deg,rgba(157,78,221,.3),rgba(99,102,241,.2));box-shadow:0 4px 16px rgba(157,78,221,.3)}
+.aj-panel-icon.pink{background:linear-gradient(135deg,rgba(247,37,133,.3),rgba(236,72,153,.2));box-shadow:0 4px 16px rgba(247,37,133,.25)}
+.aj-panel-icon.amber{background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(251,146,60,.2));box-shadow:0 4px 16px rgba(245,158,11,.2)}
+.aj-panel-icon.indigo{background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(139,92,246,.2));box-shadow:0 4px 16px rgba(99,102,241,.25)}
+.aj-panel-head h2{font-size:1.35rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif;margin-bottom:2px}
+.aj-panel-head p{font-size:.82rem;color:#9ca3af}
+
+/* Form groups */
+.aj-section{margin-bottom:28px}
+.aj-section-label{font-size:.7rem;font-weight:800;color:#c4b5fd;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.aj-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.aj-grid{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fg label{font-size:.75rem;font-weight:700;color:#c4b5fd;letter-spacing:.3px;text-transform:uppercase}
+.form-input,.form-select{width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#f5f3ff;font-size:.88rem;font-family:'Lora',serif;transition:border-color .18s,box-shadow .18s}
+.form-input:focus,.form-select:focus{outline:none;border-color:rgba(157,78,221,.6);box-shadow:0 0 0 3px rgba(157,78,221,.12)}
+.form-select option{background:#1a1830;color:#f5f3ff}
+.form-actions{display:flex;gap:10px;margin-top:8px}
+
+/* Grados grid */
+.grados-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.grado-chip{position:relative}
+.grado-chip input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+.grado-chip label{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#9ca3af;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .18s;user-select:none}
+.grado-chip input:checked + label{background:linear-gradient(135deg,rgba(157,78,221,.25),rgba(247,37,133,.15));border-color:rgba(157,78,221,.5);color:#e2e0ff;box-shadow:0 3px 12px rgba(157,78,221,.2)}
+.grado-chip label:hover{border-color:rgba(157,78,221,.3);color:#d1c4fd}
+.grado-dot{width:10px;height:10px;border-radius:50%;background:rgba(157,78,221,.5);transition:background .18s}
+.grado-chip input:checked + label .grado-dot{background:linear-gradient(135deg,#9d4edd,#f72585);box-shadow:0 0 8px rgba(157,78,221,.5)}
+
+/* Toggle switches */
+.toggle-list{display:flex;flex-direction:column;gap:12px}
+.toggle-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);transition:background .18s;cursor:pointer}
+.toggle-item:hover{background:rgba(255,255,255,.05)}
+.toggle-info .toggle-title{display:block;font-size:.88rem;font-weight:700;color:#f5f3ff}
+.toggle-info .toggle-desc{display:block;font-size:.75rem;color:#9ca3af;margin-top:2px}
+.toggle-wrap{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-checkbox{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;border-radius:50px;background:rgba(255,255,255,.1);cursor:pointer;transition:background .25s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s,background .25s}
+.toggle-checkbox:checked + .toggle-slider{background:linear-gradient(135deg,#9d4edd,#f72585)}
+.toggle-checkbox:checked + .toggle-slider::before{transform:translateX(20px)}
+
+/* Color palette */
+.color-palette{display:flex;gap:12px;flex-wrap:wrap}
+.color-opt{position:relative}
+.color-opt input{position:absolute;opacity:0;width:0;height:0}
+.color-opt label{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;border-radius:16px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;transition:all .2s;min-width:110px}
+.color-opt label:hover{border-color:rgba(255,255,255,.2);transform:translateY(-2px)}
+.color-opt input:checked + label{border-color:rgba(157,78,221,.6);background:rgba(157,78,221,.12);box-shadow:0 4px 20px rgba(157,78,221,.25)}
+.color-swatch{width:36px;height:36px;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.color-name{font-size:.78rem;font-weight:700;color:#e2e0ff}
+.color-sub{font-size:.68rem;color:#9ca3af}
+
+/* Blur slider */
+.blur-slider-wrap{padding:8px 0}
+.blur-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:50px;background:linear-gradient(90deg,rgba(157,78,221,.4),rgba(247,37,133,.4));outline:none;cursor:pointer}
+.blur-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#9d4edd,#f72585);cursor:pointer;box-shadow:0 4px 12px rgba(157,78,221,.5)}
+.blur-labels{display:flex;justify-content:space-between;font-size:.72rem;color:#9ca3af;margin-top:6px}
+.blur-val{font-size:.88rem;font-weight:800;color:#c4b5fd;text-align:center;margin-top:8px}
+
+/* Seguridad */
+.security-info{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);margin-bottom:20px}
+.security-info svg{color:#a5b4fc;flex-shrink:0}
+.security-info p{font-size:.83rem;color:#c7d2fe;line-height:1.5}
+
+/* Acerca de */
+.about-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:50px;background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.2);font-size:.75rem;font-weight:700;margin-bottom:12px}
+.about-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.about-row:last-child{border-bottom:none}
+.about-row span:first-child{font-size:.82rem;color:#9ca3af;font-weight:600}
+.about-row span:last-child{font-size:.82rem;color:#f5f3ff;font-weight:700}
+
+/* Btn styles */
+.btn-save{padding:10px 24px;border-radius:12px;border:none;background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;font-size:.86rem;font-weight:800;cursor:pointer;font-family:'Lora',serif;transition:transform .18s,box-shadow .18s;display:inline-flex;align-items:center;gap:7px;box-shadow:0 5px 18px rgba(157,78,221,.3)}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(247,37,133,.35)}
+.btn-danger{padding:10px 24px;border-radius:12px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#fca5a5;font-size:.86rem;font-weight:800;cursor:pointer;font-family:'Lora',serif;transition:all .18s;display:inline-flex;align-items:center;gap:7px}
+.btn-danger:hover{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#fff}
+
+/* Db error */
+.db-error{border-radius:16px;padding:20px 24px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;margin-bottom:24px}
+.db-error strong{color:#fff}
+.db-error code{display:inline-block;margin-top:10px;background:rgba(0,0,0,.3);padding:7px 14px;border-radius:8px;font-size:.88rem;color:#f5f3ff}
+</style>
+
+<div class="page-header">
+  <div>
+    <h1 style="background:linear-gradient(135deg,#9d4edd,#f72585);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Playfair Display',serif">Ajustes</h1>
+    <p style="color:#9ca3af">Personaliza tu experiencia en SkedyClass</p>
+  </div>
+</div>
+
+{% if db_error %}
+<div class="db-error">
+  <strong>Base de datos desactualizada.</strong> Ejecuta en la terminal:<br>
+  <code>python manage.py migrate</code>
+</div>
+{% else %}
+<div class="aj-wrap">
+
+  <!-- ── Left nav ── -->
+  <nav class="glass-panel soft aj-nav" style="padding:16px 10px">
+    <p class="aj-nav-title">Configuración</p>
+    <button class="aj-nav-item {% if seccion_activa == 'perfil' %}active{% endif %}" data-panel="perfil">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Mi Perfil
+    </button>
+    <button class="aj-nav-item {% if seccion_activa == 'preferencias' %}active{% endif %}" data-panel="preferencias">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Preferencias
+    </button>
+    <button class="aj-nav-item {% if seccion_activa == 'seguridad' %}active{% endif %}" data-panel="seguridad">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Seguridad
+    </button>
+    <button class="aj-nav-item {% if seccion_activa == 'personalizacion' %}active{% endif %}" data-panel="personalizacion">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Personalización
+    </button>
+    <button class="aj-nav-item {% if seccion_activa == 'correo' %}active{% endif %}" data-panel="correo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Correo
+      {% if not smtp_configurado %}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-warning,#f59e0b);margin-left:6px;vertical-align:middle;" title="SMTP no configurado"></span>{% endif %}
+    </button>
+    <button class="aj-nav-item {% if seccion_activa == 'google_calendar' %}active{% endif %}" data-panel="google_calendar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Google Calendar
+      {% if gcal_conectado %}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;margin-left:6px;vertical-align:middle;" title="Conectado"></span>{% else %}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#6b7280;margin-left:6px;vertical-align:middle;" title="No conectado"></span>{% endif %}
+    </button>
+    <div class="aj-nav-sep"></div>
+    <p class="aj-nav-title">Sistema</p>
+    <button class="aj-nav-item" data-panel="acerca">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Acerca de
+    </button>
+  </nav>
+
+  <!-- ── Right panels ── -->
+  <div>
+
+    <!-- ── MI PERFIL ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'perfil' %}active{% endif %}" id="panel-perfil">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div>
+          <h2>Mi Perfil</h2>
+          <p>Nombre, cargo e información de contacto</p>
+        </div>
+      </div>
+      <form method="POST" action="{% url 'ajustes' %}">
+        {% csrf_token %}
+        <input type="hidden" name="seccion" value="perfil">
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Información personal
+          </div>
+          <div class="aj-grid">
+            <div class="fg"><label>Nombre</label><input type="text" name="first_name" class="form-input" value="{{ user.first_name }}" placeholder="Tu nombre"></div>
+            <div class="fg"><label>Apellido</label><input type="text" name="last_name" class="form-input" value="{{ user.last_name }}" placeholder="Tu apellido"></div>
+            <div class="fg"><label>Correo electrónico</label><input type="email" name="email" class="form-input" value="{{ user.email }}" placeholder="tu@correo.com"></div>
+            <div class="fg"><label>Cargo</label><input type="text" name="cargo" class="form-input" value="{{ config.cargo }}" placeholder="Ej: Docente de primaria"></div>
+            <div class="fg" style="grid-column:1/-1"><label>Institución educativa</label><input type="text" name="nombre_institucion" class="form-input" value="{{ config.nombre_institucion }}" placeholder="Nombre de tu institución"></div>
+          </div>
+        </div>
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Materia asignada
+          </div>
+          <div style="padding:12px 16px;border-radius:12px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);display:flex;align-items:center;gap:12px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <div>
+              <p style="font-size:.88rem;font-weight:700;color:#c7d2fe">{{ user_materia|default:"Sin materia asignada" }}</p>
+              <p style="font-size:.74rem;color:#9ca3af">Se asignó al registrarte · Se actualiza en el perfil de registro</p>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── PREFERENCIAS DE CLASE ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'preferencias' %}active{% endif %}" id="panel-preferencias">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon pink">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </div>
+        <div>
+          <h2>Preferencias de Clase</h2>
+          <p>Grados que enseñas y notificaciones</p>
+        </div>
+      </div>
+      <form method="POST" action="{% url 'ajustes' %}">
+        {% csrf_token %}
+        <input type="hidden" name="seccion" value="preferencias">
+
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Niveles educativos que impartes
+          </div>
+          <div class="grados-grid">
+            {% for gn in grados_disponibles %}
+            <div class="grado-chip">
+              <input type="checkbox" id="g_{{ forloop.counter }}" name="grados" value="{{ gn }}"
+                {% if gn in grados_del_usuario %}checked{% endif %}>
+              <label for="g_{{ forloop.counter }}">
+                <span class="grado-dot"></span>{{ gn }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Notificaciones
+          </div>
+          <div class="toggle-list">
+            <label class="toggle-item">
+              <div class="toggle-info">
+                <span class="toggle-title">Recordatorios de clases</span>
+                <span class="toggle-desc">Alertas antes de cada clase programada</span>
+              </div>
+              <div class="toggle-wrap">
+                <input type="checkbox" name="notif_clases" class="toggle-checkbox" {% if config.notif_clases %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+              </div>
+            </label>
+            <label class="toggle-item">
+              <div class="toggle-info">
+                <span class="toggle-title">Alertas de clases pendientes</span>
+                <span class="toggle-desc">Notificaciones sobre clases sin completar</span>
+              </div>
+              <div class="toggle-wrap">
+                <input type="checkbox" name="notif_tareas" class="toggle-checkbox" {% if config.notif_tareas %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+              </div>
+            </label>
+            <label class="toggle-item">
+              <div class="toggle-info">
+                <span class="toggle-title">Resumen semanal</span>
+                <span class="toggle-desc">Recibe un resumen de actividad cada semana</span>
+              </div>
+              <div class="toggle-wrap">
+                <input type="checkbox" name="notif_resumen" class="toggle-checkbox" {% if config.notif_resumen %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Guardar preferencias
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── SEGURIDAD ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'seguridad' %}active{% endif %}" id="panel-seguridad">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon amber">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <h2>Seguridad</h2>
+          <p>Contraseña y gestión de sesión</p>
+        </div>
+      </div>
+
+      <div class="security-info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>Usa una contraseña segura de al menos 8 caracteres. No compartas tus credenciales con nadie.</p>
+      </div>
+
+      <form method="POST" action="{% url 'ajustes' %}">
+        {% csrf_token %}
+        <input type="hidden" name="seccion" value="contrasena">
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Cambiar contraseña
+          </div>
+          <div class="fg"><label>Contraseña actual</label><input type="password" name="password_actual" class="form-input" placeholder="Tu contraseña actual"></div>
+          <div class="aj-grid">
+            <div class="fg"><label>Nueva contraseña</label><input type="password" name="password_nueva" class="form-input" placeholder="Mínimo 6 caracteres"></div>
+            <div class="fg"><label>Confirmar contraseña</label><input type="password" name="password_confirmar" class="form-input" placeholder="Repite la nueva contraseña"></div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Actualizar contraseña
+          </button>
+          <a href="{% url 'logout' %}" class="btn-danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── PERSONALIZACIÓN ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'personalizacion' %}active{% endif %}" id="panel-personalizacion">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon indigo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        </div>
+        <div>
+          <h2>Personalización</h2>
+          <p>Color de acento e intensidad del efecto glass</p>
+        </div>
+      </div>
+      <form method="POST" action="{% url 'ajustes' %}">
+        {% csrf_token %}
+        <input type="hidden" name="seccion" value="personalizacion">
+
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6.5" cy="13" r="2.5"/><circle cx="13.5" cy="19" r="2.5"/><path d="M13.5 9v1M13.5 16v1M16 6.5h1M7 13H6M17 13h1M10 6.5H9M16.5 15.5l.7.7M7 10l.7.7"/></svg>
+            Color de acento
+          </div>
+          <div class="color-palette">
+            <div class="color-opt">
+              <input type="radio" name="color_scheme" id="c-default" value="default" {% if config.color_scheme == 'default' or not config.color_scheme %}checked{% endif %}>
+              <label for="c-default">
+                <span class="color-swatch" style="background:linear-gradient(135deg,#9d4edd,#6366f1)"></span>
+                <span class="color-name">Morado</span>
+                <span class="color-sub">Predeterminado</span>
+              </label>
+            </div>
+            <div class="color-opt">
+              <input type="radio" name="color_scheme" id="c-pink" value="pink" {% if config.color_scheme == 'pink' %}checked{% endif %}>
+              <label for="c-pink">
+                <span class="color-swatch" style="background:linear-gradient(135deg,#f72585,#ec4899)"></span>
+                <span class="color-name">Rosa</span>
+                <span class="color-sub">Vibrant</span>
+              </label>
+            </div>
+            <div class="color-opt">
+              <input type="radio" name="color_scheme" id="c-blue" value="blue" {% if config.color_scheme == 'blue' %}checked{% endif %}>
+              <label for="c-blue">
+                <span class="color-swatch" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"></span>
+                <span class="color-name">Índigo</span>
+                <span class="color-sub">Clásico</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="aj-section">
+          <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Intensidad del efecto Glass
+          </div>
+          <div class="blur-slider-wrap">
+            <input type="range" min="8" max="40" step="2" value="28" class="blur-slider" id="blurSlider">
+            <div class="blur-labels"><span>Sutil (8px)</span><span>Máximo (40px)</span></div>
+            <div class="blur-val" id="blurVal">28px</div>
+          </div>
+          <p style="font-size:.75rem;color:#9ca3af;margin-top:6px">Este ajuste se guarda en tu navegador (no requiere conexión).</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Guardar personalización
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── CORREO / SMTP ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'correo' %}active{% endif %}" id="panel-correo">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon {% if smtp_configurado %}green{% else %}orange{% endif %}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{% if smtp_configurado %}#86efac{% else %}#fcd34d{% endif %}" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div>
+          <h2>Correo institucional</h2>
+          <p>Configuración SMTP para notificaciones del sistema</p>
+        </div>
+      </div>
+
+      <div class="aj-section">
+        <!-- Estado actual -->
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;background:{% if smtp_configurado %}rgba(134,239,172,0.08);border:1px solid rgba(134,239,172,0.25){% else %}rgba(252,211,77,0.08);border:1px solid rgba(252,211,77,0.25){% endif %};margin-bottom:20px;">
+          <span style="font-size:18px;">{% if smtp_configurado %}✅{% else %}⚠️{% endif %}</span>
+          <div>
+            <strong style="color:{% if smtp_configurado %}#86efac{% else %}#fcd34d{% endif %};">
+              {% if smtp_configurado %}SMTP configurado{% else %}SMTP no configurado{% endif %}
+            </strong><br>
+            <small style="opacity:.7;">
+              {% if smtp_configurado %}
+                Enviando desde: <code>{{ smtp_usuario }}</code>
+              {% else %}
+                Las notificaciones por correo están desactivadas.
+              {% endif %}
+            </small>
+          </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="aj-section-label" style="margin-bottom:12px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Cómo configurar
+        </div>
+
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:16px 18px;font-size:.88rem;line-height:1.7;border:1px solid rgba(255,255,255,0.08);">
+          <p style="margin:0 0 10px;">Abre el archivo <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">.env</code> en la carpeta del proyecto y completa estas líneas:</p>
+          <pre style="background:rgba(0,0,0,0.3);border-radius:8px;padding:14px;overflow-x:auto;font-size:.82rem;margin:0 0 14px;border:1px solid rgba(255,255,255,0.1);">EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=tucorreo@gmail.com
+EMAIL_HOST_PASSWORD=xxxx xxxx xxxx xxxx
+DEFAULT_FROM_EMAIL=SkedyClass &lt;tucorreo@gmail.com&gt;</pre>
+
+          <p style="margin:0 0 6px;"><strong style="color:#fcd34d;">⚠️ EMAIL_HOST_PASSWORD no es tu contraseña de Gmail.</strong><br>
+          Necesitás una <strong>Contraseña de aplicación</strong>:</p>
+          <ol style="margin:6px 0 0 18px;padding:0;">
+            <li>Ve a <a href="https://myaccount.google.com/security" target="_blank" style="color:#a5b4fc;">myaccount.google.com → Seguridad</a></li>
+            <li>Activa <strong>Verificación en 2 pasos</strong> si no la tenés</li>
+            <li>Buscá <strong>Contraseñas de aplicación</strong></li>
+            <li>Creá una para "Correo" + "Otro (SkedyClass)"</li>
+            <li>Copiá los 16 caracteres al <code>.env</code></li>
+          </ol>
+          <p style="margin:14px 0 0;opacity:.6;font-size:.82rem;">Después de editar el .env, reiniciá el servidor con <code>run.sh</code> o <code>run.bat</code> para aplicar los cambios.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GOOGLE CALENDAR ── -->
+    <div class="aj-panel glass-panel {% if seccion_activa == 'google_calendar' %}active{% endif %}" id="panel-google_calendar">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon" style="background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(16,185,129,.15));box-shadow:0 4px 16px rgba(16,185,129,.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <h2>Google Calendar</h2>
+          <p>Sincronización bidireccional de tus clases con Google</p>
+        </div>
+      </div>
+
+      <!-- Connection status -->
+      <div class="aj-section">
+        {% if gcal_conectado %}
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div>
+            <strong style="color:#6ee7b7;display:block;margin-bottom:2px">Cuenta Google vinculada</strong>
+            <span style="font-size:.78rem;color:#9ca3af">{{ gcal_email }}</span>
+          </div>
+          {% if gcal_clases_sin_sync > 0 %}
+          <span style="margin-left:auto;font-size:.72rem;padding:3px 10px;border-radius:8px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:#fbbf24">{{ gcal_clases_sin_sync }} sin sincronizar</span>
+          {% else %}
+          <span style="margin-left:auto;font-size:.72rem;padding:3px 10px;border-radius:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34d399">Todo sincronizado</span>
+          {% endif %}
+        </div>
+        {% if gcal_needs_reauth %}
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);margin-bottom:12px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div style="flex:1">
+            <strong style="color:#fbbf24;display:block;margin-bottom:2px;font-size:.85rem">Tu sesión con Google necesita renovarse</strong>
+            <span style="font-size:.74rem;color:#9ca3af">Re-vincula tu cuenta para mantener la sincronización activa.</span>
+          </div>
+          <a href="{% url 'google_oauth_start' %}" style="padding:7px 14px;border-radius:9px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#000;font-size:.76rem;font-weight:800;text-decoration:none">Re-vincular</a>
+        </div>
+        {% endif %}
+        <form method="post" action="{% url 'gcal_disconnect' %}" style="margin-bottom:20px" data-confirm="¿Desvincular tu cuenta Google? Los eventos existentes permanecen en tu calendario, pero futuras clases no se sincronizarán." data-confirm-title="Desvincular Google" data-confirm-btn="Sí, desvincular">
+          {% csrf_token %}
+          <button type="submit" style="background:transparent;border:1px solid rgba(239,68,68,.35);color:#fca5a5;padding:8px 14px;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">Desvincular Google</button>
+        </form>
+        {% else %}
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(107,114,128,.08);border:1px solid rgba(107,114,128,.2);margin-bottom:20px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <strong style="color:#9ca3af;display:block;margin-bottom:2px">Sin cuenta Google vinculada</strong>
+            <span style="font-size:.78rem;color:#6b7280">Inicia sesión con Google para activar la sincronización automática</span>
+          </div>
+          <a href="{% url 'google_oauth_start' %}" style="margin-left:auto;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;white-space:nowrap">Vincular Google</a>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if gcal_conectado %}
+      <!-- Sync all button -->
+      <div class="aj-section">
+        <div class="aj-section-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+          Sincronización masiva
+        </div>
+        <p style="font-size:.83rem;color:#9ca3af;margin-bottom:16px;font-family:'Lora',serif">Sincroniza todas las clases que aún no tienen evento en Google Calendar. Incluye recordatorios automáticos 15 y 30 minutos antes.</p>
+        <button type="button" id="btnSyncAll" onclick="gcalSyncAll()" class="btn-save" style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 5px 18px rgba(16,185,129,.3)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+          Sincronizar todas las clases
+        </button>
+        <div id="syncAllStatus" style="display:none;margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);font-size:.82rem;color:#6ee7b7"></div>
+      </div>
+
+      <!-- Calendar ID config -->
+      <div class="aj-section">
+        <div class="aj-section-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendario destino
+        </div>
+        <form method="POST" action="{% url 'ajustes' %}">
+          {% csrf_token %}
+          <input type="hidden" name="seccion" value="google_calendar">
+          <div class="fg">
+            <label>ID del Calendario (dejar vacío para usar el principal)</label>
+            <input type="text" name="google_calendar_id" class="form-input" value="{{ config.google_calendar_id }}" placeholder="Ej: tu@gmail.com o xxx@group.calendar.google.com">
+          </div>
+          <p style="font-size:.74rem;color:#6b7280;margin:-8px 0 14px;font-family:'Lora',serif">Encuentra el ID en Google Calendar → Configuración del calendario → ID del calendario. Deja vacío para usar el calendario principal.</p>
+          <button type="submit" class="btn-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            Guardar calendario
+          </button>
+        </form>
+      </div>
+
+      <!-- Permissions info -->
+      <div class="aj-section">
+        <div class="aj-section-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Permisos y privacidad
+        </div>
+        <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:14px 16px;font-size:.82rem;line-height:1.7;color:#9ca3af;border:1px solid rgba(255,255,255,.06)">
+          <p style="margin:0 0 8px">SkedyClass solicita el permiso <code style="color:#a5b4fc;background:rgba(99,102,241,.1);padding:1px 5px;border-radius:4px">calendar.events</code> para crear, actualizar y eliminar eventos en tu nombre.</p>
+          <p style="margin:0 0 8px">Cada clase creada genera un evento con recordatorio automático a los <strong style="color:#f5f3ff">15 minutos</strong> (pop-up) y <strong style="color:#f5f3ff">30 minutos</strong> (correo) antes del inicio.</p>
+          <p style="margin:0">Para revocar el acceso: <a href="https://myaccount.google.com/permissions" target="_blank" style="color:#a5b4fc">myaccount.google.com/permissions</a> → elimina SkedyClass.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── ACERCA DE ── -->
+    <div class="aj-panel glass-panel" id="panel-acerca">
+      <div class="aj-panel-head">
+        <div class="aj-panel-icon indigo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div>
+          <h2>Acerca de SkedyClass</h2>
+          <p>Versión, créditos y estado del sistema</p>
+        </div>
+      </div>
+      <span class="about-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Sistema activo
+      </span>
+      <div>
+        <div class="about-row"><span>Aplicación</span><span>SkedyClass</span></div>
+        <div class="about-row"><span>Versión</span><span>1.0.0</span></div>
+        <div class="about-row"><span>Año</span><span>2026</span></div>
+        <div class="about-row"><span>Usuario</span><span>{{ user.username }}</span></div>
+        <div class="about-row"><span>Materia</span><span>{{ user_materia|default:"—" }}</span></div>
+        <div class="about-row"><span>Miembro desde</span><span>{{ user.date_joined|date:"d M Y" }}</span></div>
+        <div class="about-row"><span>Framework</span><span>Django 4.2 · Python</span></div>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /aj-wrap -->
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Panel switching
+var navItems = document.querySelectorAll('.aj-nav-item[data-panel]');
+var panels = document.querySelectorAll('.aj-panel');
+navItems.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var target = this.dataset.panel;
+    navItems.forEach(function(b) { b.classList.remove('active'); });
+    panels.forEach(function(p) { p.classList.remove('active'); });
+    this.classList.add('active');
+    var panel = document.getElementById('panel-' + target);
+    if (panel) panel.classList.add('active');
+    history.replaceState(null, '', '?s=' + target);
+  });
+});
+
+// Google Calendar sync all
+async function gcalSyncAll() {
+  var btn = document.getElementById('btnSyncAll');
+  var status = document.getElementById('syncAllStatus');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'Sincronizando…';
+  if (status) { status.style.display = 'none'; }
+  try {
+    var csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
+    var token = csrfToken ? csrfToken[1] : '';
+    var resp = await fetch('/api/gcal/sync-all/', {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token},
+    });
+    var json = await resp.json();
+    if (status) {
+      status.style.display = 'block';
+      status.textContent = json.synced > 0
+        ? json.synced + ' clase(s) sincronizadas correctamente con Google Calendar.'
+        : json.errors > 0 ? 'Error al sincronizar. Verifica los permisos de Google.'
+        : 'Todas las clases ya estaban sincronizadas.';
+    }
+    if (window.showToast) {
+      if (json.synced > 0) window.showToast(json.synced + ' clase(s) sincronizadas con Google Calendar.', 'success');
+      else if (json.errors > 0) window.showToast('Error de conexión con Google, intenta re-vincular tu cuenta.', 'error');
+      else window.showToast('Todas las clases ya están sincronizadas.', 'info');
+    }
+  } catch(e) {
+    if (status) { status.style.display = 'block'; status.textContent = 'Error de conexión.'; }
+    if (window.showToast) window.showToast('Error de conexión con Google.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg> Sincronizar todas las clases';
+  }
+}
+
+// Blur slider
+var slider = document.getElementById('blurSlider');
+var blurVal = document.getElementById('blurVal');
+var savedBlur = localStorage.getItem('glass-blur');
+if (slider) {
+  if (savedBlur) { slider.value = parseInt(savedBlur); }
+  blurVal.textContent = slider.value + 'px';
+  slider.addEventListener('input', function() {
+    var v = this.value + 'px';
+    blurVal.textContent = v;
+    document.documentElement.style.setProperty('--glass-blur', v);
+    localStorage.setItem('glass-blur', this.value);
+  });
+}
+</script>
+{% endblock %}

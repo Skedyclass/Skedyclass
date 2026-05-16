@@ -1,0 +1,36 @@
+# Secretos — nunca subir al repositorio
+.env
+.secret_key
+
+# Base de datos local
+db.sqlite3
+
+# Logs
+logs/
+
+# Estáticos compilados (se regeneran con collectstatic en cada deploy)
+staticfiles/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard — SkedyClass{% endblock %}
+
+{% block content %}
+<style>
+/* ── Page header ── */
+.dash-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; gap:16px; flex-wrap:wrap; }
+.dash-header h1 { font-size:1.55rem; font-weight:800; font-family:'Playfair Display',serif; background:linear-gradient(135deg,#9d4edd,#f72585); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.dash-header p { color:var(--muted); font-size:.85rem; margin-top:3px; }
+
+/* ── Create button ── */
+.btn-crear { display:inline-flex; align-items:center; gap:9px; padding:12px 26px; border-radius:50px; background:linear-gradient(135deg,#9d4edd,#f72585); color:#fff; font-size:.9rem; font-weight:800; border:none; cursor:pointer; font-family:'Lora',serif; box-shadow:0 6px 22px rgba(157,78,221,.38); transition:all .22s; }
+.btn-crear:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(247,37,133,.45); }
+.btn-crear svg { flex-shrink:0; }
+
+/* ── Stat cards ── */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:28px; overflow:visible; }
+@media(max-width:900px){ .stats-grid { grid-template-columns:repeat(2,1fr); } }
+.stat-card { border-radius:18px; padding:22px; color:#fff; position:relative; overflow:hidden; transition:transform .25s ease-in-out; will-change:transform; box-shadow:0 8px 28px rgba(0,0,0,.25); }
+.stat-card:hover { transform:scale(1.05); }
+.stat-card.blue   { background:linear-gradient(135deg,#7b2ff7,#f107a3); }
+.stat-card.yellow { background:linear-gradient(135deg,#4361ee,#9d4edd); }
+.stat-card.pink   { background:linear-gradient(135deg,#7209b7,#e040fb); }
+.stat-card.green  { background:linear-gradient(135deg,#10b981,#34d399); }
+.stat-card::after { content:''; position:absolute; top:-30%; right:-20%; width:90px; height:90px; background:rgba(255,255,255,.12); border-radius:50%; }
+.stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:.82rem; font-weight:700; }
+.stat-header span:first-child { font-size:1.4rem; }
+.stat-value { font-size:2.8rem; font-weight:900; line-height:1; }
+.stat-desc { font-size:.78rem; opacity:.85; margin-top:4px; }
+
+/* ── Search & filter ── */
+.dash-search { display:flex; gap:14px; margin-bottom:22px; flex-wrap:wrap; align-items:flex-end; }
+.dash-search-box { flex:1; min-width:220px; }
+.dash-search-box label, .dash-filter-box label { display:block; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:5px; }
+.dash-input { width:100%; padding:9px 14px; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,.04); color:var(--text); font-size:.85rem; font-family:'Lora',serif; transition:border-color .18s; }
+.dash-input:focus { outline:none; border-color:rgba(157,78,221,.5); box-shadow:0 0 0 3px rgba(157,78,221,.12); }
+[data-theme="light"] .dash-input { background:rgba(0,0,0,.03); border-color:rgba(0,0,0,.1); color:#1e1b4b; }
+.dash-filter-box { min-width:160px; }
+
+/* ── Next class banner ── */
+.next-class-card { background:linear-gradient(135deg,#7b2ff7,#9d4edd,#f72585); color:#fff; border-radius:18px; padding:24px 28px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; gap:16px; box-shadow:0 8px 32px rgba(157,78,221,.3); position:relative; overflow:hidden; }
+.next-class-card::before { content:''; position:absolute; top:-50%; right:-10%; width:180px; height:180px; background:rgba(255,255,255,.08); border-radius:50%; }
+.next-class-content h3 { font-size:1.15rem; font-weight:800; margin-bottom:12px; font-family:'Playfair Display',serif; }
+.next-class-details p { margin-bottom:4px; font-size:.88rem; }
+.next-class-badge { font-size:3.5rem; position:relative; z-index:1; }
+
+/* ── Kanban ── */
+.kanban-board { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+@media(max-width:800px){ .kanban-board { grid-template-columns:1fr; } }
+
+/* Columna — negro sólido con liquid glass */
+.kanban-column { background:#0a0a0f; border-radius:18px; border:1px solid rgba(255,255,255,.1); padding:20px; min-height:340px; box-shadow:0 8px 40px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08); position:relative; overflow:hidden; }
+/* Barra de acento superior — igual que sidebar::before */
+.kanban-column::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:18px 18px 0 0; }
+.kanban-column[data-status="pending"]::before    { background:linear-gradient(90deg,#4361ee,#9d4edd); }
+.kanban-column[data-status="in_progress"]::before { background:linear-gradient(90deg,#7209b7,#e040fb); }
+.kanban-column[data-status="completed"]::before   { background:linear-gradient(90deg,#10b981,#34d399); }
+/* Glow de fondo tenue según estado */
+.kanban-column::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; border-radius:18px; }
+.kanban-column[data-status="pending"]::after     { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(67,97,238,.08) 0%,transparent 70%); }
+.kanban-column[data-status="in_progress"]::after { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(224,64,251,.08) 0%,transparent 70%); }
+.kanban-column[data-status="completed"]::after   { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(16,185,129,.07) 0%,transparent 70%); }
+
+/* Header — gradientes idénticos a las stat-cards */
+.kanban-header { padding:11px 14px; border-radius:12px; font-weight:800; font-size:.83rem; margin-bottom:16px; color:#fff; display:flex; align-items:center; gap:8px; letter-spacing:.02em; position:relative; overflow:hidden; z-index:1; }
+.kanban-header::after { content:''; position:absolute; top:-40%; right:-15%; width:60px; height:60px; background:rgba(255,255,255,.12); border-radius:50%; pointer-events:none; }
+.kanban-header .kh-icon { font-size:.9rem; flex-shrink:0; }
+.kanban-header .kh-title { flex:1; }
+.kanban-header .kh-count { background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.2); border-radius:50px; padding:2px 10px; font-size:.72rem; font-weight:900; min-width:24px; text-align:center; }
+.kanban-header.pending    { background:linear-gradient(135deg,#4361ee,#9d4edd); box-shadow:0 4px 18px rgba(67,97,238,.4); }
+.kanban-header.in-progress { background:linear-gradient(135deg,#7209b7,#e040fb); box-shadow:0 4px 18px rgba(114,9,183,.4); }
+.kanban-header.completed  { background:linear-gradient(135deg,#10b981,#34d399); box-shadow:0 4px 18px rgba(16,185,129,.4); }
+
+/* Tarjeta — fondo oscuro ligeramente elevado sobre la columna */
+.kanban-card { background:#13111e; border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:15px 16px; margin-bottom:10px; border-left:3px solid rgba(157,78,221,.6); transition:background .2s,transform .2s,box-shadow .2s,border-color .2s; position:relative; z-index:1; }
+/* Acento izquierdo por estado */
+.kanban-column[data-status="pending"]     .kanban-card { border-left-color:#4361ee; }
+.kanban-column[data-status="in_progress"] .kanban-card { border-left-color:#e040fb; }
+.kanban-column[data-status="completed"]   .kanban-card { border-left-color:#10b981; }
+/* Hover — resplandor lateral */
+.kanban-column[data-status="pending"]     .kanban-card:hover { background:#13111e; border-color:rgba(99,102,241,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(99,102,241,.3),-4px 0 20px rgba(67,97,238,.15); }
+.kanban-column[data-status="in_progress"] .kanban-card:hover { background:#13111e; border-color:rgba(224,64,251,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(224,64,251,.3),-4px 0 20px rgba(114,9,183,.15); }
+.kanban-column[data-status="completed"]   .kanban-card:hover { background:#13111e; border-color:rgba(16,185,129,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(16,185,129,.3),-4px 0 20px rgba(16,185,129,.12); }
+
+/* Título de la tarjeta — blanco nítido */
+.kanban-card h4 { font-size:.9rem; font-weight:700; margin-bottom:10px; color:#f5f3ff; line-height:1.4; }
+
+/* Metadata — legible con separación visual */
+.kc-meta { display:flex; flex-direction:column; gap:6px; margin-bottom:13px; padding-bottom:13px; border-bottom:1px solid rgba(255,255,255,.06); }
+.kc-meta span { font-size:.78rem; color:#b0aac8; display:flex; align-items:center; gap:6px; line-height:1.3; }
+
+.card-actions { display:flex; gap:6px; flex-wrap:wrap; }
+/* Botón glass pill */
+.btn-small-dash { display:inline-flex; align-items:center; gap:4px; padding:5px 13px; border-radius:50px; font-size:.73rem; font-weight:700; text-decoration:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#d4cfe8; transition:all .18s; cursor:pointer; font-family:inherit; }
+.btn-small-dash:hover { background:linear-gradient(135deg,rgba(157,78,221,.22),rgba(247,37,133,.14)); border-color:rgba(157,78,221,.45); color:#c77dff; box-shadow:0 0 12px rgba(157,78,221,.2); }
+.btn-small-dash.green:hover { background:rgba(16,185,129,.16); border-color:rgba(16,185,129,.45); color:#34d399; }
+.btn-small-dash.muted:hover { background:rgba(99,102,241,.14); border-color:rgba(99,102,241,.35); color:#818cf8; }
+
+.empty-column { text-align:center; padding:44px 16px; color:#6b6b88; position:relative; z-index:1; }
+.empty-icon { font-size:2.2rem; display:block; margin-bottom:10px; opacity:.3; }
+.empty-column p { font-size:.82rem; }
+
+/* Section heading — gradiente igual que el h1 del dashboard */
+.section-heading { font-size:1.15rem; font-weight:800; font-family:'Playfair Display',serif; background:linear-gradient(135deg,#9d4edd,#f72585); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:32px 0 20px; }
+
+/* Modo claro */
+[data-theme="light"] .kanban-column { background:#f8f7ff; border-color:rgba(0,0,0,.08); box-shadow:0 4px 24px rgba(0,0,0,.09); }
+[data-theme="light"] .kanban-card { background:#fff; border-color:rgba(0,0,0,.09); }
+[data-theme="light"] .kanban-card h4 { color:#1e1b4b; }
+[data-theme="light"] .kc-meta { border-bottom-color:rgba(0,0,0,.06); }
+[data-theme="light"] .kc-meta span { color:#5b5680; }
+[data-theme="light"] .btn-small-dash { background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.1); color:#374151; }
+[data-theme="light"] .empty-column { color:#9ca3af; }
+[data-theme="light"] .dash-input { background:#fff; border-color:rgba(0,0,0,.1); color:#1e1b4b; }
+</style>
+
+<!-- Page Header -->
+<div class="dash-header">
+  <div>
+    <h1>Inicio</h1>
+    <p>Gestiona y visualiza tus clases de forma inteligente</p>
+  </div>
+  <a class="btn-crear" href="{% url 'crear_clase' %}">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Crear Clase
+  </a>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-header"><span>Total</span></div>
+    <div class="stat-value">{{ stats.total }}</div>
+    <div class="stat-desc">Clases totales</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-header"><span>Pendientes</span></div>
+    <div class="stat-value">{{ stats.pending }}</div>
+    <div class="stat-desc">Sin iniciar</div>
+  </div>
+  <div class="stat-card pink">
+    <div class="stat-header"><span>En Progreso</span></div>
+    <div class="stat-value">{{ stats.in_progress }}</div>
+    <div class="stat-desc">En curso</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header"><span>Completadas</span></div>
+    <div class="stat-value">{{ stats.completed }}</div>
+    <div class="stat-desc">Finalizadas</div>
+  </div>
+</div>
+
+<!-- Search & Filter — submits to /clases/ for real DB-backed search; the kanban
+     below shows the latest 5 per status. Use this form to find any class. -->
+<form class="dash-search" method="get" action="{% url 'listar_clases' %}">
+  <div class="dash-search-box">
+    <label for="search-input">Buscar clases</label>
+    <input type="text" id="search-input" name="q" class="dash-input" placeholder="Título, materia o profesor…">
+  </div>
+  <div class="dash-filter-box" style="align-self:flex-end">
+    <button type="submit" class="btn-small-dash" style="padding:9px 18px;font-weight:700">Buscar</button>
+  </div>
+</form>
+
+<!-- Next Class Banner -->
+{% if next_class %}
+<div class="next-class-card">
+  <div class="next-class-content">
+    <h3>Próxima clase en progreso</h3>
+    <div class="next-class-details">
+      <p><strong>Materia:</strong> {{ next_class.materia }}</p>
+      <p><strong>Fecha:</strong> {{ next_class.fecha }} — {{ next_class.hora }}</p>
+      <p><strong>Profesor:</strong> {{ next_class.profesor_nombre }}</p>
+      <p><strong>Grado:</strong> {{ next_class.grado_nombre }}</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ═════════ HOY EN CLASE ═════════ -->
+<style>
+.planning-widget{position:relative;background:rgba(10,8,24,.6);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid transparent;background-clip:padding-box;border-radius:22px;padding:26px 28px;margin-bottom:24px;box-shadow:0 14px 50px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
+.planning-widget::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(157,78,221,.4) 55%,rgba(247,37,133,.45));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:0}
+.planning-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;position:relative;z-index:1}
+.planning-title{font-size:1.05rem;font-weight:800;font-family:'Playfair Display',serif;color:#f5f3ff;display:flex;align-items:center;gap:10px}
+.planning-title-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#9d4edd);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(99,102,241,.4)}
+.planning-dia-badge{font-size:.75rem;font-weight:800;padding:4px 12px;border-radius:50px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;text-transform:uppercase;letter-spacing:.5px}
+.curso-hoy-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.22);margin-bottom:10px;position:relative;z-index:1;transition:background .15s,border-color .15s;text-decoration:none}
+.curso-hoy-card:hover{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.45)}
+.curso-hoy-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#9d4edd);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+.curso-hoy-nombre{font-size:.95rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif}
+.curso-hoy-meta{font-size:.75rem;color:#9ca3af;margin-top:3px}
+.clase-proxima-chip{font-size:.7rem;color:#a5b4fc;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:3px 9px;border-radius:20px;font-weight:700;margin-left:auto;white-space:nowrap}
+.proximas-list{position:relative;z-index:1}
+.proxima-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-bottom:7px;text-decoration:none;transition:background .15s}
+.proxima-row:hover{background:rgba(157,78,221,.08);border-color:rgba(157,78,221,.3)}
+.proxima-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,.5);flex-shrink:0}
+.proxima-titulo{flex:1;font-size:.88rem;font-weight:700;color:#f5f3ff}
+.proxima-fecha{font-size:.75rem;color:#9ca3af;white-space:nowrap}
+.proxima-grado{font-size:.7rem;color:#9d95c4;background:rgba(157,78,221,.12);border:1px solid rgba(157,78,221,.2);padding:2px 8px;border-radius:12px}
+.planning-empty{text-align:center;padding:28px 20px;color:#9ca3af;position:relative;z-index:1}
+
+</style>
+
+<div class="planning-widget">
+
+  <div class="planning-head">
+    <div class="planning-title">
+      <span class="planning-title-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      Hoy en clase
+    </div>
+    {% if dia_hoy_label %}<span class="planning-dia-badge">{{ dia_hoy_label }}</span>{% endif %}
+    <a href="{% url 'listar_cursos' %}" style="font-size:.78rem;color:#9ca3af;text-decoration:none">Ver todos los cursos →</a>
+  </div>
+
+  {% if cursos_hoy %}
+  {% for item in cursos_hoy %}
+  <a href="{% url 'ver_curso' item.curso.id %}" class="curso-hoy-card">
+    <span class="curso-hoy-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+    <div style="flex:1;min-width:0">
+      <div class="curso-hoy-nombre">{{ item.curso.nombre }}</div>
+      <div class="curso-hoy-meta">
+        {% if item.curso.nivel_academico %}{{ item.curso.nivel_academico }}{% endif %}
+      </div>
+    </div>
+    {% if item.clase_proxima %}
+    <span class="clase-proxima-chip">{{ item.clase_proxima.titulo|truncatechars:24 }}</span>
+    {% else %}
+    <span class="clase-proxima-chip" style="color:#9ca3af;border-color:rgba(255,255,255,.1)">Sin clase pendiente</span>
+    {% endif %}
+  </a>
+  {% endfor %}
+  {% elif proximas_clases %}
+  <p style="color:#9ca3af;font-size:.83rem;margin:0 0 14px;position:relative;z-index:1">No tienes cursos programados para hoy. Próximas clases:</p>
+  <div class="proximas-list">
+    {% for clase in proximas_clases %}
+    <a href="{% url 'editar_clase' clase.id %}" class="proxima-row">
+      <span class="proxima-dot"></span>
+      <span class="proxima-titulo">{{ clase.titulo }}</span>
+      {% if clase.grado_nombre %}<span class="proxima-grado">{{ clase.grado_nombre }}</span>{% endif %}
+      <span class="proxima-fecha">{{ clase.fecha|date:"d/m" }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="planning-empty">
+    <div style="margin-bottom:8px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7d7698" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <p style="font-weight:700;color:#e2e0ff;margin-bottom:4px">Sin clases próximas</p>
+    <p style="font-size:.82rem;margin-bottom:16px">Crea tu primer curso y planifica clases para verlas aquí.</p>
+    <a href="{% url 'crear_clase' %}" class="btn-small-dash">+ Crear primera clase</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Workload Heatmap -->
+<style>
+.workload-widget{background:rgba(14,12,30,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 26px;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 6px 22px rgba(0,0,0,.2)}
+.workload-widget::before{content:'';position:absolute;top:-40%;right:-10%;width:240px;height:240px;background:radial-gradient(circle,rgba(157,78,221,.14) 0%,transparent 65%);pointer-events:none}
+.wl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;position:relative;z-index:1}
+.wl-title{display:flex;align-items:center;gap:10px}
+.wl-title-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#9d4edd,#f72585);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 14px rgba(157,78,221,.4)}
+.wl-title h3{font-size:1rem;font-weight:800;font-family:'Playfair Display',serif;color:#f5f3ff;letter-spacing:-.2px}
+.wl-title p{font-size:.72rem;color:var(--muted);margin-top:2px}
+.wl-stats{display:flex;gap:18px;font-size:.75rem}
+.wl-stat{display:flex;flex-direction:column;align-items:flex-end}
+.wl-stat-num{font-size:1.25rem;font-weight:900;color:#c77dff;line-height:1;font-family:'Playfair Display',serif}
+.wl-stat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.wl-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px;position:relative;z-index:1}
+.wl-dow{text-align:center;font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding-bottom:4px}
+.wl-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;position:relative;z-index:1}
+.wl-cell{aspect-ratio:1/1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:rgba(241,240,255,.55);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);transition:transform .18s ease,box-shadow .2s ease;cursor:default;position:relative}
+.wl-cell.empty{background:transparent;border-color:transparent}
+.wl-cell.l0{background:rgba(255,255,255,.035);color:rgba(241,240,255,.5)}
+.wl-cell.l1{background:rgba(157,78,221,.22);color:#e9d5ff;box-shadow:inset 0 0 0 1px rgba(157,78,221,.25)}
+.wl-cell.l2{background:rgba(157,78,221,.42);color:#f5f3ff;box-shadow:inset 0 0 0 1px rgba(157,78,221,.4),0 0 10px rgba(157,78,221,.18)}
+.wl-cell.l3{background:linear-gradient(135deg,rgba(157,78,221,.75),rgba(224,64,251,.6));color:#fff;box-shadow:inset 0 0 0 1px rgba(247,37,133,.5),0 0 16px rgba(247,37,133,.28)}
+.wl-cell.l4{background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 0 22px rgba(247,37,133,.55);font-weight:900}
+.wl-cell[data-count]:hover{transform:scale(1.18);z-index:3}
+.wl-cell[data-count]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(20,16,45,.96);border:1px solid rgba(157,78,221,.35);color:#f5f3ff;padding:5px 10px;border-radius:7px;font-size:.7rem;font-weight:600;white-space:nowrap;pointer-events:none;z-index:10;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.wl-cell.today{outline:2px solid rgba(247,37,133,.7);outline-offset:1px}
+.wl-legend{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:.7rem;color:var(--muted);position:relative;z-index:1}
+.wl-legend-scale{display:flex;gap:3px}
+.wl-legend-scale span{width:11px;height:11px;border-radius:3px}
+</style>
+<div class="workload-widget">
+  <div class="wl-head">
+    <div class="wl-title">
+      <span class="wl-title-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+      <div>
+        <h3>Carga de trabajo — {{ workload_month_name }}</h3>
+        <p>Intensidad de clases programadas este mes</p>
+      </div>
+    </div>
+    <div class="wl-stats">
+      <div class="wl-stat"><span class="wl-stat-num">{{ workload_total }}</span><span class="wl-stat-lbl">Clases</span></div>
+      <div class="wl-stat"><span class="wl-stat-num">{{ workload_max }}</span><span class="wl-stat-lbl">Pico/día</span></div>
+      {% if workload_peak_day %}<div class="wl-stat"><span class="wl-stat-num">{{ workload_peak_day }}</span><span class="wl-stat-lbl">Día top</span></div>{% endif %}
+    </div>
+  </div>
+  <div class="wl-days">
+    {% for d in workload_dias_semana %}<div class="wl-dow">{{ d }}</div>{% endfor %}
+  </div>
+  <div class="wl-grid">
+    {% for cell in workload_cells %}
+      {% if cell.empty %}
+        <div class="wl-cell empty"></div>
+      {% else %}
+        <div class="wl-cell l{{ cell.level }}{% if cell.is_today %} today{% endif %}" data-count="{{ cell.count }}"
+             data-tt-titulo="Día {{ cell.day }} · {{ cell.count }} clase{{ cell.count|pluralize }}"
+             {% if cell.horas %}data-tt-horas="{{ cell.horas }}"{% endif %}
+             {% if cell.titulos_csv %}data-tt-curso="{{ cell.titulos_csv }}"{% endif %}
+             data-tt-objetivo="{{ cell.objetivo }}">{{ cell.day }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="wl-legend">
+    <span>Menos</span>
+    <div class="wl-legend-scale">
+      <span class="wl-cell l0"></span>
+      <span class="wl-cell l1"></span>
+      <span class="wl-cell l2"></span>
+      <span class="wl-cell l3"></span>
+      <span class="wl-cell l4"></span>
+    </div>
+    <span>Más</span>
+  </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="section-heading">Vista Kanban</div>
+<div class="kanban-board">
+
+  <!-- Pending -->
+  <div class="kanban-column" data-status="pending">
+    <div class="kanban-header pending">
+      <span class="kh-icon">⏳</span>
+      <span class="kh-title">Pendiente</span>
+      <span class="kh-count">{{ clases_pending|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for clase in clases_pending %}
+      <div class="kanban-card" data-id="{{ clase.id }}">
+        <h4>{{ clase.titulo }}</h4>
+        <div class="kc-meta">
+          <span>📅 {{ clase.fecha }}</span>
+          <span>🎓 {{ clase.grado_nombre }}</span>
+          <span>👤 {{ clase.profesor_nombre }}</span>
+        </div>
+        <div class="card-actions">
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash">▶ Iniciar</button></form>
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash green">✓ Completar</button></form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-column">
+        <span class="empty-icon">✓</span>
+        <p>Sin clases pendientes</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- In Progress -->
+  <div class="kanban-column" data-status="in_progress">
+    <div class="kanban-header in-progress">
+      <span class="kh-icon">⚡</span>
+      <span class="kh-title">En progreso</span>
+      <span class="kh-count">{{ clases_in_progress|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for clase in clases_in_progress %}
+      <div class="kanban-card" data-id="{{ clase.id }}">
+        <h4>{{ clase.titulo }}</h4>
+        <div class="kc-meta">
+          <span>📅 {{ clase.fecha }}</span>
+          <span>🎓 {{ clase.grado_nombre }}</span>
+          <span>👤 {{ clase.profesor_nombre }}</span>
+        </div>
+        <div class="card-actions">
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash muted">← Pendiente</button></form>
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash green">✓ Completar</button></form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-column">
+        <span class="empty-icon">⚡</span>
+        <p>Sin clases en curso</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Completed -->
+  <div class="kanban-column" data-status="completed">
+    <div class="kanban-header completed">
+      <span class="kh-icon">🏆</span>
+      <span class="kh-title">Completadas</span>
+      <span class="kh-count">{{ clases_completed|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for clase in clases_completed %}
+      <div class="kanban-card" data-id="{{ clase.id }}">
+        <h4>{{ clase.titulo }}</h4>
+        <div class="kc-meta">
+          <span>📅 {{ clase.fecha }}</span>
+          <span>🎓 {{ clase.grado_nombre }}</span>
+          <span>👤 {{ clase.profesor_nombre }}</span>
+        </div>
+        <div class="card-actions">
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash">↩ Reabrir</button></form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-column">
+        <span class="empty-icon">🏆</span>
+        <p>Sin clases completadas</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}{% endblock %}

@@ -1,0 +1,58 @@
+# Render.com — Infrastructure as Code para SkedyClass
+# Despliegue: conecta el repo en render.com → "New + → Blueprint" → selecciona este archivo.
+# Render detecta render.yaml y crea el web service + la base de datos Postgres.
+
+databases:
+  - name: skedyclass-db
+    databaseName: skedyclass
+    plan: free            # 90 días en free; sube a "basic" ($7/mes) para producción real
+    region: oregon
+
+services:
+  - type: web
+    name: skedyclass
+    runtime: python
+    plan: free            # "duerme" tras 15 min sin tráfico; sube a "starter" ($7/mes) para evitarlo
+    region: oregon
+    branch: main
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    # Migraciones antes de levantar tráfico nuevo (no en build: evita correr migrate en cada réplica)
+    preDeployCommand: "python manage.py migrate --noinput"
+    startCommand: "gunicorn skedyclass.wsgi --workers 2 --timeout 120 --bind 0.0.0.0:$PORT"
+    healthCheckPath: /
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true          # Render genera un valor aleatorio seguro
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: ALLOWED_HOSTS
+        sync: false                  # define manualmente: tudominio.com,skedyclass.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false                  # https://tudominio.com,https://skedyclass.onrender.com
+      - key: SITE_DOMAIN
+        sync: false                  # tudominio.com  (sincroniza el Site para el callback OAuth)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: skedyclass-db
+          property: connectionString
+      # --- IA: define una de las dos ---
+      - key: AI_PROVIDER
+        value: "groq"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      # --- Google OAuth / Calendar ---
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      # --- SMTP (alertas por correo) ---
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false                  # SkedyClass <no-reply@tudominio.com>

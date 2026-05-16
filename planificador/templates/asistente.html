@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+{% block title %}Asistente IA — SkedyClass{% endblock %}
+{% block content %}
+<style>
+/* ── PAGE ── */
+.ia-page{max-width:860px;margin:0 auto}
+.ia-hero{text-align:center;margin-bottom:36px}
+.ia-hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:50px;background:linear-gradient(135deg,rgba(157,78,221,.18),rgba(247,37,133,.12));border:1px solid rgba(157,78,221,.3);font-size:.72rem;font-weight:700;color:#c77dff;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px}
+.ia-hero h1{font-size:2rem;font-weight:900;color:#f5f3ff;font-family:'Playfair Display',serif;margin-bottom:8px}
+.ia-hero h1 span{background:linear-gradient(135deg,#c77dff,#f72585);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ia-hero p{color:rgba(255,255,255,.5);font-size:.9rem;max-width:500px;margin:0 auto}
+
+/* ── GLASS CARD ── */
+.ia-card{position:relative;background:rgba(10,8,24,.5);border:1px solid transparent;background-clip:padding-box;border-radius:20px;padding:28px;backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);box-shadow:0 12px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);margin-bottom:24px}
+.ia-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(157,78,221,.5),rgba(247,37,133,.35) 55%,rgba(99,102,241,.4));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.ia-card>*{position:relative;z-index:1}
+
+/* ── SECTION HEADER ── */
+.ia-sec-title{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.ia-sec-title .ia-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ia-sec-title h2{font-size:1.05rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif}
+.ia-sec-title p{font-size:.78rem;color:rgba(255,255,255,.45);margin-top:2px}
+
+/* ── STEP INDICATOR ── */
+.ia-steps{display:flex;align-items:center;gap:0;margin-bottom:32px;justify-content:center}
+.ia-step{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;color:rgba(255,255,255,.3)}
+.ia-step.active{color:#c77dff}
+.ia-step.done{color:#34d399}
+.ia-step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);flex-shrink:0;transition:all .3s}
+.ia-step.active .ia-step-num{background:linear-gradient(135deg,#9d4edd,#f72585);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(157,78,221,.35)}
+.ia-step.done .ia-step-num{background:linear-gradient(135deg,#059669,#10b981);border-color:transparent;color:#fff}
+.ia-step-line{flex:1;height:1px;background:rgba(255,255,255,.1);margin:0 8px;max-width:60px}
+
+/* ── CLASS GRID ── */
+.clase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.clase-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;cursor:pointer;transition:all .2s ease;position:relative;overflow:hidden}
+.clase-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(157,78,221,.0),rgba(247,37,133,.0));transition:opacity .2s;opacity:0}
+.clase-card:hover{background:rgba(157,78,221,.08);border-color:rgba(157,78,221,.3);transform:translateY(-2px);box-shadow:0 8px 24px rgba(157,78,221,.12)}
+.clase-card:hover::after{opacity:1}
+.clase-card.selected{background:linear-gradient(135deg,rgba(157,78,221,.2),rgba(247,37,133,.12));border-color:rgba(157,78,221,.5);box-shadow:0 0 0 2px rgba(157,78,221,.3),0 8px 24px rgba(157,78,221,.15)}
+.clase-card-badge{display:inline-block;padding:2px 8px;border-radius:50px;font-size:.62rem;font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.clase-card-badge.normal{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.clase-card-badge.dinamica{background:rgba(247,37,133,.15);color:#f9a8d4;border:1px solid rgba(247,37,133,.25)}
+.clase-card-badge.mixta{background:rgba(157,78,221,.15);color:#c77dff;border:1px solid rgba(157,78,221,.25)}
+.clase-card h3{font-size:.88rem;font-weight:700;color:#f5f3ff;margin-bottom:4px;font-family:'Playfair Display',serif;line-height:1.3}
+.clase-card p{font-size:.73rem;color:rgba(255,255,255,.45)}
+.clase-check{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#9d4edd,#f72585);display:none;align-items:center;justify-content:center}
+.clase-card.selected .clase-check{display:flex}
+
+/* ── FORM ELEMENTS ── */
+.ia-label{font-size:.8rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:6px;display:block}
+.ia-input,.ia-select,.ia-textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;color:#f5f3ff;font-size:.85rem;font-family:'Lora',serif;transition:border-color .2s,box-shadow .2s;outline:none}
+.ia-input:focus,.ia-select:focus,.ia-textarea:focus{border-color:rgba(157,78,221,.5);box-shadow:0 0 0 3px rgba(157,78,221,.12)}
+.ia-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.ia-textarea{resize:vertical;min-height:100px}
+.ia-select option{background:#1a1535;color:#f5f3ff}
+.ia-form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ia-form-group{margin-bottom:16px}
+
+/* ── NIVEL PILLS ── */
+.nivel-group{display:flex;gap:8px;flex-wrap:wrap}
+.nivel-pill{padding:7px 16px;border-radius:50px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s}
+.nivel-pill:hover{border-color:rgba(157,78,221,.4);color:#c77dff}
+.nivel-pill.selected{background:linear-gradient(135deg,rgba(157,78,221,.25),rgba(247,37,133,.15));border-color:rgba(157,78,221,.5);color:#e9d5ff}
+
+/* ── BUTTONS ── */
+.ia-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .22s;border:none;font-family:'Lora',serif}
+.ia-btn-primary{background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;box-shadow:0 4px 20px rgba(157,78,221,.35)}
+.ia-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(157,78,221,.5)}
+.ia-btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ia-btn-ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)}
+.ia-btn-ghost:hover{background:rgba(255,255,255,.1);color:#f5f3ff}
+.ia-actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+
+/* ── LOADING STATE ── */
+.ia-loading{text-align:center;padding:48px 24px;display:none}
+.ia-loading.visible{display:block}
+.ia-orb{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#9d4edd,#f72585,#6366f1);margin:0 auto 24px;animation:ia-orb-spin 2s linear infinite,ia-orb-pulse 3s ease-in-out infinite;box-shadow:0 0 40px rgba(157,78,221,.4)}
+@keyframes ia-orb-spin{to{transform:rotate(360deg)}}
+@keyframes ia-orb-pulse{0%,100%{box-shadow:0 0 30px rgba(157,78,221,.4),0 0 60px rgba(247,37,133,.2)}50%{box-shadow:0 0 50px rgba(157,78,221,.6),0 0 80px rgba(247,37,133,.35)}}
+.ia-loading h3{font-size:1.1rem;font-weight:700;color:#f5f3ff;font-family:'Playfair Display',serif;margin-bottom:8px}
+.ia-loading-msg{font-size:.85rem;color:rgba(255,255,255,.45);min-height:24px}
+.ia-loading-dots{display:inline-block;animation:ia-dots 1.4s ease-in-out infinite}
+@keyframes ia-dots{0%,80%,100%{opacity:0}40%{opacity:1}}
+
+/* ── RESULTS ── */
+.ia-results{display:none}
+.ia-results.visible{display:block}
+.ia-results-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:700px){.ia-results-grid{grid-template-columns:1fr}}
+.act-card{border-radius:16px;padding:20px;position:relative;overflow:hidden}
+.act-inicio{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(99,102,241,.05));border:1px solid rgba(99,102,241,.25)}
+.act-desarrollo{background:linear-gradient(135deg,rgba(157,78,221,.15),rgba(157,78,221,.05));border:1px solid rgba(157,78,221,.25)}
+.act-cierre{background:linear-gradient(135deg,rgba(247,37,133,.15),rgba(247,37,133,.05));border:1px solid rgba(247,37,133,.25)}
+.act-type-label{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;opacity:.8}
+.act-inicio .act-type-label{color:#818cf8}
+.act-desarrollo .act-type-label{color:#c77dff}
+.act-cierre .act-type-label{color:#f9a8d4}
+.act-card h4{font-size:.9rem;font-weight:700;color:#f5f3ff;margin-bottom:8px;font-family:'Playfair Display',serif;line-height:1.3}
+.act-card p{font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:10px}
+.act-meta{display:flex;gap:8px;flex-wrap:wrap}
+.act-chip{display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:600;padding:3px 8px;border-radius:50px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+
+.eval-card{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(52,211,153,.06));border:1px solid rgba(16,185,129,.25);border-radius:16px;padding:20px;margin-bottom:14px}
+.eval-card h4{font-size:.9rem;font-weight:700;color:#6ee7b7;font-family:'Playfair Display',serif;margin-bottom:6px}
+.eval-card p{font-size:.8rem;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:8px}
+.eval-instrumento{font-size:.75rem;color:rgba(255,255,255,.4);font-style:italic}
+
+.recurso-list{display:flex;flex-direction:column;gap:10px}
+.recurso-item{display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px}
+.recurso-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem}
+.ri-libro{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25)}
+.ri-video{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.25)}
+.ri-herramienta{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)}
+.ri-actividad{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)}
+.ri-web{background:rgba(147,51,234,.15);border:1px solid rgba(147,51,234,.25)}
+.recurso-item h5{font-size:.83rem;font-weight:700;color:#f5f3ff;margin-bottom:3px}
+.recurso-item p{font-size:.75rem;color:rgba(255,255,255,.45);line-height:1.4}
+
+.ia-msg-card{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(157,78,221,.05));border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:16px 20px;font-size:.83rem;color:rgba(255,255,255,.6);line-height:1.6;font-style:italic;margin-top:8px}
+.ia-msg-card span{color:#a5b4fc;font-weight:600}
+
+/* ── NO-CLASS WELCOME ── */
+.ia-welcome{text-align:center;padding:20px 0 8px}
+.ia-welcome-icon{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,rgba(157,78,221,.2),rgba(247,37,133,.15));border:1px solid rgba(157,78,221,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2.2rem}
+.ia-welcome h2{font-size:1.25rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif;margin-bottom:8px}
+.ia-welcome p{font-size:.85rem;color:rgba(255,255,255,.45);max-width:420px;margin:0 auto 28px;line-height:1.6}
+.ia-divider{height:1px;background:rgba(255,255,255,.07);margin:24px 0}
+.ia-divider-label{text-align:center;margin:-12px 0 24px;font-size:.72rem;color:rgba(255,255,255,.3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── SELECTED CLASS PILL ── */
+.selected-clase-pill{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(157,78,221,.12),rgba(247,37,133,.08));border:1px solid rgba(157,78,221,.3);border-radius:12px;padding:12px 16px;margin-bottom:24px;cursor:pointer;transition:border-color .2s}
+.selected-clase-pill:hover{border-color:rgba(247,37,133,.4)}
+.selected-clase-pill .pill-info{flex:1}
+.selected-clase-pill .pill-info strong{display:block;font-size:.88rem;color:#f5f3ff;font-weight:700}
+.selected-clase-pill .pill-info span{font-size:.72rem;color:rgba(255,255,255,.4)}
+.pill-change{font-size:.72rem;color:#c77dff;font-weight:600}
+
+/* ── ERROR ── */
+.ia-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:16px;color:#fca5a5;font-size:.83rem;margin-top:16px;display:none}
+.ia-error.visible{display:block}
+</style>
+
+<div class="ia-page">
+
+  <!-- HERO -->
+  <div class="ia-hero">
+    <div class="ia-hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Asistente IA Docente
+    </div>
+    <h1>Tu <span>copiloto pedagógico</span></h1>
+    <p>Diseña actividades, evaluaciones y recursos para tu clase en segundos — con inteligencia artificial adaptada al contexto de tu aula.</p>
+  </div>
+
+  <!-- STEPS -->
+  <div class="ia-steps" id="stepsBar">
+    <div class="ia-step active" id="step-ind-1">
+      <div class="ia-step-num">1</div>
+      <span>Tu clase</span>
+    </div>
+    <div class="ia-step-line"></div>
+    <div class="ia-step" id="step-ind-2">
+      <div class="ia-step-num">2</div>
+      <span>Contexto</span>
+    </div>
+    <div class="ia-step-line"></div>
+    <div class="ia-step" id="step-ind-3">
+      <div class="ia-step-num">3</div>
+      <span>Propuesta</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ STEP 1: SELECCIÓN / BIENVENIDA ═══════════════════════ -->
+  <div id="step1">
+    <div class="ia-card">
+      {% if not tiene_clases %}
+        <!-- SIN CLASES: modo guiado -->
+        <div class="ia-welcome">
+          <div class="ia-welcome-icon">🎓</div>
+          <h2>¡Bienvenido, profe!</h2>
+          <p>Aún no tienes clases creadas. Cuéntame sobre la clase que vas a preparar y la IA te diseñará una propuesta completa al instante.</p>
+        </div>
+        <div class="ia-form-row">
+          <div class="ia-form-group">
+            <label class="ia-label">Título de la clase *</label>
+            <input type="text" id="m-titulo" class="ia-input" placeholder="Ej: Introducción a las Fracciones">
+          </div>
+          <div class="ia-form-group">
+            <label class="ia-label">Materia</label>
+            <input type="text" id="m-materia" class="ia-input" placeholder="Ej: Matemáticas">
+          </div>
+        </div>
+        <div class="ia-form-group">
+          <label class="ia-label">Objetivos o tema de la clase</label>
+          <textarea id="m-objetivos" class="ia-textarea" placeholder="¿Qué quieres lograr con esta clase? ¿Cuál es el tema central?"></textarea>
+        </div>
+      {% else %}
+        <!-- CON CLASES: selector de clase -->
+        <div class="ia-sec-title">
+          <div class="ia-icon" style="background:linear-gradient(135deg,rgba(157,78,221,.2),rgba(247,37,133,.15));border:1px solid rgba(157,78,221,.25)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c77dff" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div>
+            <h2>Selecciona una clase</h2>
+            <p>¿Sobre cuál clase quieres generar la propuesta pedagógica?</p>
+          </div>
+        </div>
+        <div class="clase-grid">
+          {% for clase in clases %}
+          <div class="clase-card" data-id="{{ clase.id }}" data-titulo="{{ clase.titulo }}" data-materia="{{ clase.materia|default:'' }}" onclick="seleccionarClase(this)">
+            <span class="clase-card-badge {{ clase.tipo_clase }}">{{ clase.get_tipo_clase_display }}</span>
+            <h3>{{ clase.titulo }}</h3>
+            <p>{{ clase.materia|default:"Sin materia" }} {% if clase.grado_nombre %}· {{ clase.grado_nombre }}{% endif %}</p>
+            <div class="clase-check">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="ia-actions">
+        {% if not tiene_clases %}
+        <button class="ia-btn ia-btn-primary" onclick="goStep2Manual()">
+          Continuar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        {% else %}
+        <span id="step1-hint" style="font-size:.78rem;color:rgba(255,255,255,.35)">Selecciona una clase para continuar</span>
+        <button class="ia-btn ia-btn-primary" id="step1-btn" style="display:none" onclick="goStep2()">
+          Continuar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ STEP 2: CONTEXTO + GENERAR ═══════════════════════ -->
+  <div id="step2" style="display:none">
+    <div class="ia-card">
+
+      <!-- Clase seleccionada pill -->
+      <div class="selected-clase-pill" onclick="volverStep1()" id="clase-pill">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(157,78,221,.2),rgba(247,37,133,.15));border:1px solid rgba(157,78,221,.3);display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c77dff" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="pill-info">
+          <strong id="pill-titulo">Clase seleccionada</strong>
+          <span id="pill-materia">—</span>
+        </div>
+        <span class="pill-change">Cambiar ↩</span>
+      </div>
+
+      <div class="ia-sec-title">
+        <div class="ia-icon" style="background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(99,102,241,.1));border:1px solid rgba(99,102,241,.3)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div>
+          <h2>Contexto adicional</h2>
+          <p>Entre más detalles des, mejores serán las propuestas</p>
+        </div>
+      </div>
+
+      <div class="ia-form-group">
+        <label class="ia-label">Nivel educativo *</label>
+        <div class="nivel-group" id="nivelGroup">
+          <div class="nivel-pill selected" data-nivel="Primaria" onclick="selectNivel(this)">🧒 Primaria</div>
+          <div class="nivel-pill" data-nivel="Secundaria" onclick="selectNivel(this)">📚 Secundaria</div>
+          <div class="nivel-pill" data-nivel="Universidad" onclick="selectNivel(this)">🎓 Universidad</div>
+          <div class="nivel-pill" data-nivel="Técnico / Profesional" onclick="selectNivel(this)">⚙️ Técnico</div>
+        </div>
+      </div>
+
+      <div class="ia-form-group" style="margin-top:20px">
+        <label class="ia-label">Ideas, notas o material de apoyo (opcional)</label>
+        <textarea id="ctx-notas" class="ia-textarea" placeholder="Escribe aquí cualquier idea, recurso que ya tienes, restricciones del aula, características del grupo... Cuanto más contexto, mejores serán las actividades generadas."></textarea>
+      </div>
+
+      <div class="ia-error" id="ia-error"></div>
+
+      <div class="ia-actions">
+        <button class="ia-btn ia-btn-ghost" onclick="volverStep1()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver
+        </button>
+        <button class="ia-btn ia-btn-primary" id="generar-btn" onclick="generarPropuesta()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generar propuesta IA
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ LOADING ═══════════════════════ -->
+  <div class="ia-card ia-loading" id="ia-loading">
+    <div class="ia-orb"></div>
+    <h3>Analizando tu clase...</h3>
+    <p class="ia-loading-msg" id="loading-msg">La IA está diseñando tu propuesta pedagógica<span class="ia-loading-dots">...</span></p>
+  </div>
+
+  <!-- ═══════════════════════ STEP 3: RESULTADOS ═══════════════════════ -->
+  <div class="ia-results" id="ia-results">
+
+    <!-- Mensaje motivacional -->
+    <div class="ia-msg-card" id="res-mensaje">
+      <span>✨ SkedyClass IA:</span> <span id="res-mensaje-texto"></span>
+    </div>
+
+    <!-- Actividades -->
+    <div class="ia-card" style="margin-top:20px">
+      <div class="ia-sec-title">
+        <div class="ia-icon" style="background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(157,78,221,.15));border:1px solid rgba(99,102,241,.3)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <h2>3 Actividades Dinámicas</h2>
+          <p>Inicio · Desarrollo · Cierre — secuencia pedagógica completa</p>
+        </div>
+      </div>
+      <div class="ia-results-grid" id="res-actividades"></div>
+    </div>
+
+    <!-- Evaluación -->
+    <div class="ia-card">
+      <div class="ia-sec-title">
+        <div class="ia-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.1));border:1px solid rgba(16,185,129,.3)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div>
+          <h2>Propuesta de Evaluación</h2>
+          <p>Forma creativa de medir el aprendizaje</p>
+        </div>
+      </div>
+      <div id="res-evaluacion"></div>
+    </div>
+
+    <!-- Recursos -->
+    <div class="ia-card">
+      <div class="ia-sec-title">
+        <div class="ia-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.1));border:1px solid rgba(245,158,11,.3)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div>
+          <h2>Recursos Sugeridos</h2>
+          <p>Materiales que complementan tu planificación</p>
+        </div>
+      </div>
+      <div class="recurso-list" id="res-recursos"></div>
+    </div>
+
+    <!-- Acciones finales -->
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+      <button class="ia-btn ia-btn-ghost" onclick="regenerar()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Regenerar propuesta
+      </button>
+      <button class="ia-btn ia-btn-primary" onclick="nuevaClase()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva clase
+      </button>
+    </div>
+
+  </div><!-- /ia-results -->
+
+</div><!-- /ia-page -->
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const API_URL = '{% url "asistente_api" %}';
+
+let selectedClaseId = null;
+let selectedClaseData = {};
+let selectedNivel = 'Primaria';
+let esManual = {% if not tiene_clases %}true{% else %}false{% endif %};
+
+// ── STEP 1 helpers ──
+function seleccionarClase(el) {
+  document.querySelectorAll('.clase-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedClaseId = el.dataset.id;
+  selectedClaseData = { titulo: el.dataset.titulo, materia: el.dataset.materia };
+  document.getElementById('step1-hint').style.display = 'none';
+  document.getElementById('step1-btn').style.display = 'inline-flex';
+}
+
+function goStep2() {
+  if (!selectedClaseId) return;
+  document.getElementById('pill-titulo').textContent = selectedClaseData.titulo;
+  document.getElementById('pill-materia').textContent = selectedClaseData.materia || 'Sin materia';
+  mostrarStep(2);
+}
+
+function goStep2Manual() {
+  const titulo = document.getElementById('m-titulo').value.trim();
+  if (!titulo) { document.getElementById('m-titulo').focus(); return; }
+  esManual = true;
+  document.getElementById('pill-titulo').textContent = titulo;
+  document.getElementById('pill-materia').textContent = document.getElementById('m-materia').value.trim() || 'Sin materia';
+  mostrarStep(2);
+}
+
+function volverStep1() {
+  mostrarStep(1);
+}
+
+// ── NIVEL ──
+function selectNivel(el) {
+  document.querySelectorAll('.nivel-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedNivel = el.dataset.nivel;
+}
+
+// ── STEP NAVIGATION ──
+function mostrarStep(n) {
+  document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('ia-loading').classList.toggle('visible', false);
+  document.getElementById('ia-results').classList.toggle('visible', false);
+
+  // Update step indicators
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('step-ind-' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  });
+}
+
+// ── LOADING MESSAGES ──
+const loadingMsgs = [
+  'La IA está leyendo el contexto de tu clase',
+  'Diseñando actividades pedagógicas creativas',
+  'Construyendo la secuencia inicio-desarrollo-cierre',
+  'Preparando la propuesta de evaluación',
+  'Seleccionando recursos complementarios',
+  'Dándole los últimos toques a tu propuesta',
+];
+let loadingInterval = null;
+function startLoadingMessages() {
+  let i = 0;
+  const el = document.getElementById('loading-msg');
+  el.innerHTML = loadingMsgs[0] + '<span class="ia-loading-dots">...</span>';
+  loadingInterval = setInterval(() => {
+    i = (i + 1) % loadingMsgs.length;
+    el.innerHTML = loadingMsgs[i] + '<span class="ia-loading-dots">...</span>';
+  }, 2200);
+}
+function stopLoadingMessages() {
+  if (loadingInterval) clearInterval(loadingInterval);
+}
+
+// ── GENERATE ──
+async function generarPropuesta() {
+  const btn = document.getElementById('generar-btn');
+  const errEl = document.getElementById('ia-error');
+  errEl.classList.remove('visible');
+
+  const body = {
+    nivel: selectedNivel,
+    contexto: document.getElementById('ctx-notas').value.trim(),
+  };
+
+  if (esManual) {
+    body.clase_manual = {
+      titulo: document.getElementById('m-titulo')?.value.trim() || document.getElementById('pill-titulo').textContent,
+      materia: document.getElementById('m-materia')?.value.trim() || '',
+      objetivos: document.getElementById('m-objetivos')?.value.trim() || '',
+    };
+  } else {
+    body.clase_id = selectedClaseId;
+  }
+
+  // Show loading
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('ia-loading').classList.add('visible');
+  document.getElementById('ia-results').classList.remove('visible');
+  document.getElementById('step-ind-2').classList.remove('active');
+  document.getElementById('step-ind-2').classList.add('done');
+  document.getElementById('step-ind-3').classList.add('active');
+  startLoadingMessages();
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(body),
+    });
+    const json = await resp.json();
+    stopLoadingMessages();
+
+    if (!json.ok) {
+      document.getElementById('ia-loading').classList.remove('visible');
+      document.getElementById('step2').style.display = 'block';
+      errEl.textContent = '⚠ ' + (json.error || 'Error desconocido');
+      errEl.classList.add('visible');
+      btn.disabled = false;
+      return;
+    }
+
+    renderResultados(json.data);
+
+  } catch (e) {
+    stopLoadingMessages();
+    document.getElementById('ia-loading').classList.remove('visible');
+    document.getElementById('step2').style.display = 'block';
+    errEl.textContent = '⚠ Error de conexión: ' + e.message;
+    errEl.classList.add('visible');
+    btn.disabled = false;
+  }
+}
+
+// ── RENDER ──
+const tipoIconos = {
+  libro: '📖', video: '🎬', herramienta: '🛠️', actividad: '🎯', web: '🌐',
+};
+
+function renderResultados(data) {
+  document.getElementById('ia-loading').classList.remove('visible');
+
+  // Mensaje
+  document.getElementById('res-mensaje-texto').textContent = data.mensaje || '';
+
+  // Actividades
+  const acts = data.actividades || {};
+  const tipos = [
+    { key: 'inicio', label: '🚀 Inicio', cls: 'act-inicio' },
+    { key: 'desarrollo', label: '⚡ Desarrollo', cls: 'act-desarrollo' },
+    { key: 'cierre', label: '🎯 Cierre', cls: 'act-cierre' },
+  ];
+  document.getElementById('res-actividades').innerHTML = tipos.map(t => {
+    const a = acts[t.key] || {};
+    return `<div class="act-card ${t.cls}">
+      <div class="act-type-label">${t.label}</div>
+      <h4>${a.titulo || ''}</h4>
+      <p>${a.descripcion || ''}</p>
+      <div class="act-meta">
+        ${a.duracion ? `<span class="act-chip">⏱ ${a.duracion}</span>` : ''}
+        ${a.materiales ? `<span class="act-chip">📦 ${a.materiales}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Evaluación
+  const ev = data.evaluacion || {};
+  document.getElementById('res-evaluacion').innerHTML = `
+    <div class="eval-card">
+      <h4>${ev.titulo || ''}</h4>
+      <p>${ev.descripcion || ''}</p>
+      ${ev.instrumento ? `<div class="eval-instrumento">Instrumento: ${ev.instrumento}</div>` : ''}
+    </div>`;
+
+  // Recursos
+  const recursos = data.recursos || [];
+  document.getElementById('res-recursos').innerHTML = recursos.map(r => {
+    const icono = tipoIconos[r.tipo] || '📌';
+    return `<div class="recurso-item">
+      <div class="recurso-icon ri-${r.tipo || 'web'}">${icono}</div>
+      <div>
+        <h5>${r.titulo || ''}</h5>
+        <p>${r.descripcion || ''}</p>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ia-results').classList.add('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── ACTIONS ──
+function regenerar() {
+  document.getElementById('ia-results').classList.remove('visible');
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step-ind-3').classList.remove('active');
+  document.getElementById('step-ind-2').classList.remove('done');
+  document.getElementById('step-ind-2').classList.add('active');
+  document.getElementById('generar-btn').disabled = false;
+}
+
+function nuevaClase() {
+  selectedClaseId = null;
+  selectedClaseData = {};
+  document.querySelectorAll('.clase-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ia-results').classList.remove('visible');
+  document.getElementById('ctx-notas').value = '';
+  document.getElementById('ia-error').classList.remove('visible');
+  if (document.getElementById('step1-btn'))
+    document.getElementById('step1-btn').style.display = 'none';
+  if (document.getElementById('step1-hint'))
+    document.getElementById('step1-hint').style.display = '';
+  mostrarStep(1);
+}
+</script>
+{% endblock %}

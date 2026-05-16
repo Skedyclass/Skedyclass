@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Política de Privacidad — SkedyClass</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lora',Georgia,serif;background:#000;color:#e7e5f0;line-height:1.8;padding:48px 24px}
+.wrap{max-width:780px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.updated{color:#9ca3af;font-size:.85rem;margin-bottom:32px}
+h2{font-family:'Playfair Display',serif;color:#f5f3ff;font-size:1.25rem;margin:32px 0 12px}
+p,li{color:#c8c5d8;font-size:.95rem;margin-bottom:10px}
+ul{padding-left:22px}
+a{color:#a5b4fc}
+.back{display:inline-block;margin-top:40px;color:#a5b4fc;text-decoration:none;font-weight:700}
+.back:hover{color:#fff}
+</style></head><body><div class="wrap">
+<h1>Política de Privacidad</h1>
+<p class="updated">Última actualización: 16 de mayo de 2026</p>
+
+<p>SkedyClass ("la aplicación", "nosotros") es una herramienta de planificación académica para docentes. Esta política describe qué datos recopilamos, cómo los usamos y los derechos que tienes sobre ellos.</p>
+
+<h2>1. Datos que recopilamos</h2>
+<ul>
+<li><strong>Datos de cuenta:</strong> nombre, nombre de usuario, correo electrónico, institución y cargo que proporcionas al registrarte.</li>
+<li><strong>Datos académicos:</strong> clases, cursos, horarios, recursos y notas que creas dentro de la aplicación.</li>
+<li><strong>Datos de Google (opcional):</strong> si conectas tu cuenta de Google, accedemos a tu calendario únicamente con el permiso <em>Google Calendar Events</em> para crear, actualizar y eliminar los eventos correspondientes a tus clases.</li>
+</ul>
+
+<h2>2. Uso de los datos de Google</h2>
+<p>El uso y la transferencia de la información recibida de las APIs de Google se ajustan a la <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Política de Datos de Usuario de los Servicios de API de Google</a>, incluidos sus requisitos de Uso Limitado.</p>
+<ul>
+<li>Usamos el scope <code>calendar.events</code> exclusivamente para sincronizar las clases que tú creas con tu Google Calendar.</li>
+<li>No leemos, almacenamos ni compartimos eventos de tu calendario ajenos a SkedyClass.</li>
+<li>No vendemos ni cedemos datos de Google a terceros, ni los usamos para publicidad.</li>
+<li>Puedes desconectar tu cuenta de Google en cualquier momento desde <strong>Ajustes → Google Calendar</strong>; esto elimina el token de acceso almacenado.</li>
+</ul>
+
+<h2>3. Servicios de IA</h2>
+<p>Las funciones de Asistente IA y Lab Pedagógico envían el contenido pedagógico que generas (temas, objetivos, notas) a proveedores de IA (Groq o Google Gemini, según la configuración) para producir las propuestas. No se envían datos personales de estudiantes ni credenciales.</p>
+
+<h2>4. Conservación y seguridad</h2>
+<p>Los datos se almacenan en la base de datos del servidor donde se aloja tu instancia. Las contraseñas se guardan cifradas (hash). La comunicación se realiza sobre HTTPS. Puedes solicitar la eliminación de tu cuenta y datos asociados escribiendo al correo de soporte.</p>
+
+<h2>5. Tus derechos</h2>
+<p>Puedes acceder, corregir o eliminar tus datos personales desde tu perfil o solicitándolo al equipo de soporte. La revocación del acceso de Google también puede gestionarse en <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+<h2>6. Contacto</h2>
+<p>Para consultas sobre privacidad, escribe a: <strong>kynoproducciones@gmail.com</strong></p>
+
+<a class="back" href="{% url 'landing' %}">← Volver a SkedyClass</a>
+</div></body></html>

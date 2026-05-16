@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+{% block title %}Motor de Mimetismo Institucional — SkedyClass{% endblock %}
+
+{% block content %}
+<style>
+/* ═════════ LAB — Institutional Mimicry Engine ═════════ */
+.lab-wrap{max-width:1100px;margin:0 auto;padding:10px 0 60px}
+
+/* Hero */
+.lab-hero{position:relative;padding:32px 36px;border-radius:24px;background:radial-gradient(circle at 20% 0%,rgba(157,78,221,.22),transparent 55%),radial-gradient(circle at 80% 100%,rgba(16,185,129,.18),transparent 55%),rgba(10,8,24,.7);backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);border:1px solid transparent;background-clip:padding-box;box-shadow:0 18px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);overflow:hidden;margin-bottom:24px}
+.lab-hero::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(135deg,rgba(157,78,221,.7),rgba(247,37,133,.5) 40%,rgba(16,185,129,.55));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.lab-hero-inner{position:relative;z-index:1;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.lab-atom{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,rgba(16,185,129,.28),rgba(157,78,221,.22));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(16,185,129,.25),inset 0 1px 0 rgba(255,255,255,.12);flex-shrink:0;animation:labSpin 20s linear infinite}
+@keyframes labSpin{to{transform:rotate(360deg)}}
+.lab-atom svg{color:#6ee7b7;filter:drop-shadow(0 0 8px rgba(16,185,129,.7))}
+.lab-hero h1{font-size:1.75rem;font-weight:900;font-family:'Playfair Display',serif;background:linear-gradient(135deg,#6ee7b7 0%,#c4b5fd 50%,#f9a8d4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 5px;letter-spacing:-.3px}
+.lab-hero p{font-size:.86rem;color:#a5b4c8;font-family:'Lora',serif;margin:0;line-height:1.55;max-width:580px}
+
+/* Step Indicator */
+.lab-steps{display:flex;align-items:center;gap:0;margin-bottom:24px;background:rgba(10,8,24,.5);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;overflow-x:auto}
+.lab-step{display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}
+.step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#6b7280;transition:background .3s,color .3s,border-color .3s}
+.step-label{font-size:.78rem;font-weight:700;color:#6b7280;transition:color .3s}
+.lab-step.active .step-num{background:linear-gradient(135deg,#9d4edd,#f72585);border-color:transparent;color:#fff}
+.lab-step.active .step-label{color:#f5f3ff}
+.lab-step.done .step-num{background:rgba(16,185,129,.2);border-color:rgba(16,185,129,.4);color:#6ee7b7}
+.lab-step.done .step-label{color:#6ee7b7}
+.step-connector{flex:1;height:1px;background:rgba(255,255,255,.07);margin:0 10px;min-width:20px}
+
+/* Sections */
+.lab-section{position:relative;padding:22px 26px;border-radius:20px;background:rgba(10,8,24,.6);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid transparent;background-clip:padding-box;box-shadow:0 12px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);margin-bottom:18px;overflow:hidden}
+.lab-section::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(157,78,221,.4),rgba(247,37,133,.3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.lab-section-inner{position:relative;z-index:1}
+.lab-section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.lab-section-title{font-size:.95rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif}
+.lab-opt-badge{font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#6b7280;text-transform:uppercase;letter-spacing:.5px}
+
+/* Upload Zone */
+.lab-upload-zone{border:2px dashed rgba(157,78,221,.3);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:rgba(157,78,221,.04)}
+.lab-upload-zone:hover,.lab-upload-zone.drag-over{border-color:rgba(157,78,221,.6);background:rgba(157,78,221,.08)}
+.lab-upload-zone .upload-ico{font-size:2rem;margin-bottom:8px;opacity:.7}
+.lab-upload-zone p{font-size:.82rem;color:#9ca3af;margin:0 0 4px;font-family:'Lora',serif}
+.lab-upload-zone small{font-size:.72rem;color:#6b7280}
+.lab-upload-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:7px 16px;border-radius:10px;background:rgba(157,78,221,.15);border:1px solid rgba(157,78,221,.3);color:#c77dff;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .18s}
+.lab-upload-btn:hover{background:rgba(157,78,221,.25)}
+
+/* Plantilla status */
+.plantilla-status{display:none;padding:14px 16px;border-radius:14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);margin-top:14px}
+.plantilla-status.visible{display:block}
+.plantilla-status-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.plantilla-filename{font-size:.82rem;font-weight:700;color:#6ee7b7;flex:1}
+.plantilla-resumen{font-size:.78rem;color:#a7f3d0;font-family:'Lora',serif;line-height:1.55}
+.plantilla-secciones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.plantilla-sec-chip{font-size:.68rem;padding:2px 8px;border-radius:8px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.2);color:#34d399}
+.btn-borrar-plantilla{font-size:.72rem;color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);padding:3px 10px;border-radius:8px;cursor:pointer;transition:background .18s}
+.btn-borrar-plantilla:hover{background:rgba(239,68,68,.2)}
+
+/* Mode selector */
+.lab-modos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px}
+.lab-modo{position:relative;padding:18px;border-radius:16px;background:rgba(10,8,24,.55);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;color:#f5f3ff;font-family:inherit;transition:transform .2s,box-shadow .2s,border-color .2s;overflow:hidden}
+.lab-modo:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(157,78,221,.2)}
+.lab-modo.is-selected{border-color:transparent}
+.lab-modo.is-selected::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(135deg,#9d4edd,#f72585,#6366f1);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.lab-modo.indigo.is-selected{background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(139,92,246,.08))}
+.lab-modo.pink.is-selected{background:linear-gradient(135deg,rgba(247,37,133,.14),rgba(236,72,153,.08))}
+.lab-modo.green.is-selected{background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(5,150,105,.08))}
+.lab-modo-ico{font-size:1.5rem;margin-bottom:8px;display:block}
+.lab-modo h3{font-size:.9rem;font-weight:800;font-family:'Playfair Display',serif;margin:0 0 4px;color:#f5f3ff}
+.lab-modo p{font-size:.74rem;color:#a5b4c8;margin:0;line-height:1.5;font-family:'Lora',serif}
+
+/* Form grid */
+.lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.lab-grid{grid-template-columns:1fr}}
+.lab-full{grid-column:1/-1}
+.lab-field{display:flex;flex-direction:column;gap:5px}
+.lab-field label{font-size:.7rem;font-weight:800;color:#c77dff;text-transform:uppercase;letter-spacing:.7px}
+.lab-field input,.lab-field select,.lab-field textarea{width:100%;padding:10px 13px;border-radius:11px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:#f5f3ff;font-size:.87rem;font-family:'Lora',serif;transition:border-color .18s,box-shadow .18s;outline:none}
+.lab-field input:focus,.lab-field select:focus,.lab-field textarea:focus{border-color:rgba(247,37,133,.55);box-shadow:0 0 0 3px rgba(247,37,133,.12)}
+.lab-field textarea{resize:vertical;min-height:75px}
+.lab-field select option{background:#1a1830;color:#f5f3ff}
+
+/* Buttons */
+.lab-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.lab-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-size:.88rem;font-weight:800;border:none;cursor:pointer;font-family:inherit;transition:transform .18s,box-shadow .18s,opacity .18s;text-decoration:none}
+.lab-btn-primary{background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;box-shadow:0 8px 26px rgba(247,37,133,.35)}
+.lab-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(247,37,133,.5)}
+.lab-btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.lab-btn-ghost{background:rgba(255,255,255,.05);color:#c4b5fd;border:1px solid rgba(255,255,255,.12)}
+.lab-btn-ghost:hover{background:rgba(157,78,221,.15);color:#f5f3ff}
+.lab-btn-export{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 8px 24px rgba(16,185,129,.3)}
+.lab-btn-export:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(16,185,129,.45)}
+
+/* Loading */
+.lab-loading{display:none;padding:40px 20px;text-align:center;color:#c4b5fd;font-family:'Lora',serif;background:rgba(10,8,24,.5);border-radius:18px;border:1px solid rgba(255,255,255,.07);margin-bottom:18px}
+.lab-loading.visible{display:block;animation:labFade .35s ease}
+.lab-spinner{width:44px;height:44px;margin:0 auto 14px;border:3px solid rgba(157,78,221,.15);border-top-color:#c77dff;border-radius:50%;animation:labRot 1s linear infinite}
+@keyframes labRot{to{transform:rotate(360deg)}}
+.lab-loading-status{font-size:.82rem;color:#9ca3af;margin-top:6px}
+
+/* Error */
+.lab-error{display:none;padding:14px 18px;border-radius:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:.85rem;margin-bottom:16px;font-family:'Lora',serif}
+.lab-error.visible{display:block}
+
+/* Output */
+.lab-output{position:relative;padding:28px 30px;border-radius:22px;background:rgba(5,3,16,.72);backdrop-filter:blur(32px) saturate(200%);-webkit-backdrop-filter:blur(32px) saturate(200%);border:1px solid transparent;background-clip:padding-box;box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);margin-bottom:22px;overflow:hidden;display:none}
+.lab-output.visible{display:block;animation:labFade .45s ease}
+@keyframes labFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.lab-output::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(135deg,rgba(16,185,129,.55),rgba(157,78,221,.5) 50%,rgba(247,37,133,.55));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.lab-output-inner{position:relative;z-index:1}
+.lab-output-title{font-size:1.25rem;font-weight:900;font-family:'Playfair Display',serif;background:linear-gradient(135deg,#6ee7b7,#c4b5fd,#f9a8d4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 20px}
+
+/* Content renderers */
+.lab-q{padding:16px 18px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:12px}
+.lab-q-num{font-size:.66rem;color:#c77dff;text-transform:uppercase;letter-spacing:.8px;font-weight:800;margin-bottom:6px}
+.lab-q-text{font-size:.93rem;color:#f5f3ff;font-weight:700;font-family:'Playfair Display',serif;margin-bottom:10px;line-height:1.5}
+.lab-opts{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.lab-opt{padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:#ddd8f5;font-size:.85rem;font-family:'Lora',serif}
+.lab-opt.correct{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:#a7f3d0;font-weight:700}
+.lab-just{margin-top:8px;padding:10px 14px;border-radius:9px;background:rgba(99,102,241,.09);border-left:3px solid #a5b4fc;color:#c7d2fe;font-size:.79rem;font-family:'Lora',serif;line-height:1.55}
+.lab-just strong{color:#e0e7ff}
+
+.lab-ex{padding:14px 18px;border-radius:12px;background:rgba(247,37,133,.05);border:1px solid rgba(247,37,133,.18);margin-bottom:10px}
+.lab-ex-title{font-size:.66rem;color:#f9a8d4;text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:5px}
+.lab-ex-text{font-size:.9rem;color:#f5f3ff;margin-bottom:8px;line-height:1.55}
+.lab-ex-hint{font-size:.78rem;color:#c4b5fd;font-style:italic;margin-bottom:6px;font-family:'Lora',serif}
+.lab-ex-sol{font-size:.8rem;color:#a7f3d0;padding:8px 12px;background:rgba(16,185,129,.07);border-radius:8px;border-left:3px solid #34d399}
+.lab-intro{font-size:.87rem;color:#c4b5fd;font-family:'Lora',serif;line-height:1.6;padding:12px 15px;background:rgba(255,255,255,.03);border-radius:10px;margin-bottom:14px;border-left:3px solid rgba(157,78,221,.5)}
+
+.lab-desafio{padding:20px;border-radius:14px;background:rgba(157,78,221,.07);border:1px solid rgba(157,78,221,.28)}
+.lab-desafio-prob{font-size:.97rem;color:#f5f3ff;line-height:1.65;font-family:'Playfair Display',serif;font-weight:700;margin-bottom:14px}
+.lab-desafio-pistas{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.lab-desafio-pista{font-size:.82rem;color:#c4b5fd;padding:8px 13px;border-radius:9px;background:rgba(99,102,241,.09);border-left:3px solid #818cf8;font-family:'Lora',serif}
+.lab-desafio-sol{padding:12px 16px;border-radius:10px;background:rgba(16,185,129,.07);border-left:3px solid #34d399;color:#a7f3d0;font-size:.84rem;line-height:1.65;font-family:'Lora',serif;white-space:pre-wrap}
+
+.lab-output-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px dashed rgba(255,255,255,.09)}
+.lab-btn-export-teacher{background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;box-shadow:0 8px 24px rgba(124,58,237,.3)}
+.lab-btn-export-teacher:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,58,237,.45)}
+
+/* Tabs Estudiante / Docente */
+.lab-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:0}
+.lab-tab{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;font-family:inherit;font-size:.83rem;font-weight:700;background:transparent;border:none;border-bottom:2px solid transparent;color:#9ca3af;cursor:pointer;transition:color .18s,border-color .18s;margin-bottom:-1px}
+.lab-tab:hover{color:#c4b5fd}
+.lab-tab.is-active{color:#f5f3ff;border-bottom-color:#9d4edd}
+.lab-tab-lock{margin-left:6px;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:8px;background:rgba(247,37,133,.14);border:1px solid rgba(247,37,133,.3);color:#f9a8d4;text-transform:uppercase;letter-spacing:.5px}
+
+/* Paneles */
+.lab-pane{display:none;animation:labFade .3s ease}
+.lab-pane.is-active{display:block}
+
+/* Banners contextuales */
+.lab-pane-banner{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:11px;font-size:.78rem;font-family:'Lora',serif;line-height:1.45;margin-bottom:16px}
+.banner-student{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.22);color:#a5b4fc}
+.banner-teacher{background:rgba(247,37,133,.08);border:1px solid rgba(247,37,133,.22);color:#f9a8d4}
+
+/* Control de revelación */
+.lab-reveal-control{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:rgba(10,8,24,.55);border:1px solid rgba(255,255,255,.09);margin-bottom:14px;flex-wrap:wrap}
+.lab-reveal-info{flex:1;min-width:200px;font-family:'Lora',serif;font-size:.82rem;color:#c4b5fd;line-height:1.5}
+.lab-reveal-info strong{display:block;color:#f5f3ff;font-size:.86rem;font-weight:800;margin-bottom:3px}
+.lab-reveal-info span{color:#9ca3af;font-size:.76rem}
+.lab-reveal-control.is-revealed{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.2)}
+.lab-reveal-control.is-revealed .lab-reveal-info strong{color:#6ee7b7}
+
+/* Contenido bloqueado (con respuestas ocultas) */
+.lab-content-locked{filter:blur(8px);opacity:.4;pointer-events:none;user-select:none;transition:filter .35s ease,opacity .35s ease}
+.lab-content-locked.is-revealed{filter:none;opacity:1;pointer-events:auto;user-select:auto}
+
+/* Preloaded tema chip */
+.tema-preloaded{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7;font-size:.74rem;font-weight:700;margin-bottom:12px}
+
+/* Estilo específico para opciones reveladas en vista docente */
+.lab-opt-marker{display:inline-block;min-width:18px;padding:0 5px;margin-right:6px;border-radius:5px;font-size:.7rem;font-weight:800;text-align:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#9ca3af}
+.lab-opt.correct .lab-opt-marker{background:rgba(16,185,129,.25);border-color:rgba(16,185,129,.45);color:#6ee7b7}
+.lab-distractor-note{display:block;margin-top:4px;padding:6px 10px;font-size:.73rem;color:#fca5a5;background:rgba(239,68,68,.06);border-left:2px solid rgba(239,68,68,.4);border-radius:0 7px 7px 0;font-family:'Lora',serif;font-style:italic}
+
+/* Print — exportación contextual por vista */
+@media print{
+  .sidebar,.header,.footer,.lab-hero,.lab-steps,.lab-section,.lab-loading,.lab-error,.lab-output-actions,.lab-tabs,.lab-pane-banner,.lab-reveal-control,.lab-tab-lock{display:none!important}
+  .lab-output{box-shadow:none;border:none;background:#fff;color:#000;display:block!important;padding:0}
+  .lab-output::before{display:none}
+  .lab-output *{color:#000!important;background:none!important;border-color:#ccc!important;-webkit-text-fill-color:#000!important}
+  .lab-output-title{font-size:1.4rem;font-weight:900;margin-bottom:16px}
+  .lab-content-locked{filter:none!important;opacity:1!important}
+  /* Imprime solo la vista activa */
+  .lab-pane{display:none!important}
+  body.printing-estudiante #paneEstudiante{display:block!important}
+  body.printing-docente #paneDocente{display:block!important}
+}
+</style>
+
+<div class="lab-wrap">
+
+  <!-- Hero -->
+  <div class="lab-hero">
+    <div class="lab-hero-inner">
+      <div class="lab-atom">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <ellipse cx="12" cy="12" rx="10" ry="4"/>
+          <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/>
+          <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Motor de Mimetismo Institucional</h1>
+        <p>Genera material académico de alta exigencia cognitiva basado en la Taxonomía de Bloom. Opcionalmente, sube tu plantilla institucional para clonar su estructura formal en cada documento generado.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="lab-steps">
+    <div class="lab-step active" id="indStep1">
+      <span class="step-num">1</span>
+      <span class="step-label">Plantilla</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="lab-step active" id="indStep2">
+      <span class="step-num">2</span>
+      <span class="step-label">Configurar</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="lab-step" id="indStep3">
+      <span class="step-num">3</span>
+      <span class="step-label">Generar</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="lab-step" id="indStep4">
+      <span class="step-num">4</span>
+      <span class="step-label">Exportar</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: Plantilla Institucional -->
+  <div class="lab-section">
+    <div class="lab-section-inner">
+      <div class="lab-section-header">
+        <span class="lab-section-title">Paso 1 — Plantilla Institucional</span>
+        <span class="lab-opt-badge">Opcional</span>
+      </div>
+
+      {% if plantilla_info %}
+      <div class="plantilla-status visible" id="plantillaStatus">
+        <div class="plantilla-status-top">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="plantilla-filename">{{ plantilla_info.filename }}</span>
+          <button class="btn-borrar-plantilla" onclick="borrarPlantilla()">Quitar</button>
+        </div>
+        <p class="plantilla-resumen">{{ plantilla_info.resumen }}</p>
+        {% if plantilla_info.secciones %}
+        <div class="plantilla-secciones">
+          {% for sec in plantilla_info.secciones %}<span class="plantilla-sec-chip">{{ sec }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="lab-upload-zone" id="uploadZone">
+        <div class="upload-ico">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        </div>
+        <p>Arrastra tu plantilla institucional aquí o haz clic para seleccionarla</p>
+        <small>PDF, JPG, PNG o WEBP · Máx. 8 MB</small>
+        <div>
+          <span class="lab-upload-btn" onclick="document.getElementById('plantillaInput').click()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Seleccionar archivo
+          </span>
+        </div>
+        <input type="file" id="plantillaInput" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none">
+      </div>
+      <div class="plantilla-status" id="plantillaStatus">
+        <div class="plantilla-status-top">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="plantilla-filename" id="plantillaFilename">—</span>
+          <button class="btn-borrar-plantilla" onclick="borrarPlantilla()">Quitar</button>
+        </div>
+        <p class="plantilla-resumen" id="plantillaResumen"></p>
+        <div class="plantilla-secciones" id="plantillaSecciones"></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- STEP 2: Configurar -->
+  <div class="lab-section">
+    <div class="lab-section-inner">
+      <div class="lab-section-header">
+        <span class="lab-section-title">Paso 2 — Tipo de Instrumento y Configuración</span>
+      </div>
+
+      {% if preset_tema %}
+      <div class="tema-preloaded">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Tema precargado desde Planificador: <strong>{{ preset_tema }}</strong>
+      </div>
+      {% endif %}
+
+      <!-- Mode selector -->
+      <div class="lab-modos">
+        {% for k, m in modos.items %}
+        <button type="button" class="lab-modo {{ m.color }} {% if k == preset_modo %}is-selected{% endif %}" data-modo="{{ k }}">
+          <span class="lab-modo-ico">{{ m.icon }}</span>
+          <h3>{{ m.label }}</h3>
+          <p>{{ m.descripcion }}</p>
+        </button>
+        {% endfor %}
+      </div>
+
+      <!-- Form -->
+      <div class="lab-grid">
+        <div class="lab-field">
+          <label>Materia</label>
+          <input type="text" id="lab_materia" value="{{ materia_doc|default:'Matemáticas' }}" placeholder="Ej: Matemáticas">
+        </div>
+        <div class="lab-field">
+          <label>Curso (opcional)</label>
+          <select id="lab_curso">
+            <option value="">— Sin vincular a curso —</option>
+            {% for c in cursos %}
+            <option value="{{ c.id }}" data-grado="{{ c.nivel_academico }}"
+              {% if preset_curso == c.id|stringformat:"s" %}selected
+              {% elif preset_grado and preset_grado == c.nivel_academico %}selected{% endif %}>
+              {{ c.nombre }}{% if c.nivel_academico %} · {{ c.nivel_academico }}{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="lab-field lab-full">
+          <label>Tema específico</label>
+          <input type="text" id="lab_tema" placeholder="Ej: Ecuaciones diferenciales de primer orden" value="{{ preset_tema|default:'' }}">
+        </div>
+        <div class="lab-field">
+          <label>Nivel cognitivo</label>
+          <select id="lab_nivel">
+            <option value="basico">Exploratorio — Recordar y Comprender</option>
+            <option value="intermedio" selected>Aplicativo — Aplicar y Analizar</option>
+            <option value="avanzado">Crítico / Evaluativo — Evaluar y Crear</option>
+          </select>
+        </div>
+        <div class="lab-field">
+          <label>Grado / Grupo</label>
+          <input type="text" id="lab_grado_manual" placeholder="Ej: 10° B" value="{{ preset_grado|default:'' }}">
+        </div>
+        <div class="lab-field lab-full">
+          <label>Objetivos de aprendizaje (Bloom)</label>
+          <textarea id="lab_objetivos" placeholder="Ej: El estudiante analizará las propiedades de las funciones cuadráticas y evaluará su comportamiento en contextos reales."></textarea>
+        </div>
+      </div>
+
+      <div class="lab-actions">
+        <button type="button" class="lab-btn lab-btn-primary" id="labGenerarBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generar Material Académico
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="lab-loading" id="labLoading">
+    <div class="lab-spinner"></div>
+    <div>Generando matriz de evaluación…</div>
+    <div class="lab-loading-status" id="labLoadingStatus">Inicializando parámetros cognitivos</div>
+  </div>
+
+  <!-- Error -->
+  <div class="lab-error" id="labError"></div>
+
+  <!-- STEP 3+4: Output + Export -->
+  <div class="lab-output" id="labOutput">
+    <div class="lab-output-inner">
+      <div class="lab-output-title" id="labTituloOut">—</div>
+
+      <!-- Tabs Estudiante / Docente -->
+      <div class="lab-tabs" role="tablist">
+        <button type="button" class="lab-tab is-active" data-tab="estudiante" role="tab" aria-selected="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          Documento del estudiante
+        </button>
+        <button type="button" class="lab-tab" data-tab="docente" role="tab" aria-selected="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Guía del docente
+          <span class="lab-tab-lock" id="labLockBadge">Confidencial</span>
+        </button>
+      </div>
+
+      <!-- Vista Estudiante (limpia, sin respuestas) -->
+      <div class="lab-pane is-active" id="paneEstudiante" data-vista="estudiante">
+        <div class="lab-pane-banner banner-student">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Vista de impresión del estudiante. No incluye respuestas ni desarrollo.
+        </div>
+        <div id="labContenidoEstudiante"></div>
+      </div>
+
+      <!-- Vista Docente (oculta hasta revelar) -->
+      <div class="lab-pane" id="paneDocente" data-vista="docente">
+        <div class="lab-pane-banner banner-teacher">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1l3 6 6 .9-4.5 4.4 1.1 6.2L12 16l-5.6 2.5L7.5 12.3 3 7.9 9 7z"/></svg>
+          Guía de respuestas y justificación pedagógica. Material confidencial del docente.
+        </div>
+
+        <!-- Control de revelación -->
+        <div class="lab-reveal-control" id="labRevealControl">
+          <div class="lab-reveal-info">
+            <strong>Las respuestas están ocultas por defecto.</strong>
+            <span>Revélelas únicamente cuando esté listo para revisar el material.</span>
+          </div>
+          <button type="button" class="lab-btn lab-btn-ghost" id="labRevealBtn" onclick="labRevelarRespuestas()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Revelar respuestas
+          </button>
+        </div>
+
+        <div id="labContenidoDocente" class="lab-content-locked"></div>
+      </div>
+
+      <div class="lab-output-actions">
+        <button type="button" class="lab-btn lab-btn-export" onclick="labExportarPDF('estudiante')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Exportar PDF — Estudiante
+        </button>
+        <button type="button" class="lab-btn lab-btn-export-teacher" onclick="labExportarPDF('docente')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 14h6M9 18h6"/></svg>
+          Exportar PDF — Docente
+        </button>
+        <button type="button" class="lab-btn lab-btn-ghost" onclick="labGuardarRecurso()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+          Guardar en Recursos
+        </button>
+        <button type="button" class="lab-btn lab-btn-ghost" onclick="document.getElementById('labOutput').classList.remove('visible');document.getElementById('indStep3').classList.remove('done');document.getElementById('indStep4').classList.remove('done')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+          Nueva generación
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ════════ Motor de Mimetismo Institucional ════════ */
+var LAB_STATE = {
+  modo: "{{ preset_modo|escapejs }}",
+  lastData: null,
+  lastTitulo: '',
+  plantillaActiva: {{ plantilla_info|yesno:"true,false" }},
+};
+
+function labGetCSRF(){
+  var m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+/* ── Mode selection ── */
+document.querySelectorAll('.lab-modo').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    LAB_STATE.modo = this.dataset.modo;
+    document.querySelectorAll('.lab-modo').forEach(function(b){ b.classList.remove('is-selected'); });
+    this.classList.add('is-selected');
+  });
+});
+
+/* ── Auto-populate grado from course select ── */
+document.getElementById('lab_curso').addEventListener('change', function(){
+  var opt = this.options[this.selectedIndex];
+  var grado = opt ? (opt.dataset.grado || '') : '';
+  if (grado) document.getElementById('lab_grado_manual').value = grado;
+});
+
+/* ── Template upload ── */
+var uploadZone = document.getElementById('uploadZone');
+var plantillaInput = document.getElementById('plantillaInput');
+
+if (uploadZone) {
+  uploadZone.addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', function(){ this.classList.remove('drag-over'); });
+  uploadZone.addEventListener('drop', function(e){
+    e.preventDefault(); this.classList.remove('drag-over');
+    var f = e.dataTransfer.files[0];
+    if (f) uploadPlantilla(f);
+  });
+}
+
+if (plantillaInput) {
+  plantillaInput.addEventListener('change', function(){
+    if (this.files[0]) uploadPlantilla(this.files[0]);
+  });
+}
+
+async function uploadPlantilla(file) {
+  if (window.showToast) window.showToast('Analizando estructura de plantilla…', 'info');
+  var statusEl = document.getElementById('plantillaStatus');
+  var uploadZoneEl = document.getElementById('uploadZone');
+
+  var formData = new FormData();
+  formData.append('plantilla', file);
+  formData.append('csrfmiddlewaretoken', labGetCSRF());
+
+  try {
+    var resp = await fetch("{% url 'lab_upload_plantilla' %}", {
+      method: 'POST',
+      headers: {'X-CSRFToken': labGetCSRF()},
+      body: formData,
+    });
+    var json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Error al analizar plantilla');
+
+    // Show result
+    document.getElementById('plantillaFilename').textContent = json.filename || file.name;
+    document.getElementById('plantillaResumen').textContent = json.resumen || '';
+    var secEl = document.getElementById('plantillaSecciones');
+    if (secEl) {
+      secEl.innerHTML = (json.secciones || []).map(function(s){
+        return '<span class="plantilla-sec-chip">'+labEsc(s)+'</span>';
+      }).join('');
+    }
+
+    if (uploadZoneEl) uploadZoneEl.style.display = 'none';
+    if (statusEl) statusEl.classList.add('visible');
+    LAB_STATE.plantillaActiva = true;
+
+    if (window.showToast) window.showToast('Estructura institucional analizada y lista para mimetizar.', 'success');
+  } catch(e) {
+    if (window.showToast) window.showToast('Error: ' + e.message, 'error');
+  }
+}
+
+async function borrarPlantilla() {
+  try {
+    await fetch("{% url 'lab_borrar_plantilla' %}", {
+      method: 'POST',
+      headers: {'X-CSRFToken': labGetCSRF()},
+    });
+  } catch(e) {}
+  LAB_STATE.plantillaActiva = false;
+  // Reload to reset template state
+  window.location.reload();
+}
+
+/* ── Generate ── */
+document.getElementById('labGenerarBtn').addEventListener('click', async function(){
+  var btn = this;
+  var loading = document.getElementById('labLoading');
+  var loadingStatus = document.getElementById('labLoadingStatus');
+  var errBox = document.getElementById('labError');
+  var out = document.getElementById('labOutput');
+
+  errBox.classList.remove('visible');
+  out.classList.remove('visible');
+  loading.classList.add('visible');
+  btn.disabled = true;
+
+  // Step 3 active
+  document.getElementById('indStep3').classList.add('active');
+  document.getElementById('indStep4').classList.remove('done');
+
+  var cursoSel = document.getElementById('lab_curso');
+  var gradoCurso = cursoSel.options[cursoSel.selectedIndex] ? (cursoSel.options[cursoSel.selectedIndex].dataset.grado || '') : '';
+  var gradoManual = document.getElementById('lab_grado_manual').value.trim();
+  var grado = gradoCurso || gradoManual;
+
+  // Toast sequence
+  if (LAB_STATE.plantillaActiva) {
+    if (window.showToast) window.showToast('Mimetizando estructura de plantilla institucional…', 'info');
+    loadingStatus.textContent = 'Aplicando plantilla institucional al instrumento';
+  }
+
+  setTimeout(function(){
+    if (window.showToast) window.showToast('Construyendo ítems y estructurando guía de respuestas…', 'info');
+    loadingStatus.textContent = 'Procesando contenido académico — tiempo estimado 10–20 segundos';
+  }, 800);
+
+  try {
+    var resp = await fetch("{% url 'lab_api' %}", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': labGetCSRF()},
+      body: JSON.stringify({
+        modo: LAB_STATE.modo,
+        materia: document.getElementById('lab_materia').value.trim(),
+        tema: document.getElementById('lab_tema').value.trim(),
+        nivel: document.getElementById('lab_nivel').value,
+        objetivos: document.getElementById('lab_objetivos').value.trim(),
+        grado: grado,
+        curso_id: cursoSel.value,
+      }),
+    });
+    var json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Error desconocido');
+
+    LAB_STATE.lastData = json.data;
+    labRender(json.modo, json.data);
+
+    // Step 3 done, step 4 active
+    document.getElementById('indStep3').classList.remove('active');
+    document.getElementById('indStep3').classList.add('done');
+    document.getElementById('indStep4').classList.add('active');
+
+    if (window.showToast) window.showToast('Documentos generados: vista estudiante y guía docente.', 'success');
+
+  } catch(e) {
+    errBox.textContent = 'Error: ' + e.message;
+    errBox.classList.add('visible');
+    document.getElementById('indStep3').classList.remove('active');
+    if (window.showToast) window.showToast('Error al generar: ' + e.message, 'error');
+  } finally {
+    loading.classList.remove('visible');
+    btn.disabled = false;
+  }
+});
+
+function labRender(modo, data){
+  var out = document.getElementById('labOutput');
+  var contE = document.getElementById('labContenidoEstudiante');
+  var contD = document.getElementById('labContenidoDocente');
+  document.getElementById('labTituloOut').textContent = data.titulo || 'Material académico generado';
+  LAB_STATE.lastTitulo = data.titulo || '';
+  LAB_STATE.lastModo = modo;
+  contE.innerHTML = '';
+  contD.innerHTML = '';
+
+  // Reset reveal state cada vez que se genera nuevo material
+  var locked = document.getElementById('labContenidoDocente');
+  var revealCtrl = document.getElementById('labRevealControl');
+  var revealBtn = document.getElementById('labRevealBtn');
+  locked.classList.remove('is-revealed');
+  revealCtrl.classList.remove('is-revealed');
+  revealBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Revelar respuestas';
+
+  // Reset tabs a estudiante
+  labCambiarTab('estudiante');
+
+  if (modo === 'quiz') {
+    (data.preguntas || []).forEach(function(q, i){
+      // Vista estudiante: opciones sin marcar correcta, sin justificación
+      var optsHTMLEst = (q.opciones || []).map(function(o, idx){
+        return '<div class="lab-opt">'+
+          '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
+          labEsc(o)+
+          '</div>';
+      }).join('');
+      contE.innerHTML += '<div class="lab-q">'+
+        '<div class="lab-q-num">Ítem '+(i+1)+'</div>'+
+        '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+        '<div class="lab-opts">'+optsHTMLEst+'</div>'+
+        '<div class="lab-respuesta-espacio">Respuesta: <span style="display:inline-block;border-bottom:1px solid #6b7280;min-width:120px;height:18px"></span></div>'+
+        '</div>';
+
+      // Vista docente: marca correcta + nota de error en cada distractor + justificación
+      var errores = q.errores_distractores || [];
+      var optsHTMLDoc = (q.opciones || []).map(function(o, idx){
+        var isCorrect = idx === q.correcta;
+        var errNote = (!isCorrect && errores[idx] && errores[idx] !== '—')
+          ? '<span class="lab-distractor-note">Error revelado: '+labEsc(errores[idx])+'</span>'
+          : '';
+        return '<div class="lab-opt '+(isCorrect ? 'correct' : '')+'">'+
+          '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
+          labEsc(o)+(isCorrect ? '  ·  CORRECTA' : '')+errNote+
+          '</div>';
+      }).join('');
+      contD.innerHTML += '<div class="lab-q">'+
+        '<div class="lab-q-num">Ítem '+(i+1)+' — Clave</div>'+
+        '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+        '<div class="lab-opts">'+optsHTMLDoc+'</div>'+
+        '<div class="lab-just"><strong>Justificación pedagógica:</strong> '+labEsc(q.justificacion || '')+'</div>'+
+        '</div>';
+    });
+  } else if (modo === 'refuerzo') {
+    if (data.introduccion) {
+      contE.innerHTML += '<div class="lab-intro">'+labEsc(data.introduccion)+'</div>';
+      contD.innerHTML += '<div class="lab-intro">'+labEsc(data.introduccion)+'</div>';
+    }
+    (data.ejercicios || []).forEach(function(e, i){
+      // Estudiante: enunciado + pista + espacio para desarrollo
+      contE.innerHTML += '<div class="lab-ex">'+
+        '<div class="lab-ex-title">Problema '+(i+1)+'</div>'+
+        '<div class="lab-ex-text">'+labEsc(e.enunciado)+'</div>'+
+        (e.pista ? '<div class="lab-ex-hint">Orientación metodológica: '+labEsc(e.pista)+'</div>' : '')+
+        '<div class="lab-respuesta-espacio" style="margin-top:10px;padding:14px 0;border-top:1px dashed rgba(255,255,255,.12)">Desarrollo del estudiante:</div>'+
+        '</div>';
+      // Docente: enunciado + pista + solución completa
+      contD.innerHTML += '<div class="lab-ex">'+
+        '<div class="lab-ex-title">Problema '+(i+1)+' — Clave</div>'+
+        '<div class="lab-ex-text">'+labEsc(e.enunciado)+'</div>'+
+        (e.pista ? '<div class="lab-ex-hint">Orientación metodológica: '+labEsc(e.pista)+'</div>' : '')+
+        '<div class="lab-ex-sol"><strong>Desarrollo guiado:</strong> '+labEsc(e.solucion || '')+'</div>'+
+        '</div>';
+    });
+  } else if (modo === 'desafio') {
+    // Estudiante: problema + pistas, sin solución
+    var pistasHTML = (data.pistas || []).map(function(p, i){
+      return '<div class="lab-desafio-pista"><strong>Orientación '+(i+1)+':</strong> '+labEsc(p)+'</div>';
+    }).join('');
+    contE.innerHTML = '<div class="lab-desafio">'+
+      '<div class="lab-desafio-prob">'+labEsc(data.problema || '')+'</div>'+
+      '<div class="lab-desafio-pistas">'+pistasHTML+'</div>'+
+      '<div class="lab-respuesta-espacio" style="padding:16px 0 0;border-top:1px dashed rgba(255,255,255,.12);margin-top:14px">Desarrollo del estudiante:</div>'+
+      '</div>';
+    // Docente: problema + pistas + solución detallada
+    contD.innerHTML = '<div class="lab-desafio">'+
+      '<div class="lab-desafio-prob">'+labEsc(data.problema || '')+'</div>'+
+      '<div class="lab-desafio-pistas">'+pistasHTML+'</div>'+
+      '<div class="lab-desafio-sol"><strong>Solución razonada para el docente:</strong>\n'+labEsc(data.solucion_detallada || '')+'</div>'+
+      '</div>';
+  }
+
+  out.classList.add('visible');
+  out.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function labEsc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+/* ── Tabs Estudiante / Docente ── */
+function labCambiarTab(tab){
+  document.querySelectorAll('.lab-tab').forEach(function(t){
+    var active = t.dataset.tab === tab;
+    t.classList.toggle('is-active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('.lab-pane').forEach(function(p){
+    p.classList.toggle('is-active', p.dataset.vista === tab);
+  });
+}
+document.querySelectorAll('.lab-tab').forEach(function(t){
+  t.addEventListener('click', function(){ labCambiarTab(this.dataset.tab); });
+});
+
+/* ── Revelar respuestas ── */
+function labRevelarRespuestas(){
+  var locked = document.getElementById('labContenidoDocente');
+  var ctrl = document.getElementById('labRevealControl');
+  var btn = document.getElementById('labRevealBtn');
+  var revealed = locked.classList.toggle('is-revealed');
+  ctrl.classList.toggle('is-revealed', revealed);
+  if (revealed) {
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar respuestas';
+    if (window.showToast) window.showToast('Respuestas reveladas.', 'success');
+  } else {
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Revelar respuestas';
+  }
+}
+
+/* ── Construir nombre de archivo profesional ── */
+function labConstruirFilename(vista){
+  var modoMap = {quiz:'Evaluacion', refuerzo:'Taller', desafio:'Problema'};
+  var modoLbl = modoMap[LAB_STATE.lastModo] || 'Material';
+  var materia = (document.getElementById('lab_materia').value || 'General').trim();
+  var grado = (document.getElementById('lab_grado_manual').value || '').trim();
+  var partes = [modoLbl, materia];
+  if (grado) partes.push(grado);
+  partes.push(vista === 'docente' ? 'Docente' : 'Estudiante');
+  return partes.map(function(p){ return p.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+/g,'_').replace(/^_+|_+$/g,''); }).filter(Boolean).join('_') + '.pdf';
+}
+
+function labExportarPDF(vista){
+  vista = vista || 'estudiante';
+
+  // Si exporta docente, asegurar que está revelado
+  if (vista === 'docente') {
+    var locked = document.getElementById('labContenidoDocente');
+    if (!locked.classList.contains('is-revealed')) {
+      labRevelarRespuestas();
+    }
+  }
+
+  if (window.showToast) window.showToast('Estructurando documento del ' + (vista === 'docente' ? 'docente' : 'estudiante') + '…', 'info');
+
+  // Cambiar el título del documento para que el navegador sugiera ese nombre
+  var titleOrig = document.title;
+  var filename = labConstruirFilename(vista);
+  document.title = filename.replace(/\.pdf$/,'');
+
+  document.body.classList.add('printing-' + vista);
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      document.body.classList.remove('printing-' + vista);
+      document.title = titleOrig;
+    }, 300);
+    if (window.showToast) window.showToast('Documento ' + filename + ' listo para exportar.', 'success');
+  }, 250);
+
+  document.getElementById('indStep4').classList.remove('active');
+  document.getElementById('indStep4').classList.add('done');
+}
+
+async function labGuardarRecurso(){
+  if (!LAB_STATE.lastData) return;
+  // Guardamos la versión docente (con respuestas) — el recurso es para el profesor
+  var contenido = document.getElementById('labContenidoDocente').innerText
+    || document.getElementById('labContenidoEstudiante').innerText;
+  var titulo = LAB_STATE.lastTitulo || ('Material IA — ' + new Date().toLocaleDateString());
+  try {
+    var resp = await fetch("{% url 'lab_guardar_recurso' %}", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': labGetCSRF()},
+      body: JSON.stringify({titulo: titulo, contenido: contenido}),
+    });
+    var json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Error al guardar');
+    if (window.showToast) window.showToast('Material guardado correctamente en Recursos.', 'success');
+  } catch(e) {
+    if (window.showToast) window.showToast('Error al guardar: ' + e.message, 'error');
+  }
+}
+</script>
+{% endblock %}

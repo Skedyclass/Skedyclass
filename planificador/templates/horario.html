@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Horario Académico — SkedyClass{% endblock %}
+
+{% block content %}
+<style>
+/* ─── RESET TEXT: force full white in grid ─────────────────── */
+.ht-wrap *{color:#fff}
+
+/* ─── PAGE HEADER ─────────────────────────────────────────── */
+.ht-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+.ht-title{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:800;color:#fff;margin:0 0 3px}
+.ht-subtitle{font-size:.82rem;color:rgba(255,255,255,.55);margin:0}
+.ht-nav-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;font-size:.82rem;font-weight:700;text-decoration:none;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.12);color:#c7d2fe;transition:background .18s}
+.ht-nav-btn:hover{background:rgba(99,102,241,.25);color:#fff}
+
+/* ─── WEEK NAVIGATION ─────────────────────────────────────── */
+.week-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.week-arrow{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background .18s;flex-shrink:0}
+.week-arrow:hover{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.4);color:#fff}
+.week-label{font-size:.88rem;font-weight:700;color:#fff;flex:1;text-align:center;padding:7px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.week-today-btn{padding:7px 14px;border-radius:10px;border:none;background:rgba(99,102,241,.18);color:#c7d2fe;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .18s}
+.week-today-btn:hover{background:rgba(99,102,241,.32);color:#fff}
+
+/* ─── CONFLICT BANNER ─────────────────────────────────────── */
+.conflict-banner{display:flex;align-items:center;gap:12px;padding:12px 18px;margin-bottom:16px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);border-radius:12px;color:#fff;font-size:.85rem;font-weight:700;animation:conflictPulse 2s ease-in-out infinite}
+@keyframes conflictPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+
+/* ─── TABLE WRAPPER ────────────────────────────────────────── */
+.ht-table-wrap{overflow-x:auto;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(8,6,20,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+
+/* ─── SCHEDULE TABLE ───────────────────────────────────────── */
+.ht-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:640px}
+.ht-table th,.ht-table td{border:1px solid rgba(255,255,255,.07);color:#fff !important}
+
+/* Day header cells */
+.ht-th-time{width:72px;background:rgba(255,255,255,.03);text-align:center;padding:10px 4px;font-size:.62rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.45) !important}
+.ht-th-day{padding:10px 8px;text-align:center;font-size:.8rem;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:#fff !important}
+.ht-th-day .day-name{font-size:.8rem;font-weight:800;display:block;margin-bottom:2px;color:#fff !important}
+.ht-th-day .day-date{font-size:.68rem;font-weight:500;color:rgba(255,255,255,.65) !important}
+.ht-th-day.today-col{background:rgba(99,102,241,.18);border-bottom:2px solid rgba(99,102,241,.7)}
+.ht-th-day.today-col .day-name{color:#c7d2fe !important;text-shadow:0 0 16px rgba(99,102,241,.9)}
+.ht-th-day.today-col .day-date{color:#a5b4fc !important}
+
+/* Neon header gradients per day */
+.ht-th-day:nth-child(2){background:linear-gradient(180deg,rgba(99,102,241,.18) 0%,rgba(99,102,241,.06) 100%)}
+.ht-th-day:nth-child(3){background:linear-gradient(180deg,rgba(139,92,246,.16) 0%,rgba(139,92,246,.05) 100%)}
+.ht-th-day:nth-child(4){background:linear-gradient(180deg,rgba(168,85,247,.15) 0%,rgba(168,85,247,.04) 100%)}
+.ht-th-day:nth-child(5){background:linear-gradient(180deg,rgba(236,72,153,.14) 0%,rgba(236,72,153,.04) 100%)}
+.ht-th-day:nth-child(6){background:linear-gradient(180deg,rgba(247,37,133,.13) 0%,rgba(247,37,133,.03) 100%)}
+
+/* Time label cells */
+.ht-td-time{background:rgba(255,255,255,.025);text-align:center;padding:6px 4px;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.6) !important;white-space:nowrap;vertical-align:middle;width:72px}
+
+/* Data cells */
+.ht-td{padding:4px;vertical-align:top;min-height:56px;height:56px;position:relative;transition:background .15s}
+.ht-td:hover{background:rgba(255,255,255,.03)}
+.ht-td.today-col{background:rgba(99,102,241,.06)}
+.ht-td.today-col:hover{background:rgba(99,102,241,.1)}
+
+/* Break rows */
+.ht-td.break-cell{background:repeating-linear-gradient(135deg,rgba(251,191,36,.04) 0,rgba(251,191,36,.04) 6px,transparent 6px,transparent 14px) !important}
+.ht-tr.break-row .ht-td-time{color:rgba(251,191,36,.75) !important}
+
+/* Conflict cell */
+.ht-td.has-conflict{border-color:rgba(239,68,68,.6) !important;background:rgba(239,68,68,.08) !important;box-shadow:inset 0 0 0 1px rgba(239,68,68,.4)}
+
+/* ─── CLASS CHIPS ──────────────────────────────────────────── */
+.clase-chip{display:block;width:100%;padding:4px 7px;border-radius:8px;font-size:.68rem;font-weight:700;line-height:1.3;cursor:pointer;text-decoration:none;transition:transform .15s,box-shadow .15s;margin-bottom:2px;border:1px solid transparent;color:#fff !important}
+.clase-chip:hover{transform:scale(1.03);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.clase-chip .cc-time{font-size:.6rem;opacity:.8;display:block;margin-bottom:1px;color:rgba(255,255,255,.8) !important}
+.clase-chip .cc-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff !important}
+.clase-chip .cc-grado{font-size:.58rem;opacity:.75;display:block;color:rgba(255,255,255,.75) !important}
+.clase-chip .cc-gcal{font-size:.55rem;opacity:.8}
+
+/* Materia colors */
+.mat-matematicas{background:rgba(99,102,241,.35);border-color:rgba(99,102,241,.6)}
+.mat-lenguaje{background:rgba(236,72,153,.3);border-color:rgba(236,72,153,.55)}
+.mat-ciencias-naturales{background:rgba(16,185,129,.28);border-color:rgba(16,185,129,.55)}
+.mat-ciencias-sociales{background:rgba(245,158,11,.28);border-color:rgba(245,158,11,.55)}
+.mat-educacion-fisica{background:rgba(239,68,68,.28);border-color:rgba(239,68,68,.55)}
+.mat-artes{background:rgba(168,85,247,.3);border-color:rgba(168,85,247,.55)}
+.mat-musica{background:rgba(6,182,212,.28);border-color:rgba(6,182,212,.55)}
+.mat-ingles{background:rgba(34,197,94,.28);border-color:rgba(34,197,94,.55)}
+.mat-default{background:rgba(139,92,246,.3);border-color:rgba(139,92,246,.55)}
+
+/* Conflict chip */
+.conflict-chip{background:rgba(239,68,68,.3);border:1px solid rgba(239,68,68,.6);border-radius:6px;font-size:.6rem;font-weight:800;padding:2px 6px;display:inline-block;margin-top:2px;color:#fff !important}
+
+/* Curso background chip (lighter, recurring) */
+.curso-bg-chip{display:block;width:100%;padding:3px 6px;border-radius:6px;font-size:.62rem;font-weight:600;color:rgba(255,255,255,.7) !important;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.15);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* "+" add button */
+.cell-add-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s;text-decoration:none;color:rgba(255,255,255,.5) !important;font-size:1.1rem;font-weight:300}
+.ht-td:hover .cell-add-btn{opacity:1}
+.ht-td:has(.clase-chip) .cell-add-btn,.ht-td:has(.curso-bg-chip) .cell-add-btn{display:none}
+.cell-add-btn:hover{color:#fff !important}
+
+/* Estado badges */
+.estado-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:2px;vertical-align:middle}
+.estado-pending{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.6)}
+.estado-in_progress{background:#60a5fa;box-shadow:0 0 6px rgba(96,165,250,.6)}
+.estado-completed{background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.6)}
+
+/* ─── RIGHT CONFIG PANEL ───────────────────────────────────── */
+.ht-layout{display:grid;grid-template-columns:1fr 268px;gap:20px;align-items:start}
+@media(max-width:1024px){.ht-layout{grid-template-columns:1fr}}
+
+.ht-config-panel{background:rgba(14,12,30,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:20px;color:#fff}
+.ht-config-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;color:#fff !important}
+.fl{display:flex;flex-direction:column;gap:10px}
+.fl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl-label{font-size:.68rem;font-weight:700;color:rgba(255,255,255,.6) !important;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;display:block}
+.gl-input{width:100%;padding:9px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff !important;font-size:.85rem;font-family:inherit;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none}
+.gl-input:focus{outline:none;border-color:rgba(99,102,241,.55);box-shadow:0 0 0 3px rgba(99,102,241,.14)}
+.gl-input option{background:#1a1630;color:#fff}
+.btn-save{width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff !important;font-size:.85rem;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .18s,transform .14s;margin-top:4px}
+.btn-save:hover{opacity:.87;transform:translateY(-1px)}
+.btn-amber{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.descanso-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;margin-bottom:6px}
+.descanso-name{font-size:.78rem;font-weight:700;color:#fff !important}
+.descanso-time{font-size:.66rem;color:rgba(255,255,255,.6) !important;margin-top:1px}
+.btn-del-sm{width:26px;height:26px;border-radius:7px;border:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5 !important;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0}
+.btn-del-sm:hover{background:rgba(239,68,68,.32)}
+
+/* ─── STATS ROW ────────────────────────────────────────────── */
+.stat-mini{text-align:center;padding:12px 8px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}
+.stat-mini-num{font-size:1.4rem;font-weight:900;font-family:'Playfair Display',serif;color:#fff !important;line-height:1}
+.stat-mini-lbl{font-size:.62rem;color:rgba(255,255,255,.5) !important;margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── UNSCHEDULED COURSES ──────────────────────────────────── */
+.unscheduled-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14);border-radius:10px;text-decoration:none;color:rgba(255,255,255,.8) !important;font-size:.78rem;transition:background .18s}
+.unscheduled-chip:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.35);color:#fff !important}
+</style>
+
+<!-- Page header -->
+<div class="ht-header">
+  <div>
+    <h1 class="ht-title">Horario Académico</h1>
+    <p class="ht-subtitle">Cuadrícula semanal &mdash; {{ monday|date:"d M" }} al {{ friday|date:"d M Y" }} (Lun–Vie)</p>
+  </div>
+  <a href="{% url 'crear_clase' %}" class="ht-nav-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nueva clase
+  </a>
+</div>
+
+<!-- Week navigation -->
+<div class="week-nav">
+  <a href="?semana={{ week_offset_prev }}" class="week-arrow" title="Semana anterior">&#8592;</a>
+  <span class="week-label">
+    {% if week_offset == 0 %}Esta semana{% elif week_offset == 1 %}Próxima semana{% elif week_offset == -1 %}Semana pasada{% endif %}
+    &nbsp;·&nbsp; {{ monday|date:"d M" }} – {{ friday|date:"d M Y" }}
+  </span>
+  <a href="?semana={{ week_offset_next }}" class="week-arrow" title="Semana siguiente">&#8594;</a>
+  {% if week_offset != 0 %}<a href="?semana=0" class="week-today-btn">Hoy</a>{% endif %}
+</div>
+
+{% if has_conflicts %}
+<div class="conflict-banner">
+  <span style="font-size:1.2rem">⚠️</span>
+  <span>Se detectaron clases solapadas en este horario. Revisa las celdas marcadas en rojo.</span>
+</div>
+{% endif %}
+
+<!-- Main layout -->
+<div class="ht-layout">
+
+  <!-- LEFT: Schedule table -->
+  <div>
+    <div class="ht-wrap ht-table-wrap">
+      {% if grid_rows %}
+      <table class="ht-table" role="grid" aria-label="Horario académico semanal">
+        <thead>
+          <tr>
+            <th class="ht-th-time" scope="col">Hora</th>
+            {% for col in dias_info %}
+            <th class="ht-th-day {% if col.is_today %}today-col{% endif %}" scope="col">
+              <span class="day-name">{{ col.label }}</span>
+              <span class="day-date">{{ col.fecha_fmt }}</span>
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in grid_rows %}
+          <tr class="ht-tr {% if row.is_descanso %}break-row{% endif %}">
+            <td class="ht-td-time">{{ row.slot }}</td>
+            {% for cell in row.cells %}
+            <td class="ht-td {% if row.is_descanso %}break-cell{% endif %} {% if cell.is_today %}today-col{% endif %} {% if cell.is_conflict %}has-conflict{% endif %}" title="{% if row.is_descanso %}Bloque de descanso{% elif cell.is_conflict %}¡Conflicto de horario!{% endif %}">
+
+              {% if row.is_descanso and not cell.clases %}
+                <span title="Bloque de descanso (no editable)" style="display:flex;align-items:center;justify-content:center;height:100%;padding-top:6px;color:rgba(251,191,36,.55)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              {% else %}
+
+                {% for clase in cell.clases %}
+                {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
+                <a href="{% url 'editar_clase' clase.id %}" class="clase-chip mat-{{ mat }}"
+                   data-tt-titulo="{{ clase.titulo }}"
+                   data-tt-objetivo="{{ clase.objetivos|truncatechars:180|default:'Sin objetivo definido' }}"
+                   data-tt-curso="{{ clase.grado_nombre|default:clase.materia|default:'—' }}"
+                   data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora|time:'H:i' }}">
+                  <span class="cc-time">
+                    <span class="estado-dot estado-{{ clase.estado }}"></span>
+                    {{ clase.hora|time:"H:i" }}{% if clase.google_event_id %} <span class="cc-gcal" title="Sincronizado con Google Calendar">📅</span>{% endif %}
+                  </span>
+                  <span class="cc-title">{{ clase.titulo }}</span>
+                  {% if clase.grado_nombre %}<span class="cc-grado">{{ clase.grado_nombre }}</span>{% endif %}
+                </a>
+                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
+                {% endwith %}
+                {% endfor %}
+
+                {% if not cell.clases and not row.is_descanso and cell.fecha >= today %}
+                <a href="{% url 'crear_clase' %}?fecha={{ cell.fecha_iso }}&hora={{ row.slot }}" class="cell-add-btn" title="Planificar clase aquí">+</a>
+                {% endif %}
+
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="padding:48px 24px;text-align:center;color:#fff">
+        <div style="font-size:2.5rem;margin-bottom:14px">🗓️</div>
+        <div style="font-size:.95rem;font-weight:700;margin-bottom:6px;color:#fff">Configura tu jornada primero</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.55)">Define hora de inicio, fin y duración de sesión en el panel de la derecha.</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if cursos %}
+    <div style="margin-top:20px">
+      <div style="font-size:.7rem;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Cursos</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        {% for c in cursos %}
+        <a href="{% url 'ver_curso' c.id %}" class="unscheduled-chip">
+          {{ c.nombre }}
+          {% if c.nivel_academico %}<span style="font-size:.68rem;color:rgba(255,255,255,.5) !important">&nbsp;{{ c.nivel_academico }}</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Config panels -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <!-- Stats -->
+    <div class="ht-config-panel" style="padding:16px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="stat-mini">
+          <div class="stat-mini-num">{{ clases_count }}</div>
+          <div class="stat-mini-lbl">Clases</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-num">{{ cursos|length }}</div>
+          <div class="stat-mini-lbl">Cursos</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-num">{{ descansos|length }}</div>
+          <div class="stat-mini-lbl">Descansos</div>
+        </div>
+      </div>
+      {% if grid_rows %}
+      <div style="margin-top:10px;text-align:center;font-size:.72rem;color:rgba(255,255,255,.45)">
+        {{ grid_rows|length }} franjas · {{ horario.duracion_sesion }} min/sesión
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Jornada config -->
+    <div class="ht-config-panel">
+      <div class="ht-config-title">⏱ Configurar Jornada</div>
+      <form method="post" action="{% url 'guardar_horario' %}">
+        {% csrf_token %}
+        <div class="fl">
+          <div class="fl-row">
+            <div>
+              <label class="fl-label">Inicio jornada</label>
+              <input type="time" name="hora_inicio" class="gl-input" value="{{ horario.hora_inicio_jornada|time:'H:i' }}" required>
+            </div>
+            <div>
+              <label class="fl-label">Fin jornada</label>
+              <input type="time" name="hora_fin" class="gl-input" value="{{ horario.hora_fin_jornada|time:'H:i' }}" required>
+            </div>
+          </div>
+          <div>
+            <label class="fl-label">Duración sesión</label>
+            <select name="duracion" class="gl-input">
+              <option value="30" {% if horario.duracion_sesion == 30 %}selected{% endif %}>30 min</option>
+              <option value="45" {% if horario.duracion_sesion == 45 %}selected{% endif %}>45 min</option>
+              <option value="60" {% if horario.duracion_sesion == 60 %}selected{% endif %}>60 min</option>
+              <option value="90" {% if horario.duracion_sesion == 90 %}selected{% endif %}>90 min</option>
+              <option value="120" {% if horario.duracion_sesion == 120 %}selected{% endif %}>120 min</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-save">Guardar jornada</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Break blocks -->
+    <div class="ht-config-panel">
+      <div class="ht-config-title">☕ Bloques de Descanso</div>
+
+      {% for d in descansos %}
+      <div class="descanso-row">
+        <div>
+          <div class="descanso-name">{{ d.nombre }}</div>
+          <div class="descanso-time">{{ d.hora_inicio|time:"H:i" }} – {{ d.hora_fin|time:"H:i" }}</div>
+        </div>
+        <form method="post" action="{% url 'eliminar_bloque' d.id %}" data-confirm="¿Eliminar el bloque '{{ d.nombre }}'?" data-confirm-title="Eliminar bloque" data-confirm-btn="Eliminar">
+          {% csrf_token %}
+          <button type="submit" class="btn-del-sm" title="Eliminar">✕</button>
+        </form>
+      </div>
+      {% empty %}
+      <p style="font-size:.78rem;color:rgba(255,255,255,.4);margin:0 0 12px;text-align:center">Sin bloques de descanso</p>
+      {% endfor %}
+
+      <form method="post" action="{% url 'guardar_bloque' %}">
+        {% csrf_token %}
+        <div class="fl">
+          <div>
+            <label class="fl-label">Nombre</label>
+            <input type="text" name="nombre" class="gl-input" placeholder="Ej: Recreo" maxlength="100" required>
+          </div>
+          <div class="fl-row">
+            <div>
+              <label class="fl-label">Inicio</label>
+              <input type="time" name="hora_inicio" class="gl-input" required>
+            </div>
+            <div>
+              <label class="fl-label">Fin</label>
+              <input type="time" name="hora_fin" class="gl-input" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-save btn-amber" style="font-size:.8rem">+ Agregar descanso</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="ht-config-panel" style="padding:16px">
+      <div class="ht-config-title">⚡ Acciones Rápidas</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="{% url 'listar_cursos' %}" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;text-decoration:none;color:#c7d2fe !important;font-size:.8rem;font-weight:600;transition:background .18s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.1)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg> Administrar cursos
+        </a>
+        <a href="{% url 'planificador' %}" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);border-radius:10px;text-decoration:none;color:#6ee7b7 !important;font-size:.8rem;font-weight:600;transition:background .18s" onmouseover="this.style.background='rgba(16,185,129,.16)'" onmouseout="this.style.background='rgba(16,185,129,.08)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Ir al planificador
+        </a>
+        <a href="{% url 'ajustes' %}?s=google_calendar" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;text-decoration:none;color:#86efac !important;font-size:.8rem;font-weight:600;transition:background .18s" onmouseover="this.style.background='rgba(34,197,94,.14)'" onmouseout="this.style.background='rgba(34,197,94,.07)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Google Calendar
+        </a>
+      </div>
+    </div>
+
+  </div><!-- end right col -->
+</div><!-- end layout -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  // Show conflict toast on load if conflicts exist
+  {% if has_conflicts %}
+  if(typeof showToast === 'function'){
+    showToast('⚠️ Se detectaron clases solapadas. Revisa las celdas en rojo.', 'warning');
+  }
+  {% endif %}
+
+  // Style today column headers (JS fallback for Django template limitation)
+  var todayIso = '{{ today|date:"Y-m-d" }}';
+  document.querySelectorAll('th.ht-th-day').forEach(function(th){
+    var date = th.querySelector('.day-date');
+    if(!date) return;
+    // Already handled via today-col class from template
+  });
+})();
+</script>
+{% endblock %}
