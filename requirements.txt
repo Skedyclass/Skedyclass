@@ -1,4 +1,6 @@
-Django>=4.2,<5.0
+# Pinned to the same major tested locally (6.0). Render usa Python 3.12.4,
+# requisito de Django 6.0. No bajar sin volver a probar.
+Django>=6.0,<6.1
 whitenoise>=6.6.0
 gunicorn>=21.2.0
 groq>=0.9.0
@@ -9,4 +11,4 @@ pdfplumber>=0.11.0
 PyPDF2>=3.0.0
 openpyxl>=3.1.0
 # Optional: Google OAuth via django-allauth. After install, run: python manage.py migrate
-django-allauth>=0.61.0
+django-allauth>=65.0.0  # >=65 soporta Django 6.0

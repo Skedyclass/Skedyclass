@@ -206,7 +206,10 @@ def _validar_clase_horario(user, fecha, hora, exclude_pk=None):
             if new_start_dt < b_end and b_start < new_end_dt:
                 return False, f'La clase se cruza con el bloque de descanso "{bloque.nombre}".'
 
-    qs = Clase.objects.filter(usuario=user, fecha=fecha)
+    # Lock this user's classes for the day so two near-simultaneous submits
+    # can't both pass the overlap check (no-op on SQLite dev, real row lock on
+    # Postgres prod). Always called inside a transaction.atomic() block.
+    qs = Clase.objects.select_for_update().filter(usuario=user, fecha=fecha)
     if exclude_pk is not None:
         qs = qs.exclude(pk=exclude_pk)
     for other in qs:
@@ -541,9 +544,12 @@ def dashboard(request):
 
     context = {
         'stats': stats,
-        'clases_pending': clases_qs.filter(estado='pending')[:5],
-        'clases_in_progress': clases_qs.filter(estado='in_progress')[:5],
-        'clases_completed': clases_qs.filter(estado='completed')[:5],
+        # Kanban columns: pending/in-progress show the SOONEST classes first
+        # (the model default orders by -fecha, so override it here); completed
+        # shows the most recently finished first.
+        'clases_pending': clases_qs.filter(estado='pending').order_by('fecha', 'hora')[:5],
+        'clases_in_progress': clases_qs.filter(estado='in_progress').order_by('fecha', 'hora')[:5],
+        'clases_completed': clases_qs.filter(estado='completed').order_by('-fecha', '-hora')[:5],
         'next_class': clases_qs.filter(estado='in_progress').order_by('fecha', 'hora').first(),
         'user_materia': get_user_materia(request.user),
         'workload_cells': workload_cells,
@@ -583,10 +589,12 @@ def listar_clases(request):
 @login_required
 def crear_clase(request):
     cursos = Curso.objects.filter(usuario=request.user)
+    # Block early on BOTH GET and POST: otherwise the teacher fills the whole
+    # form and loses it on submit because the class needs a curso.
+    if not cursos.exists():
+        messages.error(request, 'Primero debes crear un curso antes de planificar una clase.')
+        return redirect('crear_curso')
     if request.method == 'POST':
-        if not cursos.exists():
-            messages.error(request, 'Primero debes crear un curso antes de planificar una clase.')
-            return redirect('crear_curso')
         form = ClaseForm(request.POST)
         if form.is_valid():
             try:
@@ -691,6 +699,9 @@ def crear_clase(request):
 @login_required
 def editar_clase(request, id):
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    # Capture the stored schedule BEFORE the form mutates the instance, so we
+    # can tell whether the teacher actually rescheduled the class.
+    orig_fecha, orig_hora = clase.fecha, clase.hora
 
     if request.method == 'POST':
         form = ClaseForm(request.POST, instance=clase)
@@ -699,12 +710,17 @@ def editar_clase(request, id):
                 updated = form.save(commit=False)
 
                 with transaction.atomic():
-                    ok, err = _validar_clase_horario(
-                        request.user, updated.fecha, updated.hora, exclude_pk=clase.pk
-                    )
-                    if not ok:
-                        messages.error(request, err)
-                        raise ValueError('horario')
+                    # Only re-validate jornada / overlap when the class is being
+                    # moved. Editing notes/objectives of a past class keeps the
+                    # same date & time and must not be blocked.
+                    reprogramada = (updated.fecha, updated.hora) != (orig_fecha, orig_hora)
+                    if reprogramada:
+                        ok, err = _validar_clase_horario(
+                            request.user, updated.fecha, updated.hora, exclude_pk=clase.pk
+                        )
+                        if not ok:
+                            messages.error(request, err)
+                            raise ValueError('horario')
                     updated.save()
                 logger.info('Clase editada: id=%s por %s', id, request.user.username)
                 messages.success(request, 'Clase actualizada correctamente.')

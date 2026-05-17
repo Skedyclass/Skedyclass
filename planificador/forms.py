@@ -108,8 +108,24 @@ class ClaseForm(forms.ModelForm):
             'notas': forms.Textarea(attrs={'class': 'form-input', 'rows': 5, 'placeholder': 'Materiales, distribucion de tiempo, recordatorios...'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Snapshot the original date/time so that editing a class WITHOUT
+        # rescheduling it (e.g. fixing notes of a class already taught) is not
+        # blocked by the "no past dates" rule. The rule only applies when the
+        # teacher is actually moving the class to a new date/time.
+        editing = bool(self.instance and self.instance.pk)
+        self._orig_fecha = self.instance.fecha if editing else None
+        self._orig_hora = self.instance.hora if editing else None
+
+    def _fecha_sin_cambiar(self, fecha):
+        return self._orig_fecha is not None and fecha == self._orig_fecha
+
     def clean_fecha(self):
         fecha = self.cleaned_data['fecha']
+        # Unchanged date on an existing class → allow (past/weekend ok).
+        if self._fecha_sin_cambiar(fecha):
+            return fecha
         if fecha.weekday() >= 5:
             raise forms.ValidationError('No se pueden programar clases en fines de semana (sabado o domingo).')
         if fecha < timezone.now().date():
@@ -121,7 +137,14 @@ class ClaseForm(forms.ModelForm):
         fecha = cleaned.get('fecha')
         hora = cleaned.get('hora')
         if fecha and hora and fecha == timezone.now().date():
-            if hora <= timezone.localtime().time():
+            # Skip the "hora ya pasó" check when neither date nor time changed
+            # on an existing class (editing notes of a class earlier today).
+            sin_cambiar = (
+                self._fecha_sin_cambiar(fecha)
+                and self._orig_hora is not None
+                and hora == self._orig_hora
+            )
+            if not sin_cambiar and hora <= timezone.localtime().time():
                 raise forms.ValidationError({
                     'hora': 'La hora ya pasó. Elige una hora futura para una clase de hoy.'
                 })
@@ -184,7 +207,7 @@ class RecursoForm(forms.ModelForm):
             'titulo': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Nombre del recurso'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-input', 'rows': 2, 'placeholder': 'Descripcion opcional...'}),
-            'archivo': forms.FileInput(attrs={'class': 'form-input', 'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.mp4,.zip'}),
+            'archivo': forms.FileInput(attrs={'class': 'form-input', 'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mp3,.wav,.zip,.txt,.csv'}),
             'url_video': forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://youtube.com/watch?v=...'}),
         }
 
