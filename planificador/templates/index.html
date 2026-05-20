@@ -104,14 +104,8 @@
 /* Section heading — gradiente igual que el h1 del dashboard */
 .section-heading { font-size:1.15rem; font-weight:800; font-family:'Playfair Display',serif; background:linear-gradient(135deg,#9d4edd,#f72585); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin:32px 0 20px; }
 
-/* Modo claro */
-[data-theme="light"] .kanban-column { background:#f8f7ff; border-color:rgba(0,0,0,.08); box-shadow:0 4px 24px rgba(0,0,0,.09); }
-[data-theme="light"] .kanban-card { background:#fff; border-color:rgba(0,0,0,.09); }
-[data-theme="light"] .kanban-card h4 { color:#1e1b4b; }
-[data-theme="light"] .kc-meta { border-bottom-color:rgba(0,0,0,.06); }
-[data-theme="light"] .kc-meta span { color:#5b5680; }
-[data-theme="light"] .btn-small-dash { background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.1); color:#374151; }
-[data-theme="light"] .empty-column { color:#9ca3af; }
+/* El kanban es SIEMPRE dark liquid glass: sin overrides de tema claro,
+   así el texto (título, fecha, curso, profesor) queda siempre legible. */
 [data-theme="light"] .dash-input { background:#fff; border-color:rgba(0,0,0,.1); color:#1e1b4b; }
 </style>
 

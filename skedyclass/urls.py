@@ -36,6 +36,7 @@ urlpatterns = [
     # Clases
     path('clases/', views.listar_clases, name='listar_clases'),
     path('clases/nueva/', views.crear_clase, name='crear_clase'),
+    path('api/clase/ia-plan/', views.clase_ia_plan, name='clase_ia_plan'),
     path('clases/editar/<int:id>/', views.editar_clase, name='editar_clase'),
     path('clases/eliminar/<int:id>/', views.eliminar_clase, name='eliminar_clase'),
     path('clases/estado/<int:id>/<str:estado>/', views.cambiar_estado_clase, name='cambiar_estado'),

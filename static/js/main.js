@@ -38,7 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initTheme() {
-    const savedTheme = prefGet('skedyclass-theme', 'light');
+    // Default 'dark': coincide con base.html (data-theme="dark"), el default
+    // del modelo ConfiguracionUsuario.tema y el diseño dark-glass de la app.
+    const savedTheme = prefGet('skedyclass-theme', 'dark');
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.body.setAttribute('data-theme', savedTheme);
 

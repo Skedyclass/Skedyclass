@@ -2013,6 +2013,153 @@ def asistente_api(request):
     return JsonResponse({'ok': False, **payload}, status=status)
 
 
+# ==================== CREAR CLASE CON IA (Plantilla 4) ====================
+
+# Methodology → tone instruction injected into the LLM prompt so the generated
+# Ficha del Estudiante / Guía del Docente matches the chosen teaching style.
+_METODOLOGIA_TONO = {
+    'normal': (
+        'Metodología NORMAL (estructura académica estándar): redacta con rigor '
+        'técnico-formal. Secuencia expositiva clásica: activación de saberes → '
+        'desarrollo conceptual → práctica guiada → cierre evaluativo.'
+    ),
+    'dinamica': (
+        'Metodología DINÁMICA (práctica y participativa): prioriza aprendizaje '
+        'activo — trabajo colaborativo, juego didáctico, manipulación y '
+        'construcción por parte del estudiante. Tono motivador pero técnico.'
+    ),
+    'mixta': (
+        'Metodología MIXTA (híbrida): equilibra un bloque teórico formal con un '
+        'bloque práctico aplicado. Articula explícitamente la transferencia '
+        'teoría → aplicación.'
+    ),
+}
+
+
+@login_required
+@rate_limit('clase_ia_plan', max_calls=8, window_sec=60)
+def clase_ia_plan(request):
+    """Genera Objetivos + Observaciones para el wizard de creación de clase.
+
+    Recibe tema, metodología, curso y día/hora; valida contra el Horario
+    Académico (jornada, solapamiento, fin de semana, fecha pasada) reusando la
+    misma lógica del formulario, y devuelve texto pedagógico alineado a la
+    Taxonomía de Bloom. No persiste nada: el guardado real lo hace crear_clase.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    tema = (data.get('tema') or '').strip()[:300]
+    metodologia = (data.get('metodologia') or 'normal').strip().lower()
+    curso_id = data.get('curso_id')
+    fecha_str = (data.get('fecha') or '').strip()
+    hora_str = (data.get('hora') or '').strip()
+
+    if not tema:
+        return JsonResponse({'ok': False, 'error': 'Indica el tema de la clase.'}, status=400)
+    if metodologia not in _METODOLOGIA_TONO:
+        return JsonResponse({'ok': False, 'error': 'Metodología no válida.'}, status=400)
+
+    try:
+        curso = Curso.objects.get(id=curso_id, usuario=request.user)
+    except (Curso.DoesNotExist, ValueError, TypeError):
+        return JsonResponse({'ok': False, 'error': 'Selecciona un curso válido.'}, status=400)
+
+    # --- Validación de día/hora (misma lógica que ClaseForm + horario) ---
+    from datetime import datetime as _dt
+    try:
+        fecha = _dt.strptime(fecha_str, '%Y-%m-%d').date()
+        hora = _dt.strptime(hora_str, '%H:%M').time()
+    except (ValueError, TypeError):
+        return JsonResponse({'ok': False, 'error': 'Día u hora con formato inválido.'}, status=400)
+
+    if fecha.weekday() >= 5:
+        return JsonResponse({'ok': False, 'error': 'No se pueden programar clases en fin de semana.'}, status=400)
+    if fecha < timezone.now().date():
+        return JsonResponse({'ok': False, 'error': 'La fecha no puede ser anterior a hoy.'}, status=400)
+    if fecha == timezone.now().date() and hora <= timezone.localtime().time():
+        return JsonResponse({'ok': False, 'error': 'La hora ya pasó. Elige una hora futura para hoy.'}, status=400)
+
+    # _validar_clase_horario usa select_for_update → debe ir dentro de atomic.
+    try:
+        with transaction.atomic():
+            ok_h, err_h = _validar_clase_horario(request.user, fecha, hora)
+        if not ok_h:
+            return JsonResponse({'ok': False, 'error': err_h}, status=400)
+    except Exception as e:
+        logger.warning('clase_ia_plan: validación horario falló: %s', e)
+
+    materia = get_user_materia(request.user) or 'General'
+    grupo = curso.nombre
+    nivel = curso.nivel_academico or 'No especificado'
+    tono = _METODOLOGIA_TONO[metodologia]
+
+    system_prompt = (
+        'Eres un asesor pedagógico experto en diseño curricular y en la '
+        'Taxonomía de Bloom revisada (Recordar, Comprender, Aplicar, Analizar, '
+        'Evaluar, Crear). Generas la planificación de una sesión de clase. '
+        f'{tono} '
+        f'La sesión es de la materia {materia}, para el grupo {grupo} '
+        f'(nivel: {nivel}). '
+        'Responde ÚNICAMENTE con un objeto JSON válido, sin markdown ni texto '
+        'extra, con esta estructura EXACTA:\n'
+        '{\n'
+        '  "objetivos": "Texto con 2 a 4 objetivos de aprendizaje redactados '
+        'con verbos de la Taxonomía de Bloom (uno por línea, con guion). '
+        'Lenguaje técnico-pedagógico.",\n'
+        '  "observaciones": "Texto con la secuencia metodológica, la '
+        'distribución de tiempo aproximada, materiales/recursos y '
+        'recomendaciones de evaluación, coherente con la metodología indicada."\n'
+        '}'
+    )
+    user_prompt = (
+        f'Tema de la clase: {tema}\n'
+        f'Materia: {materia}\nGrupo: {grupo}\nNivel: {nivel}\n'
+        f'Metodología seleccionada: {metodologia}\n'
+        'Redacta los objetivos y las observaciones para esta sesión.'
+    )
+
+    ok, payload, status = ai_generate(system_prompt, user_prompt, max_tokens=1200)
+    if not ok:
+        return JsonResponse({'ok': False, **payload}, status=status)
+
+    # El LLM puede devolver un JSON que no sea un objeto (array/string); no
+    # asumas .get sobre algo que no es dict → evita un AttributeError → 500.
+    if not isinstance(payload, dict):
+        logger.warning('clase_ia_plan: payload IA no es dict: %r', type(payload))
+        return JsonResponse(
+            {'ok': False, 'error': 'La IA devolvió un formato inesperado. Intenta de nuevo.'},
+            status=502,
+        )
+
+    objetivos = (payload.get('objetivos') or '').strip()
+    observaciones = (payload.get('observaciones') or payload.get('notas') or '').strip()
+    if not objetivos and not observaciones:
+        return JsonResponse(
+            {'ok': False, 'error': 'La IA no devolvió contenido utilizable. Intenta de nuevo.'},
+            status=502,
+        )
+
+    logger.info('clase_ia_plan OK user=%s tema="%s" metodo=%s',
+                request.user.username, tema[:60], metodologia)
+    return JsonResponse({
+        'ok': True,
+        'objetivos': objetivos[:5000],
+        'notas': observaciones[:10000],
+        'titulo': tema[:200],
+        'tipo_clase': metodologia,
+        'curso_id': curso.id,
+        'grado_nombre': curso.nombre,
+        'fecha': fecha_str,
+        'hora': hora_str,
+    })
+
+
 # ==================== AI PEDAGOGICAL LAB ====================
 
 LAB_MODOS = {

@@ -584,66 +584,81 @@ body {
     gap: 24px;
 }
 
+/* ── Modern dark-glass kanban — ÚNICA fuente de verdad.
+   Las variantes claras viven bajo [data-theme="light"]. ── */
 .kanban-column {
-    background: var(--white);
-    border-radius: var(--radius);
+    background: #0a0a0f;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.1);
     padding: 20px;
-    box-shadow: var(--shadow);
-    min-height: 350px;
+    min-height: 340px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08);
+    position: relative;
+    overflow: hidden;
 }
+.kanban-column::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 18px 18px 0 0;
+}
+.kanban-column[data-status="pending"]::before    { background: linear-gradient(90deg,#4361ee,#9d4edd); }
+.kanban-column[data-status="in_progress"]::before { background: linear-gradient(90deg,#7209b7,#e040fb); }
+.kanban-column[data-status="completed"]::before   { background: linear-gradient(90deg,#10b981,#34d399); }
 
 .kanban-header {
-    padding: 12px 16px;
-    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    border-radius: 12px;
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 0.83rem;
     margin-bottom: 16px;
-    color: white;
+    color: #fff;
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: .02em;
+    position: relative;
+    overflow: hidden;
 }
-
-.kanban-header.pending {
-    background: var(--card-yellow);
-}
-
-.kanban-header.in-progress {
-    background: var(--card-blue);
-}
-
-.kanban-header.completed {
-    background: var(--card-green);
-}
+.kanban-header.pending     { background: linear-gradient(135deg,#4361ee,#9d4edd); box-shadow: 0 4px 18px rgba(67,97,238,.4); }
+.kanban-header.in-progress { background: linear-gradient(135deg,#7209b7,#e040fb); box-shadow: 0 4px 18px rgba(114,9,183,.4); }
+.kanban-header.completed   { background: linear-gradient(135deg,#10b981,#34d399); box-shadow: 0 4px 18px rgba(16,185,129,.4); }
 
 .kanban-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-bottom: 12px;
-    border-left: 4px solid var(--primary-pink);
-    transition: all 0.2s;
+    background: #13111e;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 15px 16px;
+    margin-bottom: 10px;
+    border-left: 3px solid rgba(157,78,221,.6);
+    transition: background .2s, transform .2s, box-shadow .2s, border-color .2s;
     cursor: pointer;
 }
+.kanban-column[data-status="pending"]     .kanban-card { border-left-color: #4361ee; }
+.kanban-column[data-status="in_progress"] .kanban-card { border-left-color: #e040fb; }
+.kanban-column[data-status="completed"]   .kanban-card { border-left-color: #10b981; }
 
 .kanban-card:hover {
-    transform: translateX(4px);
-    box-shadow: var(--shadow);
+    transform: translateX(3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
 }
 
 .kanban-card h4 {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
     margin-bottom: 8px;
-    color: var(--text-dark);
+    color: #f5f3ff;
 }
 
 .kanban-card p {
     font-size: 0.85rem;
-    color: var(--text-gray);
+    color: #b0aac8;
     margin-bottom: 4px;
 }
+
+/* El kanban es SIEMPRE dark liquid glass (sin variante clara): así queda
+   legible y coherente con el resto de la app independientemente del tema. */
 
 .card-actions {
     display: flex;
@@ -1258,10 +1273,6 @@ body {
     background: var(--surface-2);
 }
 
-[data-theme="dark"] .kanban-column {
-    background: var(--surface-2);
-}
-
 [data-theme="dark"] .footer {
     background: var(--surface);
     border-top: 1px solid var(--border);
@@ -1333,15 +1344,6 @@ body {
     background: var(--surface-2);
 }
 [data-theme="dark"] .data-table td {
-    color: var(--text-dark);
-}
-
-/* ── KANBAN DARK MODE ── */
-[data-theme="dark"] .kanban-card {
-    background: rgba(40,35,75,.7);
-    border-color: rgba(255,255,255,.07);
-}
-[data-theme="dark"] .kanban-card h4 {
     color: var(--text-dark);
 }
 
@@ -1709,25 +1711,6 @@ h1, h2, h3, .page-header h1 {
     box-shadow: 0 8px 24px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.5) !important;
 }
 
-/* ── KANBAN — estilos base, sobreescritos por los inline de index.html ── */
-.kanban-column {
-    background: #0a0a0f;
-    border: 1px solid rgba(255,255,255,.1);
-}
-[data-theme="dark"] .kanban-column {
-    background: #0a0a0f;
-    border-color: rgba(255,255,255,.1);
-}
-
-.kanban-card {
-    background: #13111e;
-    border: 1px solid rgba(255,255,255,.1);
-}
-[data-theme="dark"] .kanban-card {
-    background: #13111e;
-    border-color: rgba(255,255,255,.1);
-}
-
 /* ── GLASS FORM INPUTS ── */
 .form-input, .form-select, input[type=text], input[type=email], input[type=password], textarea, select {
     font-family: 'Lora', Georgia, serif !important;
@@ -1919,18 +1902,6 @@ h1, h2, h3, .page-header h1 {
 [data-theme="dark"] .toggle-title { color: rgba(255,255,255,.85) !important; }
 [data-theme="dark"] .toggle-desc { color: rgba(255,255,255,.4) !important; }
 
-/* Kanban — dark mode limpio, sin sobrescribir los estilos inline */
-[data-theme="dark"] .kanban-column {
-    background: #0a0a0f;
-    border-color: rgba(255,255,255,.1);
-}
-[data-theme="dark"] .kanban-card {
-    background: #13111e;
-    border-color: rgba(255,255,255,.1);
-}
-[data-theme="dark"] .kanban-card h4 { color: #f5f3ff; }
-[data-theme="dark"] .kanban-card p { color: #b0aac8; }
-
 /* Stat cards — refined glass + zoom micro-interaction */
 [data-theme="dark"] .stat-card {
     border: 1px solid rgba(255,255,255,.16) !important;
@@ -2088,38 +2059,6 @@ h1, h2, h3, .page-header h1 {
     border-top: 1px solid rgba(255,255,255,.06) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
     backdrop-filter: blur(16px) !important;
-}
-
-/* Kanban card left accent by status */
-[data-theme="dark"] .kanban-column[data-status="pending"] .kanban-card {
-    border-left-color: rgba(245,158,11,.65) !important;
-}
-[data-theme="dark"] .kanban-column[data-status="in_progress"] .kanban-card {
-    border-left-color: rgba(99,102,241,.65) !important;
-}
-[data-theme="dark"] .kanban-column[data-status="completed"] .kanban-card {
-    border-left-color: rgba(16,185,129,.65) !important;
-}
-
-/* Kanban header pills */
-[data-theme="dark"] .kanban-header {
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-}
-[data-theme="dark"] .kanban-header.pending {
-    background: rgba(245,158,11,.22) !important;
-    border: 1px solid rgba(245,158,11,.3) !important;
-    color: #fbbf24 !important;
-}
-[data-theme="dark"] .kanban-header.in-progress {
-    background: rgba(99,102,241,.22) !important;
-    border: 1px solid rgba(99,102,241,.3) !important;
-    color: #818cf8 !important;
-}
-[data-theme="dark"] .kanban-header.completed {
-    background: rgba(16,185,129,.22) !important;
-    border: 1px solid rgba(16,185,129,.3) !important;
-    color: #34d399 !important;
 }
 
 /* Input focus with glass glow */

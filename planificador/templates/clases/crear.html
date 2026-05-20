@@ -79,6 +79,32 @@
 .wz-btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .wz-btn-ghost{background:rgba(255,255,255,.05);color:#c4b5fd;border:1px solid rgba(255,255,255,.12)}
 .wz-btn-ghost:hover{background:rgba(157,78,221,.14);color:#f5f3ff}
+
+/* ─── Plantilla 4: Crear clase con IA (cristal monocromático) ─── */
+.tpl-card.ia .tpl-icon{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#e9e5ff;box-shadow:none}
+.tpl-card.ia .tpl-pill{background:rgba(255,255,255,.08);color:#d4cfe8}
+.tpl-card.ia.is-selected{border-color:rgba(255,255,255,.4);box-shadow:0 14px 42px rgba(124,108,255,.22),inset 0 1px 0 rgba(255,255,255,.08);background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(157,78,221,.1))}
+
+/* ─── Sub-formulario IA (despliegue fluido) ─── */
+.ia-form{margin-top:18px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:hidden;max-height:0;opacity:0;padding:0 20px;transition:max-height .45s ease,opacity .35s ease,padding .4s ease}
+.ia-form.open{max-height:1200px;opacity:1;padding:22px 20px}
+.ia-form-title{font-size:.78rem;font-weight:800;color:#c4b5fd;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.ia-meta-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.ia-meta-opts{grid-template-columns:1fr}}
+.ia-meta-opt{position:relative}
+.ia-meta-opt input{position:absolute;opacity:0;width:0;height:0}
+.ia-meta-opt label{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(14,12,30,.5);color:#c4b5fd;cursor:pointer;transition:all .2s;font-size:.85rem;font-weight:700}
+.ia-meta-opt label small{font-size:.72rem;color:#9ca3af;font-weight:500;letter-spacing:0;text-transform:none}
+.ia-meta-opt label:hover{border-color:rgba(157,78,221,.45);color:#f5f3ff}
+.ia-meta-opt input:checked + label{background:linear-gradient(135deg,rgba(157,78,221,.24),rgba(247,37,133,.14));border-color:rgba(247,37,133,.5);color:#fff}
+.ia-err{color:#ff3d8b;font-size:.78rem;margin-top:12px;display:none}
+
+/* ─── Overlay de carga (spinner minimalista sobre negro) ─── */
+.ia-overlay{position:fixed;inset:0;z-index:11000;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px}
+.ia-overlay.show{display:flex;animation:wzFade .25s ease}
+.ia-spinner{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.12);border-top-color:#c77dff;animation:iaSpin .8s linear infinite}
+@keyframes iaSpin{to{transform:rotate(360deg)}}
+.ia-overlay p{color:#9ca3af;font-size:.85rem;font-family:'Lora',serif;letter-spacing:.02em;margin:0}
 </style>
 
 <div class="wz-wrap">
@@ -127,11 +153,66 @@
           <h3>Mixta</h3>
           <p>Combina teoría y práctica. Momentos expositivos alternados con dinámicas.</p>
         </button>
+
+        <button type="button" class="tpl-card ia" data-tipo="ia">
+          <div class="tpl-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.2L18 8.8l-4.4 1.6L12 14.6l-1.6-4.2L6 8.8l4.4-1.6z"/><path d="M19 14l.8 2.1L22 17l-2.2.9L19 20l-.8-2.1L16 17l2.2-.9z"/><path d="M6 15l.7 1.8L8.5 17.5l-1.8.7L6 20l-.7-1.8L3.5 17.5l1.8-.7z"/></svg></div>
+          <span class="tpl-pill">Asistida</span>
+          <h3>Crear clase con IA</h3>
+          <p>La IA planifica objetivos y observaciones según tu tema y metodología.</p>
+        </button>
+      </div>
+
+      <!-- Sub-formulario IA — se despliega al elegir la plantilla 4 -->
+      <div class="ia-form" id="iaForm" aria-hidden="true">
+        <div class="ia-form-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.2L18 8.8l-4.4 1.6L12 14.6l-1.6-4.2L6 8.8l4.4-1.6z"/></svg>
+          Datos para que la IA planifique la sesión
+        </div>
+        <div class="wz-grid">
+          <div class="wz-field">
+            <label>Grupo / Curso *</label>
+            <select id="ia_curso">
+              {% for curso in cursos %}
+              <option value="{{ curso.id }}" data-grado="{{ curso.nombre }}">{{ curso.nombre }}{% if curso.nivel_academico %} — {{ curso.nivel_academico }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="wz-field">
+            <label>Tema de la clase *</label>
+            <input type="text" id="ia_tema" placeholder="Ej: Ecuaciones de primer grado" maxlength="300">
+          </div>
+          <div class="wz-field">
+            <label>Día *</label>
+            <input type="date" id="ia_fecha">
+          </div>
+          <div class="wz-field">
+            <label>Hora *</label>
+            <input type="time" id="ia_hora">
+          </div>
+          <div class="wz-field wz-full">
+            <label>Metodología de la clase *</label>
+            <div class="ia-meta-opts">
+              <div class="ia-meta-opt">
+                <input type="radio" name="ia_metodologia" id="iam_dinamica" value="dinamica">
+                <label for="iam_dinamica">Dinámica <small>Actividades prácticas y participativas</small></label>
+              </div>
+              <div class="ia-meta-opt">
+                <input type="radio" name="ia_metodologia" id="iam_mixta" value="mixta">
+                <label for="iam_mixta">Mixta <small>Balance teoría formal y aplicación</small></label>
+              </div>
+              <div class="ia-meta-opt">
+                <input type="radio" name="ia_metodologia" id="iam_normal" value="normal" checked>
+                <label for="iam_normal">Normal <small>Estructura académica estándar</small></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ia-err" id="iaErr"></div>
       </div>
 
       <div class="wz-nav">
         <span></span>
-        <button type="button" class="wz-btn wz-btn-primary" onclick="wzGo(2)">
+        <button type="button" class="wz-btn wz-btn-primary" id="wzStep1Btn" onclick="wzStep1Next()">
           Siguiente
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
@@ -268,6 +349,11 @@
 
   </form>
 </div>
+
+<div class="ia-overlay" id="iaOverlay" role="status" aria-live="polite">
+  <div class="ia-spinner" aria-hidden="true"></div>
+  <p>Planificando tu clase con IA…</p>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -309,9 +395,110 @@ function wzApplyPlantilla(tipo, force){
 }
 
 /* ── Step 1: template card click ── */
+var WZ_IA_MODE = false;
+
+function wzSelectIa(){
+  WZ_IA_MODE = true;
+  document.querySelectorAll('.tpl-card').forEach(function(c){
+    c.classList.toggle('is-selected', c.dataset.tipo === 'ia');
+  });
+  var f = document.getElementById('iaForm');
+  f.classList.add('open');
+  f.setAttribute('aria-hidden', 'false');
+}
+
 document.querySelectorAll('.tpl-card').forEach(function(card){
-  card.addEventListener('click', function(){ wzApplyPlantilla(this.dataset.tipo, false); });
+  card.addEventListener('click', function(){
+    var tipo = this.dataset.tipo;
+    if (tipo === 'ia') { wzSelectIa(); return; }
+    WZ_IA_MODE = false;
+    var f = document.getElementById('iaForm');
+    f.classList.remove('open');
+    f.setAttribute('aria-hidden', 'true');
+    wzApplyPlantilla(tipo, false);
+  });
 });
+
+/* ── Step 1 "Siguiente": ruta normal vs flujo IA ── */
+function wzStep1Next(){
+  if (WZ_IA_MODE) { wzRunIa(); }
+  else { wzGo(2); }
+}
+
+function _csrf(){
+  var el = document.querySelector('#wizardForm [name=csrfmiddlewaretoken]');
+  return el ? el.value : '';
+}
+
+function wzRunIa(){
+  var err = document.getElementById('iaErr');
+  err.style.display = 'none';
+  var curso = document.getElementById('ia_curso');
+  var tema = document.getElementById('ia_tema').value.trim();
+  var fecha = document.getElementById('ia_fecha').value;
+  var hora = document.getElementById('ia_hora').value;
+  var metoEl = document.querySelector('input[name="ia_metodologia"]:checked');
+  var meto = metoEl ? metoEl.value : '';
+
+  function fail(msg){ err.textContent = msg; err.style.display = 'block'; }
+
+  if (!curso || !curso.value) { return fail('Selecciona un grupo / curso.'); }
+  if (!tema) { return fail('Escribe el tema de la clase.'); }
+  if (!fecha) { return fail('Indica el día de la clase.'); }
+  if (!hora) { return fail('Indica la hora de la clase.'); }
+  if (!meto) { return fail('Elige una metodología.'); }
+  // Bloqueo de fin de semana (validación de UX; el backend revalida)
+  var wd = new Date(fecha + 'T00:00:00').getDay();
+  if (wd === 0 || wd === 6) { return fail('No se pueden programar clases en fin de semana.'); }
+
+  var btn = document.getElementById('wzStep1Btn');
+  var overlay = document.getElementById('iaOverlay');
+  btn.disabled = true;
+  overlay.classList.add('show');
+
+  fetch("{% url 'clase_ia_plan' %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrf() },
+    body: JSON.stringify({
+      tema: tema, metodologia: meto, curso_id: curso.value,
+      fecha: fecha, hora: hora
+    })
+  })
+  .then(function(r){ return r.json().then(function(j){ return { status: r.status, body: j }; }); })
+  .then(function(res){
+    var d = res.body || {};
+    if (!res.status || res.status >= 400 || !d.ok) {
+      throw new Error(d.error || 'No se pudo generar la planificación. Intenta de nuevo.');
+    }
+    // Pre-cargar Paso 2 (objetivos / observaciones — editables)
+    document.getElementById('f_tipo_clase').value = d.tipo_clase || 'normal';
+    var tituloEl = document.querySelector('input[name="titulo"]');
+    if (tituloEl) tituloEl.value = d.titulo || tema;
+    var fechaEl = document.querySelector('input[name="fecha"]');
+    if (fechaEl) fechaEl.value = d.fecha || fecha;
+    var horaEl = document.querySelector('input[name="hora"]');
+    if (horaEl) horaEl.value = d.hora || hora;
+    // Marca 'ia' (no '1'): wzApplyPlantilla solo auto-sobrescribe lo marcado
+    // como '1', así el texto generado por IA queda "pegajoso" y no se pierde
+    // si el docente vuelve al Paso 1 y toca otra plantilla.
+    var obj = document.querySelector('textarea[name="objetivos"]');
+    if (obj) { obj.value = d.objetivos || ''; obj.dataset.wzAuto = 'ia'; }
+    var notas = document.querySelector('textarea[name="notas"]');
+    if (notas) { notas.value = d.notas || ''; notas.dataset.wzAuto = 'ia'; }
+    // Pre-cargar Paso 3 (curso/grado capturado)
+    var radio = document.querySelector('[name="_curso_sel"][value="' + d.curso_id + '"]');
+    if (radio) { radio.checked = true; document.getElementById('f_grado').value = radio.dataset.grado || d.grado_nombre || ''; }
+    else { document.getElementById('f_grado').value = d.grado_nombre || ''; }
+    overlay.classList.remove('show');
+    btn.disabled = false;
+    wzGo(2);
+  })
+  .catch(function(e){
+    overlay.classList.remove('show');
+    btn.disabled = false;
+    fail(e.message || 'Error al contactar la IA. Intenta de nuevo.');
+  });
+}
 
 /* ── Step 3: curso → grado sync ── */
 document.querySelectorAll('[name="_curso_sel"]').forEach(function(radio){
