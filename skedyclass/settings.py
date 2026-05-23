@@ -142,6 +142,7 @@ try:
     ACCOUNT_LOGIN_METHODS = {'username', 'email'}
     LOGIN_REDIRECT_URL = '/dashboard/'
     ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+    SOCIALACCOUNT_CONNECT_REDIRECT_URL = '/ajustes/?s=google_calendar'
 except ImportError:
     pass
 
