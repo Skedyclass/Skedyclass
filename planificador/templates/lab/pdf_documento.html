@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>{{ data.titulo|default:ctx.modo_label }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 1.8cm 1.6cm 1.8cm 1.6cm;
+    @frame footer_frame {
+      -pdf-frame-content: footer_content;
+      left: 1.6cm; right: 1.6cm; bottom: 0.9cm; height: 0.8cm;
+    }
+  }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; color: #000; line-height: 1.5; }
+  /* Page break helpers para tablas extensas y bloques que no deben cortarse */
+  .keep-together { page-break-inside: avoid; -fs-table-paginate: paginate; }
+  .new-page { page-break-before: always; }
+  table.matriz { page-break-inside: auto; -fs-table-paginate: paginate; }
+  table.matriz thead { display: table-header-group; }  /* repite headers en cada página */
+  table.matriz tr { page-break-inside: avoid; page-break-after: auto; }
+  .seccion-roman {
+    margin: 16pt 0 6pt 0;
+    padding: 6pt 10pt;
+    background-color: #1a1a1a;
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+    font-size: 11pt;
+    page-break-after: avoid;
+  }
+  .seccion-roman .num { display: inline-block; margin-right: 8pt; padding-right: 8pt; border-right: 1pt solid #888; }
+  .bloque-conceptual {
+    padding: 8pt 10pt;
+    background-color: #f5f5f5;
+    border-left: 2.5pt solid #444;
+    margin-bottom: 6pt;
+    font-size: 10pt;
+    line-height: 1.55;
+    text-align: justify;
+  }
+  .momento-block {
+    border: 0.5pt solid #555;
+    padding: 8pt 10pt;
+    margin-bottom: 8pt;
+    page-break-inside: avoid;
+  }
+  .momento-head {
+    display: block;
+    border-bottom: 0.5pt solid #888;
+    padding-bottom: 3pt;
+    margin-bottom: 5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 9.5pt;
+    letter-spacing: 0.4pt;
+  }
+  .momento-head .min { float: right; font-weight: normal; }
+  .sub-label {
+    display: block;
+    margin: 6pt 0 3pt 0;
+    font-weight: bold;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    color: #333;
+  }
+  ol.pasos-doc { margin: 4pt 0 6pt 18pt; }
+  ol.pasos-doc li { margin-bottom: 3pt; font-size: 10pt; }
+  .matriz td.eje { font-weight: bold; background-color: #f0f0f0; text-transform: uppercase; font-size: 9pt; letter-spacing: 0.3pt; }
+  .alcance-badge {
+    display: inline-block;
+    padding: 1pt 6pt;
+    font-size: 8.5pt;
+    font-weight: bold;
+    border: 0.5pt solid #444;
+    text-transform: uppercase;
+  }
+  .doc-header { border-bottom: 1pt solid #000; padding-bottom: 6pt; margin-bottom: 10pt; }
+  .doc-tag { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.4pt; color: #333; }
+  .doc-title { font-size: 15pt; font-weight: bold; margin: 4pt 0 2pt 0; }
+  .doc-meta { font-size: 9pt; color: #444; }
+  table.meta { width: 100%; border-collapse: collapse; margin: 8pt 0 14pt 0; }
+  table.meta td {
+    border: 0.4pt solid #555; padding: 4pt 6pt; font-size: 9pt; vertical-align: top;
+  }
+  table.meta td.k { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.3pt; width: 14%; }
+  h2.section-h {
+    font-size: 11pt; margin: 12pt 0 5pt 0; padding: 4pt 8pt;
+    background-color: #ececec; border-left: 3pt solid #000;
+    text-transform: uppercase; letter-spacing: 0.5pt;
+  }
+  ul, ol { margin: 4pt 0 8pt 18pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  .item {
+    border: 0.4pt solid #888; padding: 6pt 8pt; margin-bottom: 6pt;
+    page-break-inside: avoid;
+  }
+  .item .num { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.3pt; color: #444; }
+  .item .enun { font-weight: bold; margin: 2pt 0 4pt 0; }
+  .opts { margin: 3pt 0 0 0; }
+  .opts .opt { padding: 2pt 4pt; font-size: 10pt; }
+  .opts .opt.correct {
+    background-color: #e0f0e0; border-left: 2pt solid #2a7a2a; font-weight: bold;
+  }
+  .just { background-color: #f5f5f5; border-left: 2pt solid #555;
+          padding: 4pt 7pt; margin-top: 4pt; font-size: 9pt; }
+  .momentos { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+  .momentos th, .momentos td {
+    border: 0.5pt solid #555; padding: 5pt 7pt; font-size: 9.5pt; vertical-align: top;
+  }
+  .momentos th { background-color: #ececec; text-transform: uppercase;
+    letter-spacing: 0.3pt; font-size: 8.5pt; }
+  .momentos td.bloque {
+    width: 16%; font-weight: bold; text-transform: uppercase; background-color: #f7f7f7;
+  }
+  .momentos td.min { width: 10%; text-align: center; font-weight: bold; }
+  #footer_content { text-align: center; font-size: 8pt; color: #555;
+    border-top: 0.3pt solid #999; padding-top: 3pt; }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="doc-tag">{{ ctx.modo_label }}</div>
+  <div class="doc-title">{{ data.titulo|default:ctx.modo_label }}</div>
+  <div class="doc-meta">Docente: {{ ctx.docente }} · Emitido el {{ ctx.fecha|date:"d/m/Y" }}</div>
+</div>
+
+<table class="meta">
+  <tr>
+    <td class="k">Materia</td><td>{{ ctx.materia|default:"—" }}</td>
+    <td class="k">Grado</td><td>{{ ctx.grado|default:"—" }}</td>
+    <td class="k">Tema</td><td>{{ ctx.tema|default:"—" }}</td>
+  </tr>
+</table>
+
+{% if modo == 'guia' %}
+
+  {# ═══ Parte I — Marco Conceptual y Fundamentación ═══ #}
+  <div class="seccion-roman"><span class="num">I</span>Marco Conceptual y Fundamentación</div>
+
+  {% if data.introduccion_narrativa %}
+  <div class="keep-together">
+    <p style="font-weight:bold;font-size:9pt;text-transform:uppercase;letter-spacing:.4pt;margin:8pt 0 4pt">Introducción</p>
+    <div class="bloque-conceptual" style="white-space:pre-wrap">{{ data.introduccion_narrativa }}</div>
+  </div>
+  {% endif %}
+
+  {% if data.definicion_tecnica %}
+  <div class="keep-together">
+    <p style="font-weight:bold;font-size:9pt;text-transform:uppercase;letter-spacing:.4pt;margin:10pt 0 4pt">Definición técnica</p>
+    <div class="bloque-conceptual" style="white-space:pre-wrap">{{ data.definicion_tecnica }}</div>
+  </div>
+  {% endif %}
+
+  {% if data.utilidad_vida_real %}
+  <div class="keep-together">
+    <p style="font-weight:bold;font-size:9pt;text-transform:uppercase;letter-spacing:.4pt;margin:10pt 0 4pt">Utilidad en la vida real</p>
+    <div class="bloque-conceptual" style="white-space:pre-wrap">{{ data.utilidad_vida_real }}</div>
+  </div>
+  {% endif %}
+
+  {# ═══ Parte II — Desarrollo Teórico Profundo ═══ #}
+  {% if data.desarrollo_teorico %}
+  <div class="seccion-roman new-page"><span class="num">II</span>Desarrollo Teórico Profundo</div>
+  <div class="bloque-conceptual" style="white-space:pre-wrap">{{ data.desarrollo_teorico }}</div>
+  {% endif %}
+
+  {% if data.representaciones %}
+    <p style="font-weight:bold;font-size:9pt;text-transform:uppercase;letter-spacing:.4pt;margin:10pt 0 6pt">Representaciones y esquemas</p>
+    {% for r in data.representaciones %}
+    <div class="keep-together" style="margin-bottom:8pt;padding:8pt 10pt;background:#f8f8f8;border:0.5pt solid #888;border-left:2.5pt solid #333;font-family:'Courier New',monospace;font-size:9pt;white-space:pre-wrap;line-height:1.5">{{ r }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {# ═══ Parte III — Ejemplificaciones Graduales ═══ #}
+  <div class="seccion-roman new-page"><span class="num">III</span>Ejemplificaciones Graduales</div>
+
+  {% if data.ejemplos_introductorios %}
+    <p style="font-weight:bold;font-size:10pt;margin:6pt 0 10pt">Ejemplos Introductorios</p>
+    {% for ex in data.ejemplos_introductorios %}
+    <div class="momento-block keep-together">
+      <span class="momento-head">Ejemplo {{ forloop.counter }}</span>
+      <p style="font-weight:bold;margin:0 0 6pt;font-size:10pt">{{ ex.enunciado }}</p>
+      <span class="sub-label">Resolución paso a paso</span>
+      <div style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:9.5pt;line-height:1.6;padding:6pt 8pt;background:#f5f5f5;border-left:2pt solid #555">{{ ex.resolucion }}</div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if data.ejemplos_avanzados %}
+    <p style="font-weight:bold;font-size:10pt;margin:12pt 0 10pt">Ejemplos Avanzados</p>
+    {% for ex in data.ejemplos_avanzados %}
+    <div class="momento-block keep-together">
+      <span class="momento-head">Ejemplo Avanzado {{ forloop.counter }}</span>
+      <p style="font-weight:bold;margin:0 0 6pt;font-size:10pt">{{ ex.enunciado }}</p>
+      <span class="sub-label">Resolución completa</span>
+      <div style="white-space:pre-wrap;font-family:'Courier New',monospace;font-size:9.5pt;line-height:1.6;padding:6pt 8pt;background:#f5f5f5;border-left:2pt solid #555">{{ ex.resolucion }}</div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {# ═══ Parte IV — Matriz Analítica de Lectura ═══ #}
+  {% with matriz=data.matriz_analitica|default:data.parte4_matriz_analitica %}
+  {% if matriz %}
+  <div class="seccion-roman new-page"><span class="num">IV</span>Matriz Analítica de Lectura</div>
+  <table class="matriz">
+    <thead>
+      <tr>
+        <th style="width:20%">Dimensión</th>
+        <th style="width:42%">Pregunta de lectura</th>
+        <th>Indicador de respuesta</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in matriz %}
+      <tr>
+        <td class="eje">{{ row.dimension|default:"—" }}</td>
+        <td>{{ row.pregunta_lectura|default:"—" }}</td>
+        <td>{{ row.indicador_respuesta|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% endwith %}
+
+  {# ═══ Bibliografía ═══ #}
+  {% if data.bibliografia %}
+    <h2 class="section-h">Bibliografía</h2>
+    <ul>{% for b in data.bibliografia %}<li>{{ b }}</li>{% endfor %}</ul>
+  {% endif %}
+
+{% elif modo == 'quiz' %}
+  <h2 class="section-h">Evaluación Diagnóstica</h2>
+  {% for q in data.preguntas %}
+    <div class="item">
+      <div class="num">Ítem {{ forloop.counter }}</div>
+      <div class="enun">{{ q.enunciado }}</div>
+      <div class="opts">
+        {% for o in q.opciones %}
+          <div class="opt{% if forloop.counter0 == q.correcta %} correct{% endif %}">
+            {{ forloop.counter0|add:65|stringformat:"c" }}) {{ o }}
+            {% if forloop.counter0 == q.correcta %} · CORRECTA{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      {% if q.justificacion %}
+        <div class="just"><strong>Justificación:</strong> {{ q.justificacion }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+{% elif modo == 'refuerzo' %}
+  {% if data.introduccion %}
+    <p>{{ data.introduccion }}</p>
+  {% endif %}
+  <h2 class="section-h">Taller de Profundización</h2>
+  {% for e in data.ejercicios %}
+    <div class="item">
+      <div class="num">Problema {{ forloop.counter }}</div>
+      <div class="enun">{{ e.enunciado }}</div>
+      {% if e.pista %}<p><em>Orientación metodológica:</em> {{ e.pista }}</p>{% endif %}
+      {% if e.solucion %}
+        <div class="just"><strong>Desarrollo guiado:</strong> {{ e.solucion }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+{% elif modo == 'desafio' %}
+  <h2 class="section-h">Problema de Alta Complejidad</h2>
+  <div class="item">
+    <div class="enun">{{ data.problema }}</div>
+    {% if data.pistas %}
+      <p><strong>Orientaciones:</strong></p>
+      <ol>{% for p in data.pistas %}<li>{{ p }}</li>{% endfor %}</ol>
+    {% endif %}
+    {% if data.solucion_detallada %}
+      <div class="just"><strong>Solución razonada para el docente:</strong><br>{{ data.solucion_detallada|linebreaksbr }}</div>
+    {% endif %}
+  </div>
+{% endif %}
+
+<div id="footer_content">
+  SkedyClass · {{ ctx.modo_label }} · {{ ctx.docente }} · {{ ctx.fecha|date:"d/m/Y H:i" }}
+</div>
+
+</body>
+</html>

@@ -2,7 +2,7 @@ from datetime import time
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 
@@ -155,22 +155,45 @@ class ConfiguracionUsuario(models.Model):
         return ', '.join(g.nombre for g in self.grados.all()) or '—'
 
 
+def _recurso_upload_path(instance, filename):
+    """Storage path namespaceado por usuario para evitar mezcla de archivos
+    entre docentes y facilitar auditoría forense.
+    Resultado: recursos/u<user_id>/YYYY/MM/<filename>
+    """
+    import datetime as _dt
+    uid = instance.usuario_id or 0
+    now = _dt.datetime.now()
+    return f'recursos/u{uid}/{now.year:04d}/{now.month:02d}/{filename}'
+
+
 class Recurso(models.Model):
     TIPO_CHOICES = [
         ('documento', 'Documento / PDF'),
         ('video', 'Enlace de Video'),
         ('imagen', 'Imagen'),
         ('taller', 'Taller / Actividad'),
+        ('guia', 'Guía Metodológica'),
+        ('imagen_ia', 'Imagen generada por IA'),
+        ('plan_pdf', 'Plan de clase (PDF)'),
+        ('quiz', 'Evaluación Diagnóstica'),
         ('otro', 'Otro'),
     ]
 
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recursos')
     clase = models.ForeignKey(Clase, on_delete=models.SET_NULL, null=True, blank=True, related_name='recursos')
+    curso = models.ForeignKey(
+        Curso, on_delete=models.SET_NULL, null=True, blank=True, related_name='recursos',
+        help_text='Curso/grado asociado — respeta la separación estricta de grupos.'
+    )
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='documento')
-    archivo = models.FileField(upload_to='recursos/%Y/%m/', blank=True, null=True)
+    archivo = models.FileField(upload_to=_recurso_upload_path, blank=True, null=True)
     url_video = models.URLField(max_length=500, blank=True)
+    prompt_origen = models.TextField(
+        blank=True,
+        help_text='Prompt usado para generar el recurso (imágenes IA / guías).'
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -190,6 +213,45 @@ class Recurso(models.Model):
     def extension(self):
         name = self.nombre_archivo()
         return name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+
+    def descarga_filename(self):
+        """Construye un nombre limpio para la descarga forzada:
+        Recurso_<Tipo>_<Curso>_<Tema>.<ext>
+        """
+        import re
+        tipo_map = {
+            'guia': 'Guia',
+            'imagen_ia': 'Imagen',
+            'plan_pdf': 'PlanClase',
+            'documento': 'Documento',
+            'taller': 'Taller',
+            'imagen': 'Imagen',
+            'quiz': 'Evaluacion',
+            'video': 'Video',
+            'otro': 'Recurso',
+        }
+        tipo_lbl = tipo_map.get(self.tipo, 'Recurso')
+        curso_lbl = ''
+        if self.curso:
+            curso_lbl = (self.curso.nivel_academico or self.curso.nombre or '').strip()
+        elif self.clase and self.clase.grado_nombre:
+            curso_lbl = self.clase.grado_nombre
+        tema = (self.titulo or 'recurso').strip()
+
+        def _slug(s):
+            s = re.sub(r'[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+', '_', s).strip('_')
+            return s or 'sin_titulo'
+
+        partes = ['Recurso', tipo_lbl]
+        if curso_lbl:
+            partes.append(_slug(curso_lbl))
+        partes.append(_slug(tema))
+        ext = self.extension() or ('pdf' if self.tipo in ('guia', 'plan_pdf', 'documento', 'taller') else 'png')
+        # Sufijo con el ID del recurso para garantizar unicidad en el nombre
+        # que ve el docente al descargar — dos recursos con mismo título/grado
+        # ya no se confunden como "archivo (1).pdf" en la bandeja del navegador.
+        base = '_'.join(partes)[:110]
+        return f'{base}_{self.id}.{ext}'
 
 
 class HorarioAcademico(models.Model):
@@ -228,3 +290,21 @@ class BloqueDescanso(models.Model):
 def crear_configuracion_usuario(sender, instance, created, **kwargs):
     if created:
         ConfiguracionUsuario.objects.get_or_create(usuario=instance)
+
+
+@receiver(pre_delete, sender=Recurso)
+def limpiar_archivo_recurso(sender, instance, **kwargs):
+    """Borra el blob físico cuando se elimina un Recurso por cualquier vía
+    (cascada del User, queryset.delete(), admin, comandos de gestión).
+    El controlador `eliminar_recurso` ya lo hace explícitamente; este signal
+    cubre los casos que pasan por debajo: borrado en cascada y bulk operations.
+    Errores en el storage NO bloquean el borrado de la fila — solo se loguean."""
+    if instance.archivo:
+        try:
+            instance.archivo.delete(save=False)
+        except Exception:
+            # Storage falló o el archivo ya no existía: no bloqueamos el borrado.
+            import logging as _logging
+            _logging.getLogger('planificador').warning(
+                'No se pudo borrar el archivo físico del Recurso id=%s', instance.pk,
+            )

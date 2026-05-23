@@ -40,6 +40,10 @@ urlpatterns = [
     path('clases/editar/<int:id>/', views.editar_clase, name='editar_clase'),
     path('clases/eliminar/<int:id>/', views.eliminar_clase, name='eliminar_clase'),
     path('clases/estado/<int:id>/<str:estado>/', views.cambiar_estado_clase, name='cambiar_estado'),
+    path('clases/<int:id>/pdf/', views.clase_pdf, name='clase_pdf'),
+    path('clases/ver/<int:id>/', views.ver_clase, name='ver_clase'),
+    path('api/clases/<int:id>/pdf/guardar/', views.clase_pdf_guardar, name='clase_pdf_guardar'),
+    path('api/clases/<int:clase_id>/vincular-recurso/', views.vincular_recurso_clase, name='vincular_recurso_clase'),
 
     # Registro y bienvenida
     path('registro/', views.registro, name='registro'),
@@ -55,6 +59,8 @@ urlpatterns = [
     path('recursos/', views.listar_recursos, name='listar_recursos'),
     path('recursos/nuevo/', views.crear_recurso, name='crear_recurso'),
     path('recursos/eliminar/<int:id>/', views.eliminar_recurso, name='eliminar_recurso'),
+    path('recursos/<int:id>/descargar/', views.descargar_recurso, name='descargar_recurso'),
+    path('recursos/<int:id>/ver/', views.inline_recurso, name='inline_recurso'),
 
     # Notas
     path('notas/', views.notas, name='notas'),
@@ -77,6 +83,7 @@ urlpatterns = [
     path('lab/', views.lab, name='lab'),
     path('api/lab/', views.lab_api, name='lab_api'),
     path('api/lab/guardar/', views.lab_guardar_recurso, name='lab_guardar_recurso'),
+    path('api/lab/guardar-pdf/', views.lab_guardar_documento, name='lab_guardar_documento'),
     path('api/lab/plantilla/', views.lab_upload_plantilla, name='lab_upload_plantilla'),
     path('api/lab/plantilla/borrar/', views.lab_borrar_plantilla, name='lab_borrar_plantilla'),
 

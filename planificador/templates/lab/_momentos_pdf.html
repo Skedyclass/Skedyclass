@@ -1,0 +1,80 @@
+{# Partial: renderiza los tres momentos. Recibe `seq` con keys inicio/desarrollo/cierre. #}
+{% if seq.inicio or seq.desarrollo or seq.cierre %}
+<div class="seccion-roman"><span class="num">III</span>Secuencia Didáctica — Los Tres Momentos</div>
+
+  {% if seq.inicio %}
+  <div class="momento-block">
+    <span class="momento-head">{{ seq.inicio.denominacion|default:"Inicio — Apertura" }} <span class="min">{{ seq.inicio.duracion_min|default:"—" }} min</span></span>
+    {% if seq.inicio.estrategia %}<div class="bloque-conceptual">{{ seq.inicio.estrategia }}</div>{% endif %}
+    {% if seq.inicio.preguntas_detonantes %}
+      <span class="sub-label">Preguntas detonantes</span>
+      <ul>{% for p in seq.inicio.preguntas_detonantes %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if seq.inicio.dilema %}
+      <span class="sub-label">Dilema inicial</span>
+      <p style="margin:0">{{ seq.inicio.dilema }}</p>
+    {% endif %}
+    {% if seq.inicio.actividades %}
+      <span class="sub-label">Actividades</span>
+      <ul>{% for a in seq.inicio.actividades %}<li>{{ a }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if seq.inicio.recursos_aula %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.inicio.recursos_aula %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% elif seq.inicio.recursos %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.inicio.recursos %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if seq.desarrollo %}
+  <div class="momento-block">
+    <span class="momento-head">{{ seq.desarrollo.denominacion|default:"Desarrollo — Conceptualización y aplicación" }} <span class="min">{{ seq.desarrollo.duracion_min|default:"—" }} min</span></span>
+    {% if seq.desarrollo.explicacion_conceptual %}
+      <span class="sub-label">Explicación conceptual</span>
+      <div class="bloque-conceptual">{{ seq.desarrollo.explicacion_conceptual }}</div>
+    {% endif %}
+    {% if seq.desarrollo.guia_metodologica_docente %}
+      <span class="sub-label">Guía metodológica para el docente</span>
+      <ol class="pasos-doc">{% for p in seq.desarrollo.guia_metodologica_docente %}<li>{{ p }}</li>{% endfor %}</ol>
+    {% endif %}
+    {% if seq.desarrollo.actividades_estudiante %}
+      <span class="sub-label">Actividades del estudiante</span>
+      <ul>{% for a in seq.desarrollo.actividades_estudiante %}<li>{{ a }}</li>{% endfor %}</ul>
+    {% elif seq.desarrollo.actividades %}
+      <span class="sub-label">Actividades del estudiante</span>
+      <ul>{% for a in seq.desarrollo.actividades %}<li>{{ a }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if seq.desarrollo.recursos_aula %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.desarrollo.recursos_aula %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% elif seq.desarrollo.recursos %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.desarrollo.recursos %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if seq.cierre %}
+  <div class="momento-block">
+    <span class="momento-head">{{ seq.cierre.denominacion|default:"Cierre — Transferencia y metacognición" }} <span class="min">{{ seq.cierre.duracion_min|default:"—" }} min</span></span>
+    {% if seq.cierre.transferencia %}<div class="bloque-conceptual">{{ seq.cierre.transferencia }}</div>{% endif %}
+    {% if seq.cierre.metacognicion %}
+      <span class="sub-label">Preguntas metacognitivas</span>
+      <ul>{% for p in seq.cierre.metacognicion %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if seq.cierre.actividades %}
+      <span class="sub-label">Actividades de cierre</span>
+      <ul>{% for a in seq.cierre.actividades %}<li>{{ a }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if seq.cierre.recursos_aula %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.cierre.recursos_aula %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% elif seq.cierre.recursos %}
+      <span class="sub-label">Recursos de aula</span>
+      <ul>{% for r in seq.cierre.recursos %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  {% endif %}
+{% endif %}

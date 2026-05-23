@@ -50,23 +50,31 @@
 .cl-card-info{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#9ca3af;margin-bottom:4px}
 .cl-card-info svg{opacity:.6;flex-shrink:0}
 
-/* Card footer */
-.cl-card-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 16px;border-top:1px solid rgba(255,255,255,.06);gap:10px;flex-wrap:wrap}
+/* Card footer — column layout para que status quede arriba y la fila de
+   acciones pueda hacer wrap a ancho completo sin colisionar con el badge */
+.cl-card-footer{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px 14px;border-top:1px solid rgba(255,255,255,.06);box-sizing:border-box;min-width:0}
 
-/* Status badge */
-.cl-status{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:50px;font-size:.72rem;font-weight:800}
+/* Status badge — fijo arriba a la izquierda, no estira */
+.cl-status{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:4px 11px;border-radius:50px;font-size:.72rem;font-weight:800;flex-shrink:0}
 .cl-status.pending{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
 .cl-status.in_progress{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
 .cl-status.completed{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
 
-/* Action buttons */
-.cl-card-actions{display:flex;gap:6px;align-items:center}
-.cl-act{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:'Lora',serif;transition:opacity .15s,transform .12s}
+/* Action buttons — flex-wrap obligatorio: si no caben en una línea, bajan
+   ordenadamente a una segunda. white-space:nowrap impide que cada botón se
+   parta y rompa la grilla. */
+.cl-card-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;box-sizing:border-box;min-width:0}
+.cl-card-actions form{margin:0;display:inline-flex}
+.cl-act{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:'Lora',serif;transition:opacity .15s,transform .12s;white-space:nowrap;flex-shrink:0}
 .cl-act:hover{opacity:.8;transform:translateY(-1px)}
 .cl-act-edit{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
 .cl-act-del{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
 .cl-act-start{background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.2)}
 .cl-act-done{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.2)}
+.cl-act-pdf{background:transparent;color:#c4b5fd;border:1px solid rgba(157,78,221,.4)}
+.cl-act-pdf:hover{background:rgba(157,78,221,.12);color:#f5f3ff;border-color:rgba(157,78,221,.7)}
+.cl-act-save{background:rgba(16,185,129,.08);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+.cl-act-save:hover{background:rgba(16,185,129,.18);color:#ecfdf5}
 
 /* Empty state */
 .cl-empty{position:relative;background:rgba(10,8,24,.45);border-radius:20px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(157,78,221,.2);box-shadow:0 12px 44px rgba(0,0,0,.4);text-align:center;padding:64px 32px}
@@ -106,7 +114,7 @@
   <div class="cl-card">
     <div class="cl-card-line {{ clase.estado }}"></div>
     <div class="cl-card-body">
-      <div class="cl-card-title" title="{{ clase.titulo }}">{{ clase.titulo }}</div>
+      <a href="{% url 'ver_clase' clase.id %}" class="cl-card-title" title="Ver detalle: {{ clase.titulo }}" style="display:block;text-decoration:none;color:inherit;cursor:pointer">{{ clase.titulo }}</a>
       <div class="cl-card-meta">
         {% if clase.materia %}<span class="cl-meta-tag cl-meta-materia">{{ clase.materia }}</span>{% endif %}
         {% if clase.grado_nombre %}<span class="cl-meta-tag cl-meta-grado">{{ clase.grado_nombre }}</span>{% endif %}
@@ -135,6 +143,17 @@
         {% if clase.estado != 'completed' %}
         <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-done" style="font:inherit;cursor:pointer">✓</button></form>
         {% endif %}
+        <a href="{% url 'ver_clase' clase.id %}" class="cl-act cl-act-edit" title="Ver detalle de la clase">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Ver
+        </a>
+        <a href="{% url 'clase_pdf' clase.id %}" class="cl-act cl-act-pdf" title="Descargar plan de clase en PDF">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          PDF
+        </a>
+        <button type="button" class="cl-act cl-act-save" title="Guardar plan en Recursos" onclick="guardarClaseEnRecursos({{ clase.id }}, this)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        </button>
         <a href="{% url 'editar_clase' clase.id %}" class="cl-act cl-act-edit">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Editar
@@ -174,4 +193,30 @@
   </a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function _csrf(){
+  var m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+async function guardarClaseEnRecursos(claseId, btn){
+  btn.disabled = true;
+  if (window.showToast) window.showToast('Generando PDF del plan de clase…', 'info');
+  try {
+    var resp = await fetch('/api/clases/' + claseId + '/pdf/guardar/', {
+      method: 'POST',
+      headers: {'X-CSRFToken': _csrf()},
+    });
+    var json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Error al guardar');
+    if (window.showToast) window.showToast('Plan guardado en Recursos: ' + (json.filename || 'PDF'), 'success');
+  } catch(e){
+    if (window.showToast) window.showToast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
 {% endblock %}

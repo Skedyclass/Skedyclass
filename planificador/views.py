@@ -235,7 +235,7 @@ def _strip_json_fences(raw):
     return raw
 
 
-def _groq_generate(system_prompt, user_prompt, max_tokens):
+def _groq_generate(system_prompt, user_prompt, max_tokens, temperature=0.7):
     import json as _json
     from django.conf import settings as _settings
 
@@ -245,16 +245,23 @@ def _groq_generate(system_prompt, user_prompt, max_tokens):
 
     try:
         from groq import Groq, AuthenticationError, RateLimitError, BadRequestError, APIConnectionError
+        # APITimeoutError no existe en todas las versiones del SDK; fallback a TimeoutError
+        try:
+            from groq import APITimeoutError as _GroqTimeoutError
+        except ImportError:
+            _GroqTimeoutError = TimeoutError
     except ImportError:
         return False, {'error': 'Falta instalar groq: pip install groq'}, 500
 
     raw = ''
     try:
-        client = Groq(api_key=api_key)
+        # Timeout duro: si el proveedor cuelga, el worker queda libre en 60s
+        # en lugar de bloquearse indefinidamente bajo carga.
+        client = Groq(api_key=api_key, timeout=60.0)
         resp = client.chat.completions.create(
             model=_settings.GROQ_MODEL,
             max_tokens=max_tokens,
-            temperature=0.7,
+            temperature=temperature,
             response_format={'type': 'json_object'},
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -276,12 +283,15 @@ def _groq_generate(system_prompt, user_prompt, max_tokens):
     except APIConnectionError as e:
         logger.warning('Groq APIConnectionError: %s', e)
         return False, {'error': 'Error de conexión con la IA. Intenta de nuevo en unos segundos.'}, 502
+    except _GroqTimeoutError:
+        logger.warning('Groq timeout: el proveedor no respondió en el plazo')
+        return False, {'error': 'La IA tardó demasiado en responder. Intenta de nuevo.'}, 504
     except Exception as e:
         logger.error('Groq error inesperado: %s', e)
         return False, {'error': 'Error inesperado al generar contenido con IA.'}, 500
 
 
-def _ai_generate(system_prompt, user_prompt, max_tokens):
+def _ai_generate(system_prompt, user_prompt, max_tokens, temperature=0.7):
     import json as _json
     from django.conf import settings as _settings
 
@@ -303,11 +313,13 @@ def _ai_generate(system_prompt, user_prompt, max_tokens):
             system_instruction=system_prompt,
             generation_config={
                 'max_output_tokens': max_tokens,
-                'temperature': 0.7,
+                'temperature': temperature,
                 'response_mime_type': 'application/json',
             },
         )
-        resp = model.generate_content(user_prompt)
+        # request_options.timeout libera el worker en 90s si Gemini cuelga.
+        # Es generoso porque la guía multipágina puede tardar ~30-45s legítimos.
+        resp = model.generate_content(user_prompt, request_options={'timeout': 90})
         raw = _strip_json_fences(resp.text or '')
         return True, _json.loads(raw), 200
     except _json.JSONDecodeError as e:
@@ -317,6 +329,9 @@ def _ai_generate(system_prompt, user_prompt, max_tokens):
         return False, {'error': 'GEMINI_API_KEY inválida. Verifica la clave en .env.'}, 401
     except _gx.ResourceExhausted:
         return False, {'error': 'Límite del tier gratuito alcanzado. Espera un minuto e intenta de nuevo.'}, 429
+    except _gx.DeadlineExceeded:
+        logger.warning('Gemini timeout: el proveedor no respondió en 90s')
+        return False, {'error': 'La IA tardó demasiado en responder. Intenta de nuevo.'}, 504
     except _gx.InvalidArgument as e:
         logger.warning('Gemini InvalidArgument: %s', e)
         return False, {'error': 'Solicitud inválida a la IA. Revisa el contenido enviado.'}, 400
@@ -325,13 +340,13 @@ def _ai_generate(system_prompt, user_prompt, max_tokens):
         return False, {'error': 'Error inesperado al generar contenido con IA.'}, 500
 
 
-def ai_generate(system_prompt, user_prompt, max_tokens=2048):
+def ai_generate(system_prompt, user_prompt, max_tokens=2048, temperature=0.7):
     """Dispatch to configured AI provider. Returns (ok, payload, http_status)."""
     from django.conf import settings as _settings
     provider = _settings.AI_PROVIDER
     if provider == 'gemini':
-        return _ai_generate(system_prompt, user_prompt, max_tokens)
-    return _groq_generate(system_prompt, user_prompt, max_tokens)
+        return _ai_generate(system_prompt, user_prompt, max_tokens, temperature)
+    return _groq_generate(system_prompt, user_prompt, max_tokens, temperature)
 
 
 # Backwards-compat alias for old callers
@@ -697,6 +712,114 @@ def crear_clase(request):
 
 
 @login_required
+def ver_clase(request, id):
+    """Vista de detalle (panel de control) de una clase específica.
+    Trae la clase + recursos vinculados en una sola consulta optimizada.
+    Verifica propiedad estricta: si la clase no pertenece al docente
+    autenticado, responde 404 (no revela existencia del recurso ajeno).
+    """
+    clase = get_object_or_404(
+        Clase.objects.prefetch_related('recursos'),
+        id=id, usuario=request.user,
+    )
+
+    # Reparto pedagógico de los 3 momentos sobre la duración configurada
+    duracion_total = _session_duration_min(request.user)
+    def _round5(n):
+        return int(round(n / 5.0) * 5) or 5
+    inicio_min = _round5(duracion_total * 0.20)
+    desarrollo_min = _round5(duracion_total * 0.55)
+    cierre_min = duracion_total - inicio_min - desarrollo_min
+
+    # Estado temporal: hoy / pasada / futura
+    hoy = timezone.localdate()
+    if clase.fecha == hoy:
+        temporalidad = 'hoy'
+    elif clase.fecha < hoy:
+        temporalidad = 'pasada'
+    else:
+        temporalidad = 'futura'
+
+    # Curso asociado a la clase (para vincular recursos)
+    curso_relacionado = None
+    if clase.grado_nombre:
+        curso_relacionado = Curso.objects.filter(
+            usuario=request.user, nivel_academico=clase.grado_nombre
+        ).first()
+
+    # Recursos del docente que NO están aún enlazados a esta clase
+    # (para el selector "Vincular recurso existente")
+    recursos_disponibles = Recurso.objects.filter(
+        usuario=request.user
+    ).exclude(clase=clase).order_by('-fecha_creacion')[:50]
+
+    return render(request, 'clases/ver.html', {
+        'page': 'clases',
+        'clase': clase,
+        'recursos': clase.recursos.all(),
+        'recursos_disponibles': recursos_disponibles,
+        'curso_relacionado': curso_relacionado,
+        'duracion_total': duracion_total,
+        'inicio_min': inicio_min,
+        'desarrollo_min': desarrollo_min,
+        'cierre_min': cierre_min,
+        'temporalidad': temporalidad,
+        'hoy': hoy,
+    })
+
+
+@login_required
+@rate_limit('clase_vincular', max_calls=30, window_sec=60)
+def vincular_recurso_clase(request, clase_id):
+    """Vincula o desvincula un Recurso a una Clase. Ambos deben pertenecer
+    al usuario autenticado. POST con action=link|unlink y recurso_id."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+    clase = get_object_or_404(Clase, id=clase_id, usuario=request.user)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    action = (data.get('action') or 'link').strip()
+    try:
+        recurso_id = int(data.get('recurso_id'))
+    except (TypeError, ValueError):
+        return JsonResponse({'ok': False, 'error': 'recurso_id inválido'}, status=400)
+
+    recurso = get_object_or_404(Recurso, id=recurso_id, usuario=request.user)
+
+    if action == 'link':
+        recurso.clase = clase
+        # Sincroniza el curso del recurso con el grado de la clase para
+        # mantener la separación estricta A/B coherente: si la clase es
+        # 3°A, el recurso queda asignado al curso de 3°A. Si el grado
+        # de la clase no matchea ningún curso del docente, se deja como
+        # estaba (no se borra la asociación previa).
+        if clase.grado_nombre:
+            curso_match = Curso.objects.filter(
+                usuario=request.user, nivel_academico=clase.grado_nombre
+            ).first()
+            if curso_match is not None:
+                recurso.curso = curso_match
+                recurso.save(update_fields=['clase', 'curso'])
+            else:
+                recurso.save(update_fields=['clase'])
+        else:
+            recurso.save(update_fields=['clase'])
+    elif action == 'unlink':
+        if recurso.clase_id == clase.id:
+            recurso.clase = None
+            recurso.save(update_fields=['clase'])
+        else:
+            return JsonResponse({'ok': False, 'error': 'El recurso no está vinculado a esta clase.'}, status=400)
+    else:
+        return JsonResponse({'ok': False, 'error': 'Acción no válida'}, status=400)
+
+    return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'action': action})
+
+
+@login_required
 def editar_clase(request, id):
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
     # Capture the stored schedule BEFORE the form mutates the instance, so we
@@ -806,18 +929,26 @@ def registro(request):
         if form.is_valid():
             user = form.save(commit=False)
             user.first_name = form.cleaned_data['nombre']
-            user.save()
-            config, _ = ConfiguracionUsuario.objects.get_or_create(usuario=user)
-            config.materia = form.cleaned_data['materia']
-            config.save()
             try:
+                user.save()
+            except IntegrityError:
+                messages.error(request, 'El nombre de usuario ya está en uso. Por favor elige otro.')
+                return render(request, 'registro.html', {'form': form, 'next': request.GET.get('next', '')})
+            except Exception as e:
+                logger.error('Error inesperado al crear usuario %s: %s', form.cleaned_data.get('username'), e)
+                messages.error(request, 'No se pudo crear la cuenta. Intenta de nuevo.')
+                return render(request, 'registro.html', {'form': form, 'next': request.GET.get('next', '')})
+            try:
+                config, _ = ConfiguracionUsuario.objects.get_or_create(usuario=user)
+                config.materia = form.cleaned_data['materia']
+                config.save()
                 for grado_nombre in form.cleaned_data['grados']:
                     grado, _ = Grado.objects.get_or_create(nombre=grado_nombre)
                     config.grados.add(grado)
             except Exception as e:
-                logger.error('Error sincronizando grados en registro: %s', e)
-                messages.warning(request, 'Cuenta creada. No se pudieron sincronizar algunos niveles; editalos desde Ajustes.')
-            login(request, user)
+                logger.error('Error sincronizando configuración para %s: %s', user.username, e)
+                messages.warning(request, 'Cuenta creada. No se pudieron sincronizar algunos ajustes; edítalos desde Configuración.')
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             logger.info('Nuevo usuario registrado: %s', user.username)
             next_url = request.GET.get('next') or request.POST.get('next') or ''
             if next_url:
@@ -1226,8 +1357,8 @@ def listar_recursos(request):
         'form': RecursoForm(),
         'categoria': categoria,
         'q': q,
-        'plantillas': PLANTILLAS_CLASE,
         'user_materia': get_user_materia(request.user),
+        'cursos': Curso.objects.filter(usuario=request.user),
     })
 
 
@@ -2181,6 +2312,12 @@ LAB_MODOS = {
         'descripcion': 'Situación problema de orden superior (Sintetizar, Evaluar, Crear) para estudiantes con dominio avanzado del contenido.',
         'color': 'green',
     },
+    'guia': {
+        'label': 'Guía de Contenido Temático',
+        'icon': 'guia',
+        'descripcion': 'Texto teórico amplio y autosuficiente para el estudiante: marco conceptual, desarrollo desglosado, ejemplos graduales resueltos paso a paso y matriz de lectura crítica.',
+        'color': 'amber',
+    },
 }
 
 
@@ -2223,24 +2360,44 @@ def lab_api(request):
         return JsonResponse({'ok': False, 'error': 'Modo no válido'}, status=400)
 
     materia = (data.get('materia') or get_user_materia(request.user) or 'Matemáticas').strip()
-    objetivos = (data.get('objetivos') or '').strip()
-    nivel = (data.get('nivel') or 'intermedio').strip()
     grado = (data.get('grado') or '').strip()
     tema = (data.get('tema') or '').strip()
+    objetivos = (data.get('objetivos') or '').strip()
 
-    # Mapeo del nivel a especificación cognitiva explícita (3 niveles dinámicos)
-    NIVEL_SPEC = {
-        'basico': 'Exploratorio — niveles Recordar y Comprender de Bloom. Apto para introducción inicial al tema.',
-        'intermedio': 'Aplicativo — niveles Aplicar y Analizar de Bloom. Exige transferir el concepto a situaciones nuevas.',
-        'avanzado': 'Crítico/Evaluativo — niveles Evaluar y Crear de Bloom. Demanda juicio fundamentado y construcción original.',
-    }
-    nivel_spec = NIVEL_SPEC.get(nivel, NIVEL_SPEC['intermedio'])
+    # ── Validaciones CONDICIONALES por modo ──────────────────────────────
+    # Tema es obligatorio en TODOS los modos (sin él la IA no tiene foco).
+    if not tema:
+        return JsonResponse({
+            'ok': False,
+            'error': 'Indica el tema central del recurso.',
+        }, status=400)
+
+    # Campos específicos de quiz/refuerzo/desafio
+    nivel = (data.get('nivel') or 'intermedio').strip()
+    try:
+        cantidad_preguntas = int(data.get('cantidad_preguntas') or 0)
+    except (ValueError, TypeError):
+        cantidad_preguntas = 0
+    formato_preguntas = (data.get('formato_preguntas') or 'multiple').strip()
+    if formato_preguntas not in ('multiple', 'desarrollo', 'emparejamiento'):
+        formato_preguntas = 'multiple'
+
+    # Nivel cognitivo NO es requerido para guía — saltar validación si vacío
+    if modo != 'guia':
+        NIVEL_SPEC = {
+            'basico': 'Exploratorio — niveles Recordar y Comprender de Bloom. Apto para introducción inicial al tema.',
+            'intermedio': 'Aplicativo — niveles Aplicar y Analizar de Bloom. Exige transferir el concepto a situaciones nuevas.',
+            'avanzado': 'Crítico/Evaluativo — niveles Evaluar y Crear de Bloom. Demanda juicio fundamentado y construcción original.',
+        }
+        nivel_spec = NIVEL_SPEC.get(nivel, NIVEL_SPEC['intermedio'])
+    else:
+        nivel_spec = ''
 
     ctx_parts = [f'Materia: {materia}']
-    if grado: ctx_parts.append(f'Grado: {grado}')
-    if tema: ctx_parts.append(f'Tema: {tema}')
+    if grado: ctx_parts.append(f'Grado/Sección: {grado}')
+    if tema: ctx_parts.append(f'Tema central: {tema}')
     if objetivos: ctx_parts.append(f'Objetivos pedagógicos: {objetivos}')
-    ctx_parts.append(f'Nivel cognitivo objetivo: {nivel_spec}')
+    if nivel_spec: ctx_parts.append(f'Nivel cognitivo objetivo: {nivel_spec}')
     contexto = '\n'.join(ctx_parts)
 
     # Inject template structure if one was uploaded previously
@@ -2250,8 +2407,8 @@ def lab_api(request):
         if plantilla_estructura else ""
     )
 
-    # Lineamientos comunes a todos los modos
-    lineamientos = (
+    # Lineamientos comunes a quiz/refuerzo/desafio (instrumentos evaluativos)
+    lineamientos_evaluativos = (
         "LINEAMIENTOS OBLIGATORIOS: "
         "(1) CONTEXTUALIZACIÓN REAL — todo enunciado debe partir de una situación verificable del mundo real "
         "(industria, ciencia, vida cotidiana, fenómenos sociales o naturales), nunca abstracciones desnudas. "
@@ -2260,16 +2417,23 @@ def lab_api(request):
         "prohibidas las opciones triviales, absurdas o claramente descartables por intuición. "
         "(3) RIGOR ACADÉMICO — lenguaje técnico y formal, sin tono lúdico ni infantil, sin emojis. "
         "(4) JUSTIFICACIÓN PEDAGÓGICA — cada respuesta correcta debe acompañarse de una explicación que "
-        "habilite al docente a dar retroalimentación de calidad (qué se evalúa, por qué es correcta, qué error "
-        "conceptual revela cada distractor). "
+        "habilite al docente a dar retroalimentación de calidad. "
     )
 
+    max_tokens = 2048
+
     if modo == 'quiz':
+        n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 5
+        fmt_label = {
+            'multiple': 'ítems de opción múltiple (4 opciones por pregunta)',
+            'desarrollo': 'ítems de desarrollo (pregunta abierta con rúbrica)',
+            'emparejamiento': 'ítems de emparejamiento (dos columnas A↔B)',
+        }[formato_preguntas]
         system_prompt = (
-            "Eres un evaluador educativo experto en Taxonomía de Bloom revisada y en análisis de errores "
-            "conceptuales documentados por la investigación didáctica. "
-            "Diseña una Evaluación Diagnóstica de 5 ítems de opción múltiple ajustada al nivel cognitivo indicado. "
-            + lineamientos +
+            f"Eres un evaluador educativo experto en Taxonomía de Bloom revisada y en análisis de errores "
+            f"conceptuales documentados por la investigación didáctica. "
+            f"Diseña una Evaluación Diagnóstica de {n_items} {fmt_label}, ajustada al nivel cognitivo indicado. "
+            + lineamientos_evaluativos +
             "Devuelve SOLO JSON válido sin comentarios ni markdown con este esquema exacto: "
             '{"titulo": "Evaluación Diagnóstica — [Tema]", "preguntas": [{"enunciado": "Situación real + pregunta…", '
             '"opciones": ["…","…","…","…"], "correcta": 0, '
@@ -2279,34 +2443,110 @@ def lab_api(request):
             'En errores_distractores, la posición correspondiente a la opción correcta puede contener "—". '
             'correcta es índice 0–3.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera la Evaluación Diagnóstica de 5 ítems ajustada al nivel cognitivo objetivo."
+        user_prompt = f"{contexto}{plantilla_ctx}\nGenera la Evaluación Diagnóstica de {n_items} ítems."
     elif modo == 'refuerzo':
+        n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 6
         system_prompt = (
-            "Eres un especialista en diseño curricular basado en la Taxonomía de Bloom revisada. "
-            "Diseña un Taller de Profundización con 6 problemas de aplicación graduados, ajustados al nivel "
-            "cognitivo indicado. Cada problema debe exigir procedimiento explícito y reflexión metodológica. "
-            + lineamientos +
+            f"Eres un especialista en diseño curricular basado en la Taxonomía de Bloom revisada. "
+            f"Diseña un Taller de Profundización con {n_items} problemas de aplicación graduados, ajustados al nivel "
+            f"cognitivo indicado. Cada problema debe exigir procedimiento explícito y reflexión metodológica. "
+            + lineamientos_evaluativos +
             "Devuelve SOLO JSON válido sin markdown: "
             '{"titulo": "Taller de Profundización — [Tema]", "introduccion": "Contextualización académica del taller…", '
             '"ejercicios": [{"enunciado": "Situación real + consigna…", '
             '"pista": "Orientación metodológica que el estudiante puede consultar", '
             '"solucion": "Desarrollo paso a paso con justificación procedimental para el docente"}]}.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Taller de Profundización con 6 problemas ajustado al nivel cognitivo objetivo."
-    else:  # desafio
+        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Taller de Profundización con {n_items} problemas."
+    elif modo == 'desafio':
         system_prompt = (
             "Eres un diseñador de olimpiadas académicas y situaciones problema de alto nivel cognitivo. "
             "Construye UN Problema de Aplicación de Alta Complejidad ajustado al nivel cognitivo indicado, "
             "que requiera análisis multifactorial, modelación y justificación epistemológica. "
-            + lineamientos +
+            + lineamientos_evaluativos +
             "Devuelve SOLO JSON válido: "
             '{"titulo": "Problema de Aplicación de Alta Complejidad — [Tema]", "problema": "Situación real compleja…", '
             '"pistas": ["Orientación 1 para el estudiante…", "Orientación 2…", "Orientación 3…"], '
             '"solucion_detallada": "Desarrollo paso a paso con justificación pedagógica para el docente"}.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Problema de Aplicación de Alta Complejidad ajustado al nivel cognitivo objetivo."
+        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Problema de Aplicación de Alta Complejidad."
+    else:  # ─────────── modo == 'guia' ───────────
+        # Motor de Generación de Guías de Contenido Temático — V5
+        # Genera texto teórico autosuficiente destinado AL ESTUDIANTE.
+        # PROHIBIDO: fases docentes, instrucciones de aula, secuencias Inicio/Desarrollo/Cierre.
+        max_tokens = 8192
 
-    ok, payload, status = ai_generate(system_prompt, user_prompt, max_tokens=2048)
+        system_prompt = (
+            "Eres un experto en Didáctica del Contenido y Redacción Académica. "
+            "Tu tarea es construir una GUÍA DE CONTENIDO TEÓRICO AMPLIA, RIGUROSA Y AUTOSUFICIENTE "
+            "destinada al estudiante. El texto explica el tema en profundidad para que el lector "
+            "pueda dominarlo sin depender de un docente.\n\n"
+
+            "[INSTRUCCIÓN DE CONTROL ESTRICTA]: Bajo ninguna circunstancia generes únicamente "
+            "títulos o esquemas de secciones. Cada campo de texto del JSON DEBE contener un mínimo "
+            "de 3 a 5 párrafos extensos de contenido teórico puro y explicativo. Si dejas un campo "
+            "vacío o con menos de 200 palabras, la ejecución se considerará fallida. "
+            "Desarrolla los ejemplos paso a paso de forma completamente explícita.\n\n"
+
+            "PROHIBICIÓN ABSOLUTA: Queda completamente prohibido incluir secciones como "
+            "'Fase de Inicio', 'Fase de Desarrollo', 'Fase de Cierre', 'Instrucciones para el docente', "
+            "'Duración de la sesión' o cualquier referencia a cómo dictar la clase. "
+            "El texto NO le habla al profesor; explica el tema directamente al estudiante.\n\n"
+
+            "DIRECTRICES DE POTENCIA:\n"
+            "(1) DENSIDAD MÁXIMA — párrafos largos y bien conectados. "
+            "Prohibidos bullets superficiales en los campos de texto principal.\n"
+            "(2) RIGOR ACADÉMICO — terminología precisa, sin tono lúdico, sin emojis.\n"
+            "(3) PROGRESIÓN LÓGICA — del concepto abstracto a la aplicación concreta.\n"
+            "(4) EJEMPLOS COMPLETAMENTE RESUELTOS — cada paso justificado explícitamente.\n"
+            "(5) MATRIZ BASADA EN EL TEXTO GENERADO — las preguntas de la matriz deben surgir "
+            "EXCLUSIVAMENTE del contenido de los campos anteriores.\n\n"
+
+            "ESTRUCTURA OBLIGATORIA — devuelve SOLO JSON válido con EXACTAMENTE estas claves "
+            "en el nivel raíz (no anides objetos para los campos de texto extenso):\n\n"
+            '{\n'
+            '  "titulo": "Guía de Contenido Teórico: [Tema específico]",\n'
+            '  "introduccion_narrativa": "TEXTO EXTENSO: 4-6 párrafos que contextualizan el tema de forma atractiva para el estudiante. Mostrar relevancia en el mundo real. Enganchar desde la primera línea. Cada párrafo separado por \\n\\n.",\n'
+            '  "definicion_tecnica": "TEXTO EXTENSO: definición formal y rigurosa con todos sus componentes esenciales. Distinguir de conceptos relacionados. Incluir terminología disciplinar precisa. Mínimo 3 párrafos.",\n'
+            '  "utilidad_vida_real": "TEXTO EXTENSO: 3-5 párrafos con aplicaciones históricas, científicas, tecnológicas y cotidianas. Al menos un referente histórico y dos aplicaciones contemporáneas concretas.",\n'
+            '  "desarrollo_teorico": "TEXTO MUY EXTENSO: mínimo 8-12 párrafos densos que desarrollan sistemáticamente propiedades, reglas, fórmulas y sus derivaciones lógicas. Usar TITULO EN MAYUSCULAS como separador de subtemas dentro del mismo string. Párrafos separados por \\n\\n.",\n'
+            '  "representaciones": [\n'
+            '    "REPRESENTACION 1 — [título descriptivo]: esquema ASCII, tabla o expresión simbólica seguida de su explicación pedagógica de 2-3 líneas",\n'
+            '    "REPRESENTACION 2 — [título descriptivo]: ...",\n'
+            '    "REPRESENTACION 3 — [título descriptivo]: ..."\n'
+            '  ],\n'
+            '  "ejemplos_introductorios": [\n'
+            '    {"enunciado": "Situación sencilla e intuitiva con datos concretos.", "resolucion": "Paso 1: [acción] — [justificación de la propiedad usada]\\nPaso 2: [acción] — [justificación]\\n...\\nPaso N: [resultado final con interpretación]. Mínimo 10 pasos explícitos."},\n'
+            '    {"enunciado": "Segundo ejemplo introductorio en contexto diferente.", "resolucion": "Resolución completa con el mismo nivel de detalle."}\n'
+            '  ],\n'
+            '  "ejemplos_avanzados": [\n'
+            '    {"enunciado": "Problema complejo con múltiples condiciones que requieren articular varias propiedades.", "resolucion": "ANÁLISIS PREVIO: [identificar variables y estrategia]\\nPaso 1: ...\\nPaso 2: ...\\n...\\nVERIFICACIÓN: [comprobar el resultado]\\nCONCLUSIÓN: [interpretación argumentada]. Mínimo 15 pasos."},\n'
+            '    {"enunciado": "Segundo ejemplo avanzado en contexto diferente al primero.", "resolucion": "Resolución completa con análisis, desarrollo, verificación y conclusión."}\n'
+            '  ],\n'
+            '  "matriz_analitica": [\n'
+            '    {"dimension": "Dimensión conceptual evaluada (ej: Definición formal)", "pregunta_lectura": "Pregunta de comprensión profunda basada en el texto generado arriba", "indicador_respuesta": "Qué debe contener la respuesta para demostrar comprensión real"},\n'
+            '    "(repetir — mínimo 6 filas, una por cada dimensión clave del contenido)"\n'
+            '  ],\n'
+            '  "bibliografia": [\n'
+            '    "Apellido, N. (año). Título. Editorial. — referencia mundial",\n'
+            '    "Apellido, N. (año). Título. Editorial. — referencia latinoamericana",\n'
+            '    "Referencia adicional APA 7"\n'
+            '  ]\n'
+            '}'
+        )
+
+        user_prompt = (
+            f"{contexto}{plantilla_ctx}\n\n"
+            f"Genera la Guía de Contenido Teórico COMPLETA sobre '{tema}'. "
+            "RELLENA CADA CAMPO DE TEXTO CON CONTENIDO REAL Y EXTENSO — no con descripciones "
+            "de lo que debería ir ahí. "
+            "Los campos introduccion_narrativa, definicion_tecnica, utilidad_vida_real y "
+            "desarrollo_teorico deben contener el texto académico real, no instrucciones. "
+            "NO ABREVIES. NO DEJES CAMPOS VACIOS. DESARROLLA CADA EJEMPLO PASO A PASO."
+        )
+
+    temperature = 0.3 if modo == 'guia' else 0.7
+    ok, payload, status = ai_generate(system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature)
     if ok:
         return JsonResponse({'ok': True, 'modo': modo, 'data': payload})
     return JsonResponse({'ok': False, **payload}, status=status)
@@ -2431,12 +2671,18 @@ def _ai_analyze_template(file_bytes, file_type, filename, mime_type=None):
                 },
             )
             image_part = {'mime_type': mime_type or 'image/jpeg', 'data': file_bytes}
-            resp = model.generate_content(['Analiza la estructura de esta plantilla institucional.', image_part])
+            resp = model.generate_content(
+                ['Analiza la estructura de esta plantilla institucional.', image_part],
+                request_options={'timeout': 60},
+            )
             raw = _strip_json_fences(resp.text or '')
             return True, _json.loads(raw), 200
         except _json.JSONDecodeError as e:
             logger.warning('Gemini Vision JSON inválido: %s | raw=%s', e, raw[:200])
             return False, {'error': 'La IA devolvió una respuesta inválida al analizar la imagen.'}, 500
+        except _gx.DeadlineExceeded:
+            logger.warning('Gemini Vision timeout al analizar plantilla')
+            return False, {'error': 'El análisis de la plantilla tardó demasiado. Intenta de nuevo.'}, 504
         except Exception as e:
             logger.error('Gemini Vision error inesperado: %s', e)
             return False, {'error': 'Error al analizar la imagen con IA.'}, 500
@@ -2514,3 +2760,296 @@ def lab_borrar_plantilla(request):
     request.session.pop('lab_plantilla_estructura', None)
     request.session.pop('lab_plantilla_info', None)
     return JsonResponse({'ok': True})
+
+
+# ==================== EXPORTACIÓN A PDF ====================
+
+def _render_pdf_from_html(html_source):
+    """HTML → PDF en memoria usando xhtml2pdf (Python puro).
+    Returns (ok, bytes_or_error_msg)."""
+    try:
+        from xhtml2pdf import pisa
+    except ImportError:
+        return False, 'Falta instalar xhtml2pdf: pip install xhtml2pdf'
+    import io
+    buf = io.BytesIO()
+    result = pisa.CreatePDF(src=html_source, dest=buf, encoding='utf-8')
+    if result.err:
+        return False, 'Error al renderizar el PDF.'
+    return True, buf.getvalue()
+
+
+def _slug_filename(s, fallback='archivo'):
+    import re
+    s = re.sub(r'[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+', '_', s or '').strip('_')
+    return (s or fallback)[:80]
+
+
+def _unique_filename(base, ext):
+    """Construye un nombre de archivo único añadiendo timestamp + UUID corto.
+    Garantiza que dos usuarios generando 'Taller_Mate.pdf' simultáneamente NUNCA
+    colisionen a nivel de storage, incluso sin la protección de `get_available_name`.
+
+    Formato: <base>_<YYYYMMDD-HHMMSS>_<uuid8>.<ext>
+    Ejemplo: PlanClase_10A_Funciones_20260523-104512_a3f9c2e1.pdf
+    """
+    import uuid
+    import datetime as _dt
+    ts = _dt.datetime.now().strftime('%Y%m%d-%H%M%S')
+    suffix = uuid.uuid4().hex[:8]
+    return f'{base}_{ts}_{suffix}.{ext}'
+
+
+def _resolver_curso_clase(user, clase_id=None, curso_id=None):
+    """Resuelve (curso, clase) garantizando consistencia A↔B.
+
+    Reglas:
+      - Si llega clase_id: se prioriza. El curso se DERIVA del grado_nombre
+        de la clase (ignorando un curso_id contradictorio del cliente).
+      - Si solo llega curso_id: se valida y se usa.
+      - Si ambos están vacíos o son ajenos: devuelve (None, None).
+
+    Esto blinda contra que un docente envíe deliberadamente curso=3°A
+    con clase=3°B y termine creando recursos cruzados entre grupos.
+    """
+    clase = None
+    if clase_id:
+        try:
+            clase = Clase.objects.filter(id=int(clase_id), usuario=user).first()
+        except (ValueError, TypeError):
+            clase = None
+
+    curso = None
+    if clase is not None and clase.grado_nombre:
+        # Deriva el curso desde la clase — fuente de verdad
+        curso = Curso.objects.filter(
+            usuario=user, nivel_academico=clase.grado_nombre
+        ).first()
+    elif curso_id:
+        try:
+            curso = Curso.objects.filter(id=int(curso_id), usuario=user).first()
+        except (ValueError, TypeError):
+            curso = None
+
+    if (clase_id and not clase) or (curso_id and not curso and not clase):
+        logger.warning(
+            'Lab guardar: usuario %s envió ids ajenos/inexistentes (clase_id=%s curso_id=%s)',
+            user.username, clase_id, curso_id,
+        )
+
+    return curso, clase
+
+
+@login_required
+def clase_pdf(request, id):
+    """Exporta una clase planificada como PDF profesional optimizado para
+    impresión en blanco y negro. Verifica propiedad estricta."""
+    clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    horario_obj = getattr(request.user, 'horario_academico', None)
+    duracion_total = _session_duration_min(request.user)
+
+    # Distribución pedagógica 20/55/25 redondeada a 5 min
+    def _round5(n):
+        return int(round(n / 5.0) * 5) or 5
+    inicio_min = _round5(duracion_total * 0.20)
+    desarrollo_min = _round5(duracion_total * 0.55)
+    cierre_min = duracion_total - inicio_min - desarrollo_min
+
+    config = getattr(request.user, 'configuracion', None)
+    institucion = (config.nombre_institucion if config else '') or 'Institución Educativa'
+    cargo = config.cargo if config else ''
+
+    html = render(request, 'clases/pdf.html', {
+        'clase': clase,
+        'institucion': institucion,
+        'cargo': cargo,
+        'docente_nombre': request.user.get_full_name() or request.user.username,
+        'duracion_total': duracion_total,
+        'inicio_min': inicio_min,
+        'desarrollo_min': desarrollo_min,
+        'cierre_min': cierre_min,
+        'fecha_emision': timezone.now(),
+    }).content.decode('utf-8')
+
+    ok, payload = _render_pdf_from_html(html)
+    if not ok:
+        from django.http import HttpResponse
+        return HttpResponse(payload, status=500, content_type='text/plain; charset=utf-8')
+
+    grupo = _slug_filename(clase.grado_nombre or 'GeneralS', 'Grupo')
+    tema = _slug_filename(clase.titulo or 'Clase', 'Clase')
+    filename = f'PlanClase_{grupo}_{tema}.pdf'
+
+    from django.http import HttpResponse
+    resp = HttpResponse(payload, content_type='application/pdf')
+    resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return resp
+
+
+@login_required
+@rate_limit('clase_pdf_save', max_calls=10, window_sec=60)
+def clase_pdf_guardar(request, id):
+    """Genera el PDF de la clase y lo persiste como Recurso (tipo plan_pdf)
+    vinculado al docente, la clase y el curso. Verifica propiedad."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+    from django.core.files.base import ContentFile
+
+    clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    duracion_total = _session_duration_min(request.user)
+    def _round5(n):
+        return int(round(n / 5.0) * 5) or 5
+    inicio_min = _round5(duracion_total * 0.20)
+    desarrollo_min = _round5(duracion_total * 0.55)
+    cierre_min = duracion_total - inicio_min - desarrollo_min
+    config = getattr(request.user, 'configuracion', None)
+
+    html = render(request, 'clases/pdf.html', {
+        'clase': clase,
+        'institucion': (config.nombre_institucion if config else '') or 'Institución Educativa',
+        'cargo': config.cargo if config else '',
+        'docente_nombre': request.user.get_full_name() or request.user.username,
+        'duracion_total': duracion_total,
+        'inicio_min': inicio_min,
+        'desarrollo_min': desarrollo_min,
+        'cierre_min': cierre_min,
+        'fecha_emision': timezone.now(),
+    }).content.decode('utf-8')
+
+    ok, payload = _render_pdf_from_html(html)
+    if not ok:
+        return JsonResponse({'ok': False, 'error': payload}, status=500)
+
+    # Resolver curso a partir del nombre del grado de la clase si existe
+    curso_match = None
+    if clase.grado_nombre:
+        curso_match = Curso.objects.filter(
+            usuario=request.user, nivel_academico=clase.grado_nombre
+        ).first()
+
+    grupo = _slug_filename(clase.grado_nombre or 'General', 'Grupo')
+    tema = _slug_filename(clase.titulo or 'Clase', 'Clase')
+    filename = _unique_filename(f'PlanClase_{grupo}_{tema}', 'pdf')
+
+    recurso = Recurso.objects.create(
+        usuario=request.user,
+        clase=clase,
+        curso=curso_match,
+        titulo=f'Plan de clase — {clase.titulo}'[:200],
+        descripcion=f'Plan exportado para {clase.grado_nombre or "—"} · {clase.fecha}'[:5000],
+        tipo='plan_pdf',
+    )
+    recurso.archivo.save(filename, ContentFile(payload), save=True)
+    return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
+
+
+# ==================== GUARDADO ENRIQUECIDO DESDE EL AI LAB ====================
+
+def _build_lab_pdf_html(modo, data, ctx):
+    """Construye el HTML completo (con estilos inline) que xhtml2pdf
+    convertirá a PDF. Diseño limpio, optimizado para impresión B/N."""
+    from django.template.loader import render_to_string
+    return render_to_string('lab/pdf_documento.html', {
+        'modo': modo,
+        'data': data,
+        'ctx': ctx,
+    })
+
+
+@login_required
+@rate_limit('lab_save_pdf', max_calls=10, window_sec=60)
+def lab_guardar_documento(request):
+    """Guarda en Recursos el material generado por el AI Lab como PDF binario.
+    Soporta los modos quiz, refuerzo, desafio, guia."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    modo = (body.get('modo') or '').strip()
+    data = body.get('data') or {}
+    if modo not in LAB_MODOS or not isinstance(data, dict):
+        return JsonResponse({'ok': False, 'error': 'Modo o data inválidos'}, status=400)
+
+    ctx = {
+        'materia': (body.get('materia') or '').strip()[:80],
+        'grado': (body.get('grado') or '').strip()[:80],
+        'tema': (body.get('tema') or '').strip()[:200],
+        'docente': request.user.get_full_name() or request.user.username,
+        'fecha': timezone.now(),
+        'modo_label': LAB_MODOS[modo]['label'],
+    }
+    curso_match, clase_match = _resolver_curso_clase(
+        request.user,
+        clase_id=body.get('clase_id'),
+        curso_id=body.get('curso_id'),
+    )
+
+    html = _build_lab_pdf_html(modo, data, ctx)
+    ok, payload = _render_pdf_from_html(html)
+    if not ok:
+        return JsonResponse({'ok': False, 'error': payload}, status=500)
+
+    from django.core.files.base import ContentFile
+    from django.utils.html import strip_tags
+
+    titulo = strip_tags(data.get('titulo') or LAB_MODOS[modo]['label'])[:200]
+    tipo_map = {'quiz': 'quiz', 'refuerzo': 'taller', 'desafio': 'taller', 'guia': 'guia'}
+    tipo = tipo_map.get(modo, 'documento')
+    tipo_prefix = {'quiz': 'Evaluacion', 'refuerzo': 'Taller', 'desafio': 'Problema', 'guia': 'Guia'}[modo]
+    grupo = _slug_filename(ctx['grado'] or 'General')
+    tema = _slug_filename(ctx['tema'] or titulo)
+    filename = _unique_filename(f'Recurso_{tipo_prefix}_{grupo}_{tema}', 'pdf')
+
+    recurso = Recurso.objects.create(
+        usuario=request.user,
+        curso=curso_match,
+        clase=clase_match,
+        titulo=titulo,
+        descripcion=f'{LAB_MODOS[modo]["label"]} · {ctx["materia"]} · {ctx["grado"] or "General"}'[:5000],
+        tipo=tipo,
+    )
+    recurso.archivo.save(filename, ContentFile(payload), save=True)
+    return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
+
+
+# ==================== DESCARGA SEGURA DE RECURSOS ====================
+
+def _serve_recurso(request, id, attachment):
+    """Common implementation behind descargar_recurso / inline_recurso.
+    Verifies ownership strictly. attachment=True forces download (.pdf, .png);
+    attachment=False allows inline display (img previews)."""
+    recurso = get_object_or_404(Recurso, id=id, usuario=request.user)
+    if not recurso.archivo:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound('Este recurso no tiene archivo descargable.')
+
+    from django.http import FileResponse
+    try:
+        f = recurso.archivo.open('rb')
+    except FileNotFoundError:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound('El archivo físico se eliminó del servidor.')
+
+    return FileResponse(
+        f,
+        as_attachment=attachment,
+        filename=recurso.descarga_filename() if attachment else None,
+    )
+
+
+@login_required
+def descargar_recurso(request, id):
+    """Fuerza descarga (Content-Disposition: attachment) con nombre
+    parametrizado. Verifica propiedad estricta (404 si no pertenece)."""
+    return _serve_recurso(request, id, attachment=True)
+
+
+@login_required
+def inline_recurso(request, id):
+    """Sirve el archivo INLINE para previews (<img>, <iframe>, etc.).
+    Verifica propiedad estricta — esta es la única ruta segura para mostrar
+    media en producción, ya que /media/ directo no aplica autorización."""
+    return _serve_recurso(request, id, attachment=False)
