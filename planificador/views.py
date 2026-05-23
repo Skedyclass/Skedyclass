@@ -1154,7 +1154,6 @@ _SECCION_A_TAB = {
     'contrasena': 'seguridad',
     'preferencias': 'preferencias',
     'personalizacion': 'personalizacion',
-    'correo': 'correo',
     'google_calendar': 'google_calendar',
 }
 
