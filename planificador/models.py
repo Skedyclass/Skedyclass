@@ -6,6 +6,11 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 
+def _anio_actual():
+    import datetime
+    return datetime.date.today().year
+
+
 def _default_jornada_inicio():
     return time(6, 0)
 
@@ -41,7 +46,7 @@ class Curso(models.Model):
     nombre = models.CharField(max_length=200)
     nivel_academico = models.CharField(max_length=100, blank=True)
     materia = models.CharField(max_length=50, choices=MATERIA_CHOICES, blank=True)
-    anio = models.IntegerField(default=2026)
+    anio = models.IntegerField(default=_anio_actual)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
