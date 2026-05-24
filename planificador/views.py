@@ -2882,12 +2882,6 @@ def test_recordatorio_email(request):
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
-    # DIAGNOSTIC: si llegas aquí el endpoint es alcanzable
-    try:
-        return JsonResponse({'ok': False, 'error': 'DIAG: endpoint alcanzable, deploy OK'}, status=200)
-    except Exception:
-        pass
-
     try:
         import traceback as _tb
         from django.conf import settings as _cfg
