@@ -452,8 +452,10 @@ def google_login(request):
         return redirect('login' if not request.user.is_authenticated else '/ajustes/?s=google_calendar')
     base = '/accounts/google/login/'
     if request.user.is_authenticated:
-        # ?process=connect → link to current user instead of creating a new account
-        return redirect(f'{base}?process=connect')
+        # Pass next explicitly — allauth >=65 prefers this over SOCIALACCOUNT_CONNECT_REDIRECT_URL
+        from urllib.parse import quote as _quote
+        next_url = _quote('/ajustes/?s=google_calendar', safe='/')
+        return redirect(f'{base}?process=connect&next={next_url}')
     return redirect(base)
 
 
