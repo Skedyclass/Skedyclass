@@ -71,11 +71,6 @@ urlpatterns = [
     path('horario/guardar/', views.guardar_horario, name='guardar_horario'),
     path('horario/bloque/nuevo/', views.guardar_bloque, name='guardar_bloque'),
     path('horario/bloque/eliminar/<int:id>/', views.eliminar_bloque, name='eliminar_bloque'),
-    path('horario/bloque-semanal/nuevo/', views.guardar_bloque_horario, name='guardar_bloque_horario'),
-    path('horario/bloque-semanal/eliminar/<int:id>/', views.eliminar_bloque_horario, name='eliminar_bloque_horario'),
-    path('horario/ano-lectivo/', views.guardar_ano_lectivo, name='guardar_ano_lectivo'),
-    path('api/horario/proyectar/', views.proyectar_ano_lectivo, name='proyectar_ano_lectivo'),
-
     # Ajustes y perfil
     path('ajustes/', views.ajustes, name='ajustes'),
     path('perfil/', views.perfil, name='perfil'),

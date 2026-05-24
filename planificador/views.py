@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import CALENDAR_ID_RE, NIVEL_ACADEMICO_CHOICES, ClaseForm, CursoForm, RecursoForm, RegistroForm
-from .models import BloqueDescanso, BloqueHorario, Clase, ConfiguracionUsuario, Curso, Grado, HorarioAcademico, MATERIA_CHOICES, Nota, Recurso
+from .models import BloqueDescanso, Clase, ConfiguracionUsuario, Curso, Grado, HorarioAcademico, MATERIA_CHOICES, Nota, Recurso
 
 logger = logging.getLogger('planificador')
 
@@ -1961,59 +1961,10 @@ def horario(request):
 
     friday = monday + _td(days=4)
 
-    bloques_horario = list(BloqueHorario.objects.filter(usuario=request.user).select_related('curso'))
-
-    # Build template matrix: map BloqueHorario into the same slot/day grid
-    bloque_map = {}
-    for _b in bloques_horario:
-        _slot = _find_slot(_b.hora_inicio)
-        if _slot is None:
-            continue
-        _dia = _WEEKDAY_TO_DIA.get(_b.dia_semana)
-        if _dia:
-            bloque_map.setdefault((_dia, _slot), []).append(_b)
-
-    bloque_grid_rows = []
-    for slot in slots:
-        slot_str = slot.strftime('%H:%M')
-        is_descanso = slot in descanso_slots
-        _slot_end = (_dt.combine(today, slot) + slot_delta).time()
-        _cells = []
-        for dia in dias:
-            _cells.append({
-                'dia': dia,
-                'dia_num': _DIA_TO_WD[dia],
-                'slot': slot_str,
-                'slot_end': _slot_end.strftime('%H:%M'),
-                'bloques': bloque_map.get((dia, slot), []),
-                'is_descanso': is_descanso,
-            })
-        bloque_grid_rows.append({
-            'slot': slot_str,
-            'is_descanso': is_descanso,
-            'cells': _cells,
-        })
-
-    # Auto-archive past pending classes when annual mode is active
-    _now_time = timezone.localtime().time()
-    if horario_obj.horario_anual_activo:
-        Clase.objects.filter(
-            usuario=request.user, estado='pending', fecha__lt=today
-        ).update(estado='completed')
-        if _now_time > horario_obj.hora_fin_jornada:
-            Clase.objects.filter(
-                usuario=request.user, estado='pending', fecha=today
-            ).update(estado='completed')
-
-    # Weekend planning alert: active on Sat/Sun when annual mode is on
-    alerta_planificacion = horario_obj.horario_anual_activo and today.weekday() >= 5
-
     return render(request, 'horario.html', {
         'page': 'horario',
         'horario': horario_obj,
         'descansos': descansos,
-        'bloques_horario': bloques_horario,
-        'bloque_grid_rows': bloque_grid_rows,
         'grid_rows': grid_rows,
         'dias': dias,
         'dias_info': dias_info,
@@ -2027,8 +1978,6 @@ def horario(request):
         'materia_choices': MATERIA_CHOICES,
         'week_offset_prev': week_offset - 1,
         'week_offset_next': week_offset + 1,
-        'dias_choices': BloqueHorario.DIAS_CHOICES,
-        'alerta_planificacion': alerta_planificacion,
     })
 
 
@@ -2091,148 +2040,6 @@ def eliminar_bloque(request, id):
     bloque.delete()
     messages.success(request, f'Bloque "{nombre}" eliminado.')
     return redirect('horario')
-
-
-@login_required
-def guardar_bloque_horario(request):
-    """Create a recurring BloqueHorario entry."""
-    if request.method != 'POST':
-        return redirect('horario')
-    import datetime as _dt_mod
-    try:
-        dia = int(request.POST.get('dia_semana', -1))
-    except (ValueError, TypeError):
-        dia = -1
-    if dia not in range(5):
-        messages.error(request, 'Selecciona un día de la semana válido.')
-        return redirect('horario')
-    h_inicio = _parse_time(request.POST.get('hora_inicio'), _dt_mod.time(7, 0))
-    h_fin = _parse_time(request.POST.get('hora_fin'), _dt_mod.time(8, 0))
-    if h_fin <= h_inicio:
-        messages.error(request, 'La hora de fin debe ser posterior a la de inicio.')
-        return redirect('horario')
-    titulo = (request.POST.get('titulo') or '').strip()[:200]
-    materia = (request.POST.get('materia') or '').strip()
-    if materia not in dict(MATERIA_CHOICES):
-        materia = ''
-    curso_id = request.POST.get('curso_id')
-    curso = None
-    if curso_id:
-        try:
-            curso = Curso.objects.get(id=curso_id, usuario=request.user)
-        except Curso.DoesNotExist:
-            pass
-    BloqueHorario.objects.create(
-        usuario=request.user,
-        dia_semana=dia,
-        hora_inicio=h_inicio,
-        hora_fin=h_fin,
-        titulo=titulo,
-        materia=materia,
-        curso=curso,
-    )
-    messages.success(request, 'Bloque de horario agregado al calendario semanal.')
-    return redirect('horario')
-
-
-@login_required
-def eliminar_bloque_horario(request, id):
-    if request.method != 'POST':
-        return redirect('horario')
-    bloque = get_object_or_404(BloqueHorario, id=id, usuario=request.user)
-    bloque.delete()
-    messages.success(request, 'Bloque de horario eliminado.')
-    return redirect('horario')
-
-
-@login_required
-def guardar_ano_lectivo(request):
-    """Save the academic year parameters on HorarioAcademico."""
-    if request.method != 'POST':
-        return redirect('horario')
-    import datetime as _dt_mod
-    horario_obj, _ = HorarioAcademico.objects.get_or_create(usuario=request.user)
-    horario_obj.ano_lectivo = (request.POST.get('ano_lectivo') or '').strip()[:20]
-    fecha_inicio_str = (request.POST.get('fecha_inicio_lectivo') or '').strip()
-    fecha_fin_str = (request.POST.get('fecha_fin_lectivo') or '').strip()
-    try:
-        horario_obj.fecha_inicio_lectivo = _dt_mod.date.fromisoformat(fecha_inicio_str)
-    except (ValueError, TypeError):
-        horario_obj.fecha_inicio_lectivo = None
-    try:
-        horario_obj.fecha_fin_lectivo = _dt_mod.date.fromisoformat(fecha_fin_str)
-    except (ValueError, TypeError):
-        horario_obj.fecha_fin_lectivo = None
-    if (horario_obj.fecha_inicio_lectivo and horario_obj.fecha_fin_lectivo
-            and horario_obj.fecha_fin_lectivo <= horario_obj.fecha_inicio_lectivo):
-        messages.error(request, 'La fecha de fin del año lectivo debe ser posterior a la de inicio.')
-        return redirect('horario')
-    horario_obj.horario_anual_activo = request.POST.get('horario_anual_activo') == '1'
-    horario_obj.save()
-    messages.success(request, 'Año lectivo configurado correctamente.')
-    return redirect('horario')
-
-
-@login_required
-@rate_limit('proyectar_ano', max_calls=3, window_sec=300)
-def proyectar_ano_lectivo(request):
-    """Generate Clase instances for every BloqueHorario across the academic year."""
-    if request.method != 'POST':
-        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
-
-    try:
-        horario_obj = request.user.horario_academico
-    except HorarioAcademico.DoesNotExist:
-        return JsonResponse({'ok': False, 'error': 'Configura primero el horario de jornada.'}, status=400)
-
-    if not horario_obj.fecha_inicio_lectivo or not horario_obj.fecha_fin_lectivo:
-        return JsonResponse({'ok': False, 'error': 'Define las fechas de inicio y fin del año lectivo.'}, status=400)
-
-    bloques = BloqueHorario.objects.filter(usuario=request.user)
-    if not bloques.exists():
-        return JsonResponse({'ok': False, 'error': 'No hay bloques de horario semanal configurados.'}, status=400)
-
-    from datetime import timedelta as _td
-    inicio = horario_obj.fecha_inicio_lectivo
-    fin = horario_obj.fecha_fin_lectivo
-
-    # Align to the Monday of the starting week
-    lunes = inicio - timedelta(days=inicio.weekday())
-
-    created = 0
-    skipped = 0
-
-    with transaction.atomic():
-        while lunes <= fin:
-            for bloque in bloques:
-                fecha = lunes + _td(days=bloque.dia_semana)
-                if fecha < inicio or fecha > fin:
-                    continue
-                if fecha.weekday() >= 5:
-                    continue
-                # Skip if a class already exists at that exact slot
-                existe = Clase.objects.filter(
-                    usuario=request.user,
-                    fecha=fecha,
-                    hora_inicio=bloque.hora_inicio,
-                ).exists()
-                if existe:
-                    skipped += 1
-                    continue
-                Clase.objects.create(
-                    usuario=request.user,
-                    titulo=bloque.titulo or (bloque.materia or 'Clase por planificar'),
-                    materia=bloque.materia,
-                    fecha=fecha,
-                    hora_inicio=bloque.hora_inicio,
-                    hora_fin=bloque.hora_fin,
-                    estado='pending',
-                )
-                created += 1
-            lunes += _td(weeks=1)
-
-    logger.info('proyectar_ano_lectivo: user=%s created=%d skipped=%d', request.user.username, created, skipped)
-    return JsonResponse({'ok': True, 'created': created, 'skipped': skipped})
 
 
 # ==================== ASISTENTE IA ====================
