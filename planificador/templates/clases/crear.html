@@ -486,8 +486,8 @@ function wzRunIa(){
     if (tituloEl) tituloEl.value = d.titulo || tema;
     var fechaEl = document.querySelector('input[name="fecha"]');
     if (fechaEl) fechaEl.value = d.fecha || fecha;
-    var horaEl = document.querySelector('input[name="hora"]');
-    if (horaEl) horaEl.value = d.hora || hora;
+    var horaEl = document.querySelector('input[name="hora_inicio"]');
+    if (horaEl) horaEl.value = d.hora_inicio || d.hora || hora;
     // Marca 'ia' (no '1'): wzApplyPlantilla solo auto-sobrescribe lo marcado
     // como '1', así el texto generado por IA queda "pegajoso" y no se pierde
     // si el docente vuelve al Paso 1 y toca otra plantilla.
