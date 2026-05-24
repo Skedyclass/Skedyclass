@@ -665,7 +665,7 @@ def crear_clase(request):
                 next_url = request.POST.get('next') or request.GET.get('next')
                 if next_url in ('dashboard', 'listar_clases', 'planificador'):
                     return redirect(next_url)
-                return redirect('editar_clase', id=clase.id)
+                return redirect('ver_clase', id=clase.id)
             except ValueError:
                 pass  # message already added above; fall through to re-render
             except IntegrityError:
