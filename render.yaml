@@ -18,7 +18,7 @@ services:
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
     # Migraciones antes de levantar tráfico nuevo (no en build: evita correr migrate en cada réplica)
     preDeployCommand: "python manage.py migrate --noinput"
-    startCommand: "gunicorn skedyclass.wsgi --workers 2 --timeout 120 --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn skedyclass.wsgi --workers 1 --timeout 120 --bind 0.0.0.0:$PORT"
     healthCheckPath: /
     envVars:
       - key: SECRET_KEY
