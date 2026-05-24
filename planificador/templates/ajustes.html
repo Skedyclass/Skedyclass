@@ -641,7 +641,13 @@ async function enviarPruebaEmail(btn) {
       method: 'POST',
       headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token},
     });
-    var json = await resp.json();
+    var json;
+    try { json = await resp.json(); } catch(_) {
+      var msg = resp.status === 404 ? 'El servidor está actualizándose. Espera un momento e intenta de nuevo.' : 'El servidor devolvió una respuesta inesperada (código ' + resp.status + ').';
+      if (status) { status.textContent = msg; status.style.color = '#fca5a5'; }
+      if (window.showToast) window.showToast(msg, 'error');
+      return;
+    }
     if (json.ok) {
       if (status) { status.textContent = '✓ Correo enviado a ' + json.email; status.style.color = '#6ee7b7'; }
       if (window.showToast) window.showToast('Correo de prueba enviado a ' + json.email, 'success');
@@ -650,7 +656,7 @@ async function enviarPruebaEmail(btn) {
       if (window.showToast) window.showToast(json.error || 'Error al enviar el correo.', 'error');
     }
   } catch(e) {
-    if (status) { status.textContent = 'Error de conexión.'; status.style.color = '#fca5a5'; }
+    if (status) { status.textContent = 'No se pudo conectar con el servidor. Verifica tu conexión.'; status.style.color = '#fca5a5'; }
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Enviar correo de prueba';
