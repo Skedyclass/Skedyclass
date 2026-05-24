@@ -546,7 +546,10 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
     document.getElementById('indStep3').classList.add('done');
     document.getElementById('indStep4').classList.add('active');
 
-    if (window.showToast) window.showToast('Documentos generados: vista estudiante y guía docente.', 'success');
+    var toastMsg = json.modo === 'guia'
+      ? 'Guía de contenido generada correctamente.'
+      : 'Documentos generados: vista estudiante y guía docente.';
+    if (window.showToast) window.showToast(toastMsg, 'success');
 
   } catch(e) {
     errBox.textContent = 'Error: ' + e.message;
@@ -755,6 +758,22 @@ function labRender(modo, data){
     contE.innerHTML = html;
     contD.innerHTML = html;
   }
+
+  // Para guía: un solo documento, sin separación estudiante/docente
+  var esGuia = (modo === 'guia');
+  document.querySelector('.lab-tabs').style.display = esGuia ? 'none' : '';
+  document.querySelector('.lab-btn-export-teacher').style.display = esGuia ? 'none' : '';
+  var bannerStudent = document.querySelector('#paneEstudiante .lab-pane-banner');
+  if (bannerStudent) {
+    bannerStudent.style.display = esGuia ? 'none' : '';
+  }
+  var exportBtn = document.querySelector('.lab-btn-export');
+  if (exportBtn) {
+    exportBtn.innerHTML = esGuia
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Exportar PDF'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Exportar PDF — Estudiante';
+  }
+  if (esGuia) labCambiarTab('estudiante');
 
   out.classList.add('visible');
   out.scrollIntoView({behavior:'smooth', block:'start'});
