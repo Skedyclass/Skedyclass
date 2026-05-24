@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda del día — SkedyClass</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a2e">
+
+<!-- Wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f7;padding:32px 16px">
+<tr><td align="center">
+
+<!-- Card -->
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)">
+
+  <!-- Header -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);padding:32px 40px 28px">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65)">Planificador de Clases</p>
+            <h1 style="margin:0;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-.5px">SkedyClass</h1>
+          </td>
+          <td align="right" style="vertical-align:middle">
+            <span style="display:inline-block;background:rgba(255,255,255,.15);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.5px">
+              Agenda diaria
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Greeting -->
+  <tr>
+    <td style="padding:32px 40px 0">
+      <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1a1a2e">
+        Buenos días, {{ usuario.first_name|default:usuario.username }}.
+      </p>
+      <p style="margin:0;font-size:13px;color:#6b7280">
+        {{ today|date:"l, j \d\e F \d\e Y" }}
+      </p>
+    </td>
+  </tr>
+
+  <!-- Divider -->
+  <tr>
+    <td style="padding:20px 40px 0">
+      <div style="height:1px;background:#f0f0f5"></div>
+    </td>
+  </tr>
+
+  {% if tiene_clases %}
+
+  <!-- Classes section -->
+  <tr>
+    <td style="padding:24px 40px 8px">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6366f1">
+        Clases de hoy
+      </p>
+      <p style="margin:0;font-size:13px;color:#6b7280">
+        Tienes <strong style="color:#1a1a2e">{{ clases|length }} clase{{ clases|length|pluralize }}</strong> programada{{ clases|length|pluralize }} para hoy.
+      </p>
+    </td>
+  </tr>
+
+  <!-- Class list -->
+  <tr>
+    <td style="padding:12px 40px 28px">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        {% for clase in clases %}
+        <tr>
+          <td style="padding:0 0 10px">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+              style="background:#fafafa;border:1px solid #ebebf0;border-radius:10px;border-left:4px solid {% if clase.estado == 'completed' %}#10b981{% elif clase.estado == 'in_progress' %}#6366f1{% else %}#f59e0b{% endif %}">
+              <tr>
+                <td style="padding:14px 18px">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td>
+                        <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#1a1a2e">
+                          {{ clase.titulo }}
+                        </p>
+                        <p style="margin:0;font-size:12px;color:#6b7280">
+                          {% if clase.grado_nombre %}{{ clase.grado_nombre }}{% endif %}
+                          {% if clase.grado_nombre and clase.materia %} &nbsp;&middot;&nbsp; {% endif %}
+                          {% if clase.materia %}{{ clase.materia }}{% endif %}
+                        </p>
+                      </td>
+                      <td align="right" style="vertical-align:top;white-space:nowrap;padding-left:12px">
+                        <p style="margin:0;font-size:13px;font-weight:700;color:#374151">
+                          {{ clase.hora_inicio|time:"H:i" }}
+                          {% if clase.hora_fin %}&nbsp;&ndash;&nbsp;{{ clase.hora_fin|time:"H:i" }}{% endif %}
+                        </p>
+                        <p style="margin:4px 0 0;font-size:11px;font-weight:600;text-align:right;
+                          {% if clase.estado == 'completed' %}color:#10b981{% elif clase.estado == 'in_progress' %}color:#6366f1{% else %}color:#f59e0b{% endif %}">
+                          {% if clase.estado == 'completed' %}Completada
+                          {% elif clase.estado == 'in_progress' %}En progreso
+                          {% else %}Pendiente{% endif %}
+                        </p>
+                      </td>
+                    </tr>
+                    {% if clase.objetivos %}
+                    <tr>
+                      <td colspan="2" style="padding-top:8px;border-top:1px solid #ebebf0;margin-top:8px">
+                        <p style="margin:8px 0 0;font-size:12px;color:#6b7280;line-height:1.6">
+                          <strong style="color:#374151">Objetivo:</strong> {{ clase.objetivos|truncatechars:120 }}
+                        </p>
+                      </td>
+                    </tr>
+                    {% endif %}
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </td>
+  </tr>
+
+  <!-- Tip -->
+  <tr>
+    <td style="padding:0 40px 32px">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="background:#f0f0ff;border-radius:8px;border:1px solid #e0e0ff">
+        <tr>
+          <td style="padding:14px 18px">
+            <p style="margin:0;font-size:12px;color:#4338ca;line-height:1.65">
+              <strong>Consejo del dia:</strong> Recuerda marcar cada clase como
+              "En progreso" al iniciarla y "Completada" al finalizarla desde el
+              Planificador de SkedyClass.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {% else %}
+
+  <!-- Day off -->
+  <tr>
+    <td style="padding:32px 40px">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px">
+        <tr>
+          <td style="padding:28px 32px;text-align:center">
+            <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#065f46">
+              Dia libre
+            </p>
+            <p style="margin:0;font-size:13px;color:#047857;line-height:1.7">
+              No tienes clases programadas para hoy.
+              Aprovecha este tiempo para organizar y planificar
+              las clases de la proxima semana desde SkedyClass.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {% endif %}
+
+  <!-- Footer -->
+  <tr>
+    <td style="background:#f8f8fb;border-top:1px solid #ebebf0;padding:20px 40px;border-radius:0 0 12px 12px">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6">
+              <strong style="color:#6b7280">SkedyClass</strong> &mdash; Planificador inteligente para docentes<br>
+              Este correo fue enviado porque activaste los recordatorios diarios.<br>
+              Para desactivarlos, ingresa a <strong>Ajustes &rarr; Preferencias</strong>.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+<!-- /Card -->
+
+</td></tr>
+</table>
+<!-- /Wrapper -->
+
+</body>
+</html>

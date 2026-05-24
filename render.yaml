@@ -56,3 +56,33 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false                  # SkedyClass <no-reply@tudominio.com>
+
+  - type: cron
+    name: skedyclass-daily-reminders
+    runtime: python
+    plan: free
+    region: oregon
+    schedule: "* * * * *"           # cada minuto; el comando filtra por hora preferida del usuario
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py send_daily_reminders"
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          name: skedyclass
+          type: web
+          property: envVarValue
+          envVarKey: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: skedyclass-db
+          property: connectionString
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false

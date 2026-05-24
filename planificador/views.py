@@ -1229,6 +1229,15 @@ def ajustes(request):
             config.notif_clases = request.POST.get('notif_clases') == 'on'
             config.notif_tareas = request.POST.get('notif_tareas') == 'on'
             config.notif_resumen = request.POST.get('notif_resumen') == 'on'
+            config.recibir_recordatorio_email = 'recibir_recordatorio_email' in request.POST
+            if config.recibir_recordatorio_email:
+                from datetime import time as _time
+                hora_str = request.POST.get('hora_recordatorio_preferida', '06:00')
+                try:
+                    h, m = [int(x) for x in hora_str.split(':')]
+                    config.hora_recordatorio_preferida = _time(h, m)
+                except (ValueError, AttributeError):
+                    config.hora_recordatorio_preferida = _time(6, 0)
             config.save()
             messages.success(request, 'Preferencias de clase guardadas.')
 
