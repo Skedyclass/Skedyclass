@@ -305,6 +305,14 @@
               style="background:rgba(255,255,255,.06);border:1px solid rgba(99,102,241,.35);border-radius:8px;padding:7px 12px;color:#f5f3ff;font-size:.88rem;font-family:inherit;outline:none;cursor:pointer">
             <span style="font-size:.78rem;color:#9ca3af">Zona horaria: America/Bogota</span>
           </div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button type="button" id="btn-test-email" onclick="enviarPruebaEmail(this)"
+              style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#818cf8;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Enviar correo de prueba
+            </button>
+            <span id="test-email-status" style="font-size:.78rem;color:#9ca3af"></span>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -447,10 +455,11 @@
         {% if gcal_conectado %}
         <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);margin-bottom:12px">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <div>
+          <div style="flex:1">
             <strong style="color:#6ee7b7;display:block;margin-bottom:2px">Cuenta Google vinculada</strong>
-            <span style="font-size:.78rem;color:#9ca3af">{{ gcal_email }}</span>
+            <span style="font-size:.78rem;color:#9ca3af">Los eventos se crean en el calendario de <strong style="color:#a7f3d0">{{ gcal_email }}</strong></span>
           </div>
+          <a href="https://calendar.google.com" target="_blank" rel="noopener" style="flex-shrink:0;padding:7px 14px;border-radius:9px;background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.35);color:#6ee7b7;font-size:.76rem;font-weight:800;text-decoration:none;white-space:nowrap">Abrir Calendar →</a>
           {% if gcal_clases_sin_sync > 0 %}
           <span style="margin-left:auto;font-size:.72rem;padding:3px 10px;border-radius:8px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:#fbbf24">{{ gcal_clases_sin_sync }} sin sincronizar</span>
           {% else %}
@@ -616,6 +625,35 @@ async function gcalSyncAll() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg> Sincronizar todas las clases';
+  }
+}
+
+// Test email
+async function enviarPruebaEmail(btn) {
+  var status = document.getElementById('test-email-status');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  if (status) status.textContent = '';
+  try {
+    var csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
+    var token = csrfToken ? csrfToken[1] : '';
+    var resp = await fetch('/api/test-email/', {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': token},
+    });
+    var json = await resp.json();
+    if (json.ok) {
+      if (status) { status.textContent = '✓ Correo enviado a ' + json.email; status.style.color = '#6ee7b7'; }
+      if (window.showToast) window.showToast('Correo de prueba enviado a ' + json.email, 'success');
+    } else {
+      if (status) { status.textContent = json.error || 'Error al enviar.'; status.style.color = '#fca5a5'; }
+      if (window.showToast) window.showToast(json.error || 'Error al enviar el correo.', 'error');
+    }
+  } catch(e) {
+    if (status) { status.textContent = 'Error de conexión.'; status.style.color = '#fca5a5'; }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Enviar correo de prueba';
   }
 }
 

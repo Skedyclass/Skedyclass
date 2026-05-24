@@ -218,8 +218,9 @@ async function syncClase(id, btn) {
     });
     var json = await resp.json();
     if (json.ok && json.event_id) {
-      btn.outerHTML = '<span title="Sincronizado" style="display:inline-flex;align-items:center;gap:3px;font-size:.68rem;color:#34d399;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>GCal</span>';
-      if (window.showToast) window.showToast('Clase sincronizada con tu Google Calendar.', 'success');
+      var linkHtml = json.html_link ? ' <a href="' + json.html_link + '" target="_blank" rel="noopener" style="color:#34d399;text-decoration:underline;font-size:.68rem">Ver →</a>' : '';
+      btn.outerHTML = '<span title="Sincronizado con Google Calendar" style="display:inline-flex;align-items:center;gap:3px;font-size:.68rem;color:#34d399;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>GCal' + linkHtml + '</span>';
+      if (window.showToast) window.showToast('Clase sincronizada con Google Calendar.' + (json.html_link ? ' Puedes verla en el enlace junto al ícono GCal.' : ''), 'success');
     } else {
       btn.innerHTML = orig;
       btn.disabled = false;

@@ -1626,6 +1626,7 @@ def _sync_gcal(clase, action, user, service=None, cal_id=None):
             if eid:
                 Clase.objects.filter(pk=clase.pk).update(google_event_id=eid)
                 clase.google_event_id = eid
+            clase._gcal_html_link = result.get('htmlLink', '')
             return True, 'Clase sincronizada con tu Google Calendar.'
 
         elif action == 'update':
@@ -1692,6 +1693,7 @@ def gcal_sync_clase(request, id):
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
     action = 'update' if clase.google_event_id else 'create'
     ok, msg = _sync_gcal(clase, action, request.user)
+    html_link = getattr(clase, '_gcal_html_link', '')
     if msg:
         if ok:
             messages.success(request, msg)
@@ -1700,7 +1702,7 @@ def gcal_sync_clase(request, id):
     elif not ok:
         messages.warning(request, 'Vincula tu cuenta Google para sincronizar clases con el calendario.')
     if is_ajax:
-        return JsonResponse({'ok': ok, 'message': msg or '', 'event_id': clase.google_event_id})
+        return JsonResponse({'ok': ok, 'message': msg or '', 'event_id': clase.google_event_id, 'html_link': html_link})
     return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'planificador')
 
 
@@ -2832,11 +2834,15 @@ def lab_guardar_documento(request):
         html = _build_lab_pdf_html(modo, data, ctx)
     except Exception as e:
         logger.error('lab_guardar_documento: error renderizando template PDF: %s', e, exc_info=True)
-        return JsonResponse({'ok': False, 'error': f'Error al preparar el PDF: {type(e).__name__}: {e}'}, status=500)
+        return JsonResponse({'ok': False, 'error': 'Error al preparar el documento. Inténtalo de nuevo.'}, status=500)
 
-    ok, payload = _render_pdf_from_html(html)
+    try:
+        ok, payload = _render_pdf_from_html(html)
+    except Exception as e:
+        logger.error('lab_guardar_documento: error en xhtml2pdf: %s', e, exc_info=True)
+        return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
     if not ok:
-        return JsonResponse({'ok': False, 'error': payload}, status=500)
+        return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
 
     from django.core.files.base import ContentFile
     from django.utils.html import strip_tags
@@ -2864,6 +2870,65 @@ def lab_guardar_documento(request):
         return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
 
     return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
+
+
+# ==================== TEST DE CORREO ====================
+
+@login_required
+@rate_limit('test_email', max_calls=3, window_sec=300, json_response=True)
+def test_recordatorio_email(request):
+    """Envía un correo de prueba inmediato al usuario autenticado usando el mismo
+    template del recordatorio diario. Solo funciona si EMAIL_HOST_USER está
+    configurado en el servidor (back-end SMTP activo)."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+    from django.conf import settings as _cfg
+    if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
+        return JsonResponse({
+            'ok': False,
+            'error': 'El servidor no tiene SMTP configurado. Define EMAIL_HOST_USER en las variables de entorno de Render.',
+        }, status=503)
+
+    email = (request.user.email or '').strip()
+    if not email:
+        return JsonResponse({
+            'ok': False,
+            'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
+        }, status=400)
+
+    try:
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+
+        today = timezone.localdate()
+        clases_hoy = list(
+            Clase.objects.filter(usuario=request.user, fecha=today).order_by('hora_inicio')
+        )
+        tiene_clases = bool(clases_hoy)
+
+        context = {
+            'usuario': request.user,
+            'clases': clases_hoy,
+            'today': today,
+            'tiene_clases': tiene_clases,
+        }
+        fecha_str = today.strftime('%d de %B de %Y')
+        subject = f'[PRUEBA] SkedyClass — Tu agenda del {fecha_str}'
+        html_body = render_to_string('email/recordatorio_diario.html', context)
+
+        from planificador.management.commands.send_daily_reminders import _build_plain_text
+        text_body = _build_plain_text(request.user, clases_hoy, today, tiene_clases)
+
+        msg = EmailMultiAlternatives(subject=subject, body=text_body, to=[email])
+        msg.attach_alternative(html_body, 'text/html')
+        msg.send(fail_silently=False)
+
+        logger.info('Test email enviado a %s (%s)', request.user.username, email)
+        return JsonResponse({'ok': True, 'email': email})
+    except Exception as e:
+        logger.error('Test email falló para %s: %s', request.user.username, e, exc_info=True)
+        return JsonResponse({'ok': False, 'error': 'No se pudo enviar el correo. Revisa la configuración SMTP.'}, status=500)
 
 
 # ==================== DESCARGA SEGURA DE RECURSOS ====================
