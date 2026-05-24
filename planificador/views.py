@@ -2329,7 +2329,6 @@ def lab(request):
     preset_curso = request.GET.get('curso', '').strip()
     preset_tema = request.GET.get('tema', '').strip()
     preset_grado = request.GET.get('grado', '').strip()
-    plantilla_info = request.session.get('lab_plantilla_info', None)
     return render(request, 'lab.html', {
         'page': 'lab',
         'cursos': cursos,
@@ -2339,7 +2338,6 @@ def lab(request):
         'preset_curso': preset_curso,
         'preset_tema': preset_tema,
         'preset_grado': preset_grado,
-        'plantilla_info': plantilla_info,
     })
 
 
@@ -2399,13 +2397,6 @@ def lab_api(request):
     if nivel_spec: ctx_parts.append(f'Nivel cognitivo objetivo: {nivel_spec}')
     contexto = '\n'.join(ctx_parts)
 
-    # Inject template structure if one was uploaded previously
-    plantilla_estructura = request.session.get('lab_plantilla_estructura', '')
-    plantilla_ctx = (
-        f"\nEstructura de plantilla institucional detectada (mimetiza este formato): {plantilla_estructura}\n"
-        if plantilla_estructura else ""
-    )
-
     # Lineamientos comunes a quiz/refuerzo/desafio (instrumentos evaluativos)
     lineamientos_evaluativos = (
         "LINEAMIENTOS OBLIGATORIOS: "
@@ -2442,7 +2433,7 @@ def lab_api(request):
             'En errores_distractores, la posición correspondiente a la opción correcta puede contener "—". '
             'correcta es índice 0–3.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera la Evaluación Diagnóstica de {n_items} ítems."
+        user_prompt = f"{contexto}\nGenera la Evaluación Diagnóstica de {n_items} ítems."
     elif modo == 'refuerzo':
         n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 6
         system_prompt = (
@@ -2456,7 +2447,7 @@ def lab_api(request):
             '"pista": "Orientación metodológica que el estudiante puede consultar", '
             '"solucion": "Desarrollo paso a paso con justificación procedimental para el docente"}]}.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Taller de Profundización con {n_items} problemas."
+        user_prompt = f"{contexto}\nGenera el Taller de Profundización con {n_items} problemas."
     elif modo == 'desafio':
         system_prompt = (
             "Eres un diseñador de olimpiadas académicas y situaciones problema de alto nivel cognitivo. "
@@ -2468,7 +2459,7 @@ def lab_api(request):
             '"pistas": ["Orientación 1 para el estudiante…", "Orientación 2…", "Orientación 3…"], '
             '"solucion_detallada": "Desarrollo paso a paso con justificación pedagógica para el docente"}.'
         )
-        user_prompt = f"{contexto}{plantilla_ctx}\nGenera el Problema de Aplicación de Alta Complejidad."
+        user_prompt = f"{contexto}\nGenera el Problema de Aplicación de Alta Complejidad."
     else:  # ─────────── modo == 'guia' ───────────
         # Motor de Generación de Guías de Contenido Temático — V5
         # Genera texto teórico autosuficiente destinado AL ESTUDIANTE.
@@ -2535,7 +2526,7 @@ def lab_api(request):
         )
 
         user_prompt = (
-            f"{contexto}{plantilla_ctx}\n\n"
+            f"{contexto}\n\n"
             f"Genera la Guía de Contenido Teórico COMPLETA sobre '{tema}'. "
             "RELLENA CADA CAMPO DE TEXTO CON CONTENIDO REAL Y EXTENSO — no con descripciones "
             "de lo que debería ir ahí. "
@@ -2573,192 +2564,6 @@ def lab_guardar_recurso(request):
         descripcion=strip_tags(contenido)[:5000],
     )
     return JsonResponse({'ok': True, 'recurso_id': recurso.id})
-
-
-def _ai_analyze_template(file_bytes, file_type, filename, mime_type=None):
-    """Analyze an uploaded institutional template (PDF/image) using AI."""
-    import json as _json
-    from django.conf import settings as _settings
-
-    system_prompt = (
-        "Eres un experto en análisis de documentos institucionales educativos. "
-        "Analiza la estructura formal de esta plantilla y extrae sus características. "
-        "Devuelve SOLO JSON válido con esta estructura exacta:\n"
-        '{"encabezado": "descripción del encabezado institucional", '
-        '"secciones": ["lista de secciones del documento"], '
-        '"estilo_escritura": "descripción del registro formal", '
-        '"formato_instrucciones": "cómo se redactan las consignas", '
-        '"elementos_fijos": ["elementos permanentes como logos, fechas, etc."], '
-        '"resumen": "descripción concisa de la plantilla en 2-3 oraciones"}'
-    )
-
-    if file_type == 'pdf':
-        import io
-        text = ''
-
-        # Layer 1: pdfplumber (best for structured PDFs)
-        try:
-            import pdfplumber
-            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-                parts = [page.extract_text() or '' for page in pdf.pages[:4]]
-            text = '\n'.join(p for p in parts if p).strip()
-        except ImportError:
-            pass
-        except Exception:
-            pass
-
-        # Layer 2: PyPDF2 fallback
-        if len(text) < 50:
-            try:
-                import PyPDF2
-                reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-                parts = []
-                for page in reader.pages[:4]:
-                    extracted = page.extract_text()
-                    if extracted:
-                        parts.append(extracted)
-                text = '\n'.join(parts).strip()
-            except ImportError:
-                pass
-            except Exception:
-                pass
-
-        # Layer 3: PyMuPDF (fitz) fallback
-        if len(text) < 50:
-            try:
-                import fitz  # PyMuPDF
-                doc = fitz.open(stream=file_bytes, filetype='pdf')
-                parts = []
-                for i, page in enumerate(doc):
-                    if i >= 4:
-                        break
-                    parts.append(page.get_text())
-                doc.close()
-                text = '\n'.join(p for p in parts if p).strip()
-            except ImportError:
-                pass
-            except Exception:
-                pass
-
-        if len(text) < 50:
-            return False, {
-                'error': 'Este PDF parece ser escaneado o protegido. '
-                         'Por favor sube una imagen (JPG/PNG) de la plantilla para analizarla con visión por computador.'
-            }, 422
-
-        user_prompt = f"Analiza la estructura de esta plantilla institucional educativa:\n\n{text[:3000]}"
-        return ai_generate(system_prompt, user_prompt, max_tokens=800)
-
-    else:  # image
-        api_key = _settings.GEMINI_API_KEY
-        if not api_key or api_key == 'TU_API_KEY_AQUI':
-            return False, {'error': 'GEMINI_API_KEY no configurada'}, 503
-
-        raw = ''
-        try:
-            import google.generativeai as genai
-            from google.api_core import exceptions as _gx
-
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(
-                model_name='gemini-1.5-flash',
-                system_instruction=system_prompt,
-                generation_config={
-                    'max_output_tokens': 800,
-                    'temperature': 0.3,
-                    'response_mime_type': 'application/json',
-                },
-            )
-            image_part = {'mime_type': mime_type or 'image/jpeg', 'data': file_bytes}
-            resp = model.generate_content(
-                ['Analiza la estructura de esta plantilla institucional.', image_part],
-                request_options={'timeout': 60},
-            )
-            raw = _strip_json_fences(resp.text or '')
-            return True, _json.loads(raw), 200
-        except _json.JSONDecodeError as e:
-            logger.warning('Gemini Vision JSON inválido: %s | raw=%s', e, raw[:200])
-            return False, {'error': 'La IA devolvió una respuesta inválida al analizar la imagen.'}, 500
-        except _gx.DeadlineExceeded:
-            logger.warning('Gemini Vision timeout al analizar plantilla')
-            return False, {'error': 'El análisis de la plantilla tardó demasiado. Intenta de nuevo.'}, 504
-        except Exception as e:
-            logger.error('Gemini Vision error inesperado: %s', e)
-            return False, {'error': 'Error al analizar la imagen con IA.'}, 500
-
-
-@login_required
-@rate_limit('lab_upload', max_calls=5, window_sec=60)
-def lab_upload_plantilla(request):
-    if request.method != 'POST':
-        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
-
-    file = request.FILES.get('plantilla')
-    if not file:
-        return JsonResponse({'ok': False, 'error': 'No se recibió ningún archivo'}, status=400)
-
-    filename = file.name.lower()
-    file_bytes = file.read()
-
-    if not file_bytes:
-        return JsonResponse({'ok': False, 'error': 'El archivo está vacío.'}, status=400)
-
-    MAX_SIZE = 8 * 1024 * 1024  # 8 MB
-    if len(file_bytes) > MAX_SIZE:
-        return JsonResponse({'ok': False, 'error': 'El archivo supera el tamaño máximo de 8 MB.'}, status=400)
-
-    if filename.endswith('.pdf'):
-        file_type, mime_type, magic_kind = 'pdf', None, 'pdf'
-    elif filename.endswith(('.jpg', '.jpeg')):
-        file_type, mime_type, magic_kind = 'image', 'image/jpeg', 'jpg'
-    elif filename.endswith('.png'):
-        file_type, mime_type, magic_kind = 'image', 'image/png', 'png'
-    elif filename.endswith('.webp'):
-        file_type, mime_type, magic_kind = 'image', 'image/webp', 'webp'
-    else:
-        return JsonResponse({'ok': False, 'error': 'Formato no soportado. Usa PDF, JPG, PNG o WEBP.'}, status=400)
-
-    # Verify the magic bytes match the declared extension (defense in depth:
-    # blocks renamed executables, polyglots, and naive smuggling attempts).
-    if not _validate_magic(file_bytes, magic_kind):
-        return JsonResponse({
-            'ok': False,
-            'error': 'El archivo no es un ' + magic_kind.upper() + ' válido. Verifica la extensión.'
-        }, status=400)
-
-    ok, payload, status = _ai_analyze_template(file_bytes, file_type, filename, mime_type)
-
-    if ok:
-        secciones = payload.get('secciones', [])
-        estructura_str = (
-            f"Encabezado: {payload.get('encabezado', '')}. "
-            f"Secciones: {', '.join(secciones) if secciones else 'N/A'}. "
-            f"Estilo: {payload.get('estilo_escritura', '')}. "
-            f"Instrucciones: {payload.get('formato_instrucciones', '')}."
-        )
-        request.session['lab_plantilla_estructura'] = estructura_str
-        request.session['lab_plantilla_info'] = {
-            'filename': file.name,
-            'resumen': payload.get('resumen', ''),
-            'secciones': secciones,
-        }
-        return JsonResponse({
-            'ok': True,
-            'resumen': payload.get('resumen', ''),
-            'secciones': secciones,
-            'filename': file.name,
-        })
-
-    return JsonResponse({'ok': False, **payload}, status=status)
-
-
-@login_required
-def lab_borrar_plantilla(request):
-    if request.method != 'POST':
-        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
-    request.session.pop('lab_plantilla_estructura', None)
-    request.session.pop('lab_plantilla_info', None)
-    return JsonResponse({'ok': True})
 
 
 # ==================== EXPORTACIÓN A PDF ====================

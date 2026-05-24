@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Motor de Mimetismo Institucional — SkedyClass{% endblock %}
+{% block title %}Laboratorio de Material Académico — SkedyClass{% endblock %}
 
 {% block content %}
 <style>
@@ -43,17 +43,6 @@
 .lab-upload-zone small{font-size:.72rem;color:#6b7280}
 .lab-upload-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:7px 16px;border-radius:10px;background:rgba(157,78,221,.15);border:1px solid rgba(157,78,221,.3);color:#c77dff;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .18s}
 .lab-upload-btn:hover{background:rgba(157,78,221,.25)}
-
-/* Plantilla status */
-.plantilla-status{display:none;padding:14px 16px;border-radius:14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);margin-top:14px}
-.plantilla-status.visible{display:block}
-.plantilla-status-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.plantilla-filename{font-size:.82rem;font-weight:700;color:#6ee7b7;flex:1}
-.plantilla-resumen{font-size:.78rem;color:#a7f3d0;font-family:'Lora',serif;line-height:1.55}
-.plantilla-secciones{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.plantilla-sec-chip{font-size:.68rem;padding:2px 8px;border-radius:8px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.2);color:#34d399}
-.btn-borrar-plantilla{font-size:.72rem;color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);padding:3px 10px;border-radius:8px;cursor:pointer;transition:background .18s}
-.btn-borrar-plantilla:hover{background:rgba(239,68,68,.2)}
 
 /* Mode selector */
 .lab-modos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px}
@@ -232,86 +221,31 @@
         </svg>
       </div>
       <div>
-        <h1>Motor de Mimetismo Institucional</h1>
-        <p>Genera material académico de alta exigencia cognitiva basado en la Taxonomía de Bloom. Opcionalmente, sube tu plantilla institucional para clonar su estructura formal en cada documento generado.</p>
+        <h1>Laboratorio de Material Académico</h1>
+        <p>Genera material académico de alta exigencia cognitiva basado en la Taxonomía de Bloom: evaluaciones, talleres de refuerzo, desafíos y guías temáticas listas para exportar.</p>
       </div>
     </div>
   </div>
 
   <!-- Step Indicator -->
   <div class="lab-steps">
-    <div class="lab-step active" id="indStep1">
-      <span class="step-num">1</span>
-      <span class="step-label">Plantilla</span>
-    </div>
-    <div class="step-connector"></div>
     <div class="lab-step active" id="indStep2">
-      <span class="step-num">2</span>
+      <span class="step-num">1</span>
       <span class="step-label">Configurar</span>
     </div>
     <div class="step-connector"></div>
     <div class="lab-step" id="indStep3">
-      <span class="step-num">3</span>
+      <span class="step-num">2</span>
       <span class="step-label">Generar</span>
     </div>
     <div class="step-connector"></div>
     <div class="lab-step" id="indStep4">
-      <span class="step-num">4</span>
+      <span class="step-num">3</span>
       <span class="step-label">Exportar</span>
     </div>
   </div>
 
-  <!-- STEP 1: Plantilla Institucional -->
-  <div class="lab-section">
-    <div class="lab-section-inner">
-      <div class="lab-section-header">
-        <span class="lab-section-title">Paso 1 — Plantilla Institucional</span>
-        <span class="lab-opt-badge">Opcional</span>
-      </div>
-
-      {% if plantilla_info %}
-      <div class="plantilla-status visible" id="plantillaStatus">
-        <div class="plantilla-status-top">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span class="plantilla-filename">{{ plantilla_info.filename }}</span>
-          <button class="btn-borrar-plantilla" onclick="borrarPlantilla()">Quitar</button>
-        </div>
-        <p class="plantilla-resumen">{{ plantilla_info.resumen }}</p>
-        {% if plantilla_info.secciones %}
-        <div class="plantilla-secciones">
-          {% for sec in plantilla_info.secciones %}<span class="plantilla-sec-chip">{{ sec }}</span>{% endfor %}
-        </div>
-        {% endif %}
-      </div>
-      {% else %}
-      <div class="lab-upload-zone" id="uploadZone">
-        <div class="upload-ico">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
-        </div>
-        <p>Arrastra tu plantilla institucional aquí o haz clic para seleccionarla</p>
-        <small>PDF, JPG, PNG o WEBP · Máx. 8 MB</small>
-        <div>
-          <span class="lab-upload-btn" onclick="document.getElementById('plantillaInput').click()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            Seleccionar archivo
-          </span>
-        </div>
-        <input type="file" id="plantillaInput" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none">
-      </div>
-      <div class="plantilla-status" id="plantillaStatus">
-        <div class="plantilla-status-top">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span class="plantilla-filename" id="plantillaFilename">—</span>
-          <button class="btn-borrar-plantilla" onclick="borrarPlantilla()">Quitar</button>
-        </div>
-        <p class="plantilla-resumen" id="plantillaResumen"></p>
-        <div class="plantilla-secciones" id="plantillaSecciones"></div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- STEP 2: Configurar -->
+  <!-- STEP 1: Configurar -->
   <div class="lab-section">
     <div class="lab-section-inner">
       <div class="lab-section-header">
@@ -506,7 +440,6 @@ var LAB_STATE = {
   modo: "{{ preset_modo|escapejs }}",
   lastData: null,
   lastTitulo: '',
-  plantillaActiva: {{ plantilla_info|yesno:"true,false" }},
 };
 
 function labGetCSRF(){
@@ -554,76 +487,6 @@ document.getElementById('lab_curso').addEventListener('change', function(){
   if (grado) document.getElementById('lab_grado_manual').value = grado;
 });
 
-/* ── Template upload ── */
-var uploadZone = document.getElementById('uploadZone');
-var plantillaInput = document.getElementById('plantillaInput');
-
-if (uploadZone) {
-  uploadZone.addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('drag-over'); });
-  uploadZone.addEventListener('dragleave', function(){ this.classList.remove('drag-over'); });
-  uploadZone.addEventListener('drop', function(e){
-    e.preventDefault(); this.classList.remove('drag-over');
-    var f = e.dataTransfer.files[0];
-    if (f) uploadPlantilla(f);
-  });
-}
-
-if (plantillaInput) {
-  plantillaInput.addEventListener('change', function(){
-    if (this.files[0]) uploadPlantilla(this.files[0]);
-  });
-}
-
-async function uploadPlantilla(file) {
-  if (window.showToast) window.showToast('Analizando estructura de plantilla…', 'info');
-  var statusEl = document.getElementById('plantillaStatus');
-  var uploadZoneEl = document.getElementById('uploadZone');
-
-  var formData = new FormData();
-  formData.append('plantilla', file);
-  formData.append('csrfmiddlewaretoken', labGetCSRF());
-
-  try {
-    var resp = await fetch("{% url 'lab_upload_plantilla' %}", {
-      method: 'POST',
-      headers: {'X-CSRFToken': labGetCSRF()},
-      body: formData,
-    });
-    var json = await resp.json();
-    if (!json.ok) throw new Error(json.error || 'Error al analizar plantilla');
-
-    // Show result
-    document.getElementById('plantillaFilename').textContent = json.filename || file.name;
-    document.getElementById('plantillaResumen').textContent = json.resumen || '';
-    var secEl = document.getElementById('plantillaSecciones');
-    if (secEl) {
-      secEl.innerHTML = (json.secciones || []).map(function(s){
-        return '<span class="plantilla-sec-chip">'+labEsc(s)+'</span>';
-      }).join('');
-    }
-
-    if (uploadZoneEl) uploadZoneEl.style.display = 'none';
-    if (statusEl) statusEl.classList.add('visible');
-    LAB_STATE.plantillaActiva = true;
-
-    if (window.showToast) window.showToast('Estructura institucional analizada y lista para mimetizar.', 'success');
-  } catch(e) {
-    if (window.showToast) window.showToast('Error: ' + e.message, 'error');
-  }
-}
-
-async function borrarPlantilla() {
-  try {
-    await fetch("{% url 'lab_borrar_plantilla' %}", {
-      method: 'POST',
-      headers: {'X-CSRFToken': labGetCSRF()},
-    });
-  } catch(e) {}
-  LAB_STATE.plantillaActiva = false;
-  // Reload to reset template state
-  window.location.reload();
-}
-
 /* ── Generate ── */
 document.getElementById('labGenerarBtn').addEventListener('click', async function(){
   var btn = this;
@@ -646,16 +509,7 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
   var gradoManual = document.getElementById('lab_grado_manual').value.trim();
   var grado = gradoCurso || gradoManual;
 
-  // Toast sequence
-  if (LAB_STATE.plantillaActiva) {
-    if (window.showToast) window.showToast('Mimetizando estructura de plantilla institucional…', 'info');
-    loadingStatus.textContent = 'Aplicando plantilla institucional al instrumento';
-  }
-
-  setTimeout(function(){
-    if (window.showToast) window.showToast('Construyendo ítems y estructurando guía de respuestas…', 'info');
-    loadingStatus.textContent = 'Procesando contenido académico — tiempo estimado 10–20 segundos';
-  }, 800);
+  loadingStatus.textContent = 'Procesando contenido académico — tiempo estimado 10–20 segundos';
 
   try {
     // Construir payload según modo — solo se envían los campos visibles del
@@ -964,8 +818,6 @@ function labExportarPDF(vista){
       labRevelarRespuestas();
     }
   }
-
-  if (window.showToast) window.showToast('Estructurando documento del ' + (vista === 'docente' ? 'docente' : 'estudiante') + '…', 'info');
 
   // Cambiar el título del documento para que el navegador sugiera ese nombre
   var titleOrig = document.title;

@@ -84,8 +84,6 @@ urlpatterns = [
     path('api/lab/', views.lab_api, name='lab_api'),
     path('api/lab/guardar/', views.lab_guardar_recurso, name='lab_guardar_recurso'),
     path('api/lab/guardar-pdf/', views.lab_guardar_documento, name='lab_guardar_documento'),
-    path('api/lab/plantilla/', views.lab_upload_plantilla, name='lab_upload_plantilla'),
-    path('api/lab/plantilla/borrar/', views.lab_borrar_plantilla, name='lab_borrar_plantilla'),
 
     # Google Calendar Sync
     path('api/gcal/sync/<int:id>/', views.gcal_sync_clase, name='gcal_sync_clase'),
