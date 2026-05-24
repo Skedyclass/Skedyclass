@@ -2874,9 +2874,36 @@ def lab_guardar_documento(request):
 
 # ==================== TEST DE CORREO ====================
 
+def _enviar_test_email_bg(email, username, first_name):
+    """Envía el correo de prueba en hilo de fondo para no bloquear el worker."""
+    import threading
+    def _send():
+        try:
+            from django.core.mail import send_mail
+            from django.utils import timezone as _tz
+            nombre = first_name or username
+            fecha_str = _tz.localdate().strftime('%d de %B de %Y')
+            send_mail(
+                subject=f'[PRUEBA] SkedyClass — {fecha_str}',
+                message=(
+                    f'Hola {nombre},\n\n'
+                    'Este es un correo de prueba de SkedyClass.\n'
+                    'Si lo recibes, los recordatorios diarios están correctamente configurados.\n\n'
+                    '— SkedyClass'
+                ),
+                from_email=None,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            logger.info('Test email (bg) enviado a %s', email)
+        except Exception as exc:
+            logger.error('Test email (bg) falló para %s: %s', email, exc)
+    threading.Thread(target=_send, daemon=True).start()
+
+
 @login_required
 def test_recordatorio_email(request):
-    """Verifica que el SMTP esté configurado correctamente sin hacer conexión de red."""
+    """Dispara un correo de prueba en hilo de fondo y responde de inmediato."""
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
@@ -2895,12 +2922,11 @@ def test_recordatorio_email(request):
             'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
         }, status=400)
 
-    host = getattr(_cfg, 'EMAIL_HOST', 'smtp.gmail.com')
-    user = getattr(_cfg, 'EMAIL_HOST_USER', '')
+    _enviar_test_email_bg(email, request.user.username, request.user.first_name or '')
     return JsonResponse({
         'ok': True,
         'email': email,
-        'detail': f'SMTP configurado: {user} → {host}. Los recordatorios diarios se enviarán a {email}.',
+        'detail': f'Correo en camino a {email}. Revisa tu bandeja en unos segundos.',
     })
 
 
