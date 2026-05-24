@@ -122,10 +122,96 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 [data-theme="dark"] label{color:#d4cfe8}
 [data-theme="dark"] .form-input,[data-theme="dark"] .form-select,[data-theme="dark"] .form-textarea{color:#f5f3ff!important;background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
 
+/* ── MOBILE NAV (bottom bar + overlay sheet) ── */
+.mobile-menu-btn{display:none}
+.mobile-nav-bar{display:none}
+.mobile-nav-overlay{display:none}
+
 @media(max-width:768px){
-  .sidebar{display:none}
+  .sidebar{display:none!important}
   .layout{grid-template-columns:1fr}
   .header,.main-content,.footer{grid-column:1}
+  .footer{display:none}
+
+  /* Tighter header on small screens */
+  .header{padding:0 14px}
+  .header-badge{display:none}
+  .user-chip .user-avatar+*{display:none} /* hide username text, keep avatar */
+  .user-chip{padding:4px}
+
+  /* Main content: bottom padding for the nav bar */
+  .main-content{padding:14px 14px 80px}
+
+  /* ── Hamburger button (visible only on mobile) ── */
+  .mobile-menu-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:36px;height:36px;border-radius:10px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+    color:#c4b5fd;cursor:pointer;
+  }
+
+  /* ── Bottom nav bar ── */
+  .mobile-nav-bar{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:500;
+    background:rgba(6,4,18,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    border-top:1px solid rgba(255,255,255,.1);
+    height:60px;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mob-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;
+    text-decoration:none;color:#6b7280;
+    font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+    background:none;border:none;cursor:pointer;font-family:inherit;
+    -webkit-tap-highlight-color:transparent;transition:color .15s;
+    padding:0;
+  }
+  .mob-nav-item svg{opacity:.65;transition:opacity .15s}
+  .mob-nav-item.active{color:#c4b5fd}
+  .mob-nav-item.active svg{opacity:1;filter:drop-shadow(0 0 5px rgba(157,78,221,.55))}
+  .mob-nav-item:active{opacity:.7}
+
+  /* ── Overlay sheet ── */
+  .mobile-nav-overlay{
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,.7);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    flex-direction:column;justify-content:flex-end;
+  }
+  .mobile-nav-overlay.mob-open{display:flex;animation:mobOverlayIn .22s ease}
+  @keyframes mobOverlayIn{from{opacity:0}to{opacity:1}}
+  .mob-sheet{
+    background:rgba(10,8,24,.98);
+    border-top:1px solid rgba(255,255,255,.1);
+    border-radius:22px 22px 0 0;
+    padding:12px 18px calc(74px + env(safe-area-inset-bottom,0px));
+    max-height:88vh;overflow-y:auto;
+    animation:mobSheetUp .25s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes mobSheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .mob-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 18px}
+  .mob-section-lbl{font-size:.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+    color:#9d95c4;margin:14px 0 8px 2px}
+  .mob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
+  .mob-tile{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    padding:12px 6px;border-radius:14px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+    text-decoration:none;color:#cfc9e6;
+    font-size:.68rem;font-weight:700;text-align:center;
+    -webkit-tap-highlight-color:transparent;transition:background .15s;
+  }
+  .mob-tile.active{
+    background:linear-gradient(135deg,rgba(157,78,221,.22),rgba(247,37,133,.14));
+    border-color:rgba(157,78,221,.4);color:#f5f3ff;
+  }
+  .mob-tile svg{opacity:.75}
+  .mob-tile.active svg{opacity:1}
+  .mob-tile-ai{background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(157,78,221,.08));
+    border-color:rgba(16,185,129,.22)}
+  .mob-tile-ai.active{background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(157,78,221,.18));
+    border-color:rgba(16,185,129,.4)}
 }
 
 /* ── HOVER TOOLTIP (Ethereal Noir, used in Horario, Calendario, Recursos, Carga) ── */
@@ -137,7 +223,96 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 #sk-tooltip .sk-tt-value{color:#A0A0A0;flex:1;word-break:break-word}
 #sk-tooltip .sk-tt-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
 [data-tt-objetivo],[data-tt-curso],[data-tt-recursos],[data-tt-horas]{cursor:help}
-</style></head><body><div class="layout" id="appLayout"><!-- Sidebar --><aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><div class="sidebar-logo-text"><h1>SkedyClass</h1><p>Planificador de clases</p></div><button class="sb-toggle" onclick="toggleSidebar()" title="Colapsar menú"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button></div><div class="menu-section">Principal</div><ul class="sidebar-menu"><li><a href="{% url 'dashboard' %}" data-label="Inicio" class="{% if page == 'dashboard' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="sb-link-text">Inicio</span></a></li><li><a href="{% url 'planificador' %}" data-label="Planificador" class="{% if page == 'planificador' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="sb-link-text">Planificador</span></a></li><li><a href="{% url 'horario' %}" data-label="Horario" class="{% if page == 'horario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span class="sb-link-text">Horario</span></a></li><li><a href="{% url 'calendario' %}" data-label="Calendario" class="{% if page == 'calendario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/></svg><span class="sb-link-text">Calendario</span></a></li><li><a href="{% url 'listar_clases' %}" data-label="Clases" class="{% if page == 'clases' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="sb-link-text">Clases</span></a></li></ul><div class="menu-section">Personas</div><ul class="sidebar-menu"><li><a href="{% url 'listar_cursos' %}" data-label="Cursos" class="{% if page == 'cursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span class="sb-link-text">Cursos</span></a></li></ul><div class="menu-section" style="background:linear-gradient(90deg,rgba(157,78,221,.15),transparent);color:#c77dff;border-radius:6px;padding:4px 8px;margin-bottom:4px">Inteligencia Artificial</div><ul class="sidebar-menu"><li><a href="{% url 'asistente' %}" data-label="Asistente IA" class="{% if page == 'asistente' %}active{% endif %}" style="{% if page != 'asistente' %}background:linear-gradient(135deg,rgba(157,78,221,.08),rgba(247,37,133,.05));border:1px solid rgba(157,78,221,.18);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg><span class="sb-link-text">Asistente IA</span></a></li><li><a href="{% url 'lab' %}" data-label="Lab Pedagógico" class="{% if page == 'lab' %}active{% endif %}" style="{% if page != 'lab' %}background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(157,78,221,.08));border:1px solid rgba(16,185,129,.22);box-shadow:inset 0 0 12px rgba(157,78,221,.1);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(16,185,129,.6))"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg><span class="sb-link-text">Lab Pedagógico</span></a></li></ul><div class="menu-section">Más</div><ul class="sidebar-menu"><li><a href="{% url 'notas' %}" data-label="Notas" class="{% if page == 'notas' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="sb-link-text">Notas</span></a></li><li><a href="{% url 'listar_recursos' %}" data-label="Recursos" class="{% if page == 'recursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="sb-link-text">Recursos</span></a></li><li><a href="{% url 'ajustes' %}" data-label="Ajustes" class="{% if page == 'ajustes' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="sb-link-text">Ajustes</span></a></li></ul><div class="sidebar-footer">SkedyClass &copy; 2026</div></aside><!-- Header --><header class="header"><div class="header-left"><h2><span style="color:var(--indigo)">Skedy</span><span style="color:var(--pink)">Class</span></h2><span class="header-badge">Pro</span></div><div class="header-right"><a href="{% url 'perfil' %}" class="header-btn" title="Perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></a><div class="user-chip"><div class="user-avatar">{{ user.username|first }}</div>{{ user.username }}</div><a href="{% url 'logout' %}" class="header-btn" title="Cerrar sesión"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div></header><!-- Main Content --><main class="main-content">{% block content %}{% endblock %}</main><!-- Toasts (Liquid Glass) --><div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true">{% if messages %}{% for message in messages %}<div class="toast toast-{{ message.tags|default:'info' }}" role="status"><span class="toast-icon" aria-hidden="true">{% if message.tags == 'success' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="20 6 9 17 4 12"/></svg>{% elif message.tags == 'error' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>{% else %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>{% endif %}</span><span class="toast-msg">{{ message }}</span><button type="button" class="toast-close" aria-label="Cerrar" onclick="dismissToast(this.parentNode)">×</button></div>{% endfor %}{% endif %}</div><footer class="footer"><span>&copy; 2026 SkedyClass</span><div><a href="{% url 'terminos' %}">Términos</a><a href="{% url 'privacidad' %}">Privacidad</a><a href="mailto:kynoproducciones@gmail.com">Soporte</a></div></footer></div><!-- Glass Confirmation Modal --><!-- Floating Tooltip (Ethereal Noir) --><div id="sk-tooltip" role="tooltip" aria-hidden="true"><h4 class="sk-tt-title"></h4><div class="sk-tt-body"></div></div><div id="gc-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center"><div id="gc-box" style="background:rgba(14,12,30,.96);border:1px solid rgba(255,61,139,.4);border-radius:22px;padding:32px 36px;max-width:400px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 40px rgba(157,78,221,.15);position:relative;overflow:hidden;transform:scale(.92);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s ease"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ff3d8b,#9d4edd)"></div><div id="gc-icon" style="text-align:center;margin-bottom:14px;color:#cfc9e6"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h3 id="gc-title" style="font-family:'Playfair Display',serif;color:#f5f3ff;margin:0 0 8px;text-align:center;font-size:1.1rem;font-weight:800"></h3><p id="gc-msg" style="color:#b0acc8;font-size:.88rem;text-align:center;margin:0 0 24px;line-height:1.6"></p><div style="display:flex;gap:10px"><button id="gc-cancel" type="button" style="flex:1;padding:12px;border-radius:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfc9e6;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s">Cancelar</button><button id="gc-confirm" type="button" style="flex:1;padding:12px;border-radius:13px;background:linear-gradient(135deg,#ff3d8b,#c0306c);border:none;color:#fff;font-size:.9rem;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(255,61,139,.35);transition:opacity .2s">Confirmar</button></div></div></div><script src="{% static 'js/main.js' %}?v=20260516"></script><script>
+</style></head><body><div class="layout" id="appLayout"><!-- Sidebar --><aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><div class="sidebar-logo-text"><h1>SkedyClass</h1><p>Planificador de clases</p></div><button class="sb-toggle" onclick="toggleSidebar()" title="Colapsar menú"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button></div><div class="menu-section">Principal</div><ul class="sidebar-menu"><li><a href="{% url 'dashboard' %}" data-label="Inicio" class="{% if page == 'dashboard' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="sb-link-text">Inicio</span></a></li><li><a href="{% url 'planificador' %}" data-label="Planificador" class="{% if page == 'planificador' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="sb-link-text">Planificador</span></a></li><li><a href="{% url 'horario' %}" data-label="Horario" class="{% if page == 'horario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span class="sb-link-text">Horario</span></a></li><li><a href="{% url 'calendario' %}" data-label="Calendario" class="{% if page == 'calendario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/></svg><span class="sb-link-text">Calendario</span></a></li><li><a href="{% url 'listar_clases' %}" data-label="Clases" class="{% if page == 'clases' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="sb-link-text">Clases</span></a></li></ul><div class="menu-section">Personas</div><ul class="sidebar-menu"><li><a href="{% url 'listar_cursos' %}" data-label="Cursos" class="{% if page == 'cursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span class="sb-link-text">Cursos</span></a></li></ul><div class="menu-section" style="background:linear-gradient(90deg,rgba(157,78,221,.15),transparent);color:#c77dff;border-radius:6px;padding:4px 8px;margin-bottom:4px">Inteligencia Artificial</div><ul class="sidebar-menu"><li><a href="{% url 'asistente' %}" data-label="Asistente IA" class="{% if page == 'asistente' %}active{% endif %}" style="{% if page != 'asistente' %}background:linear-gradient(135deg,rgba(157,78,221,.08),rgba(247,37,133,.05));border:1px solid rgba(157,78,221,.18);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg><span class="sb-link-text">Asistente IA</span></a></li><li><a href="{% url 'lab' %}" data-label="Lab Pedagógico" class="{% if page == 'lab' %}active{% endif %}" style="{% if page != 'lab' %}background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(157,78,221,.08));border:1px solid rgba(16,185,129,.22);box-shadow:inset 0 0 12px rgba(157,78,221,.1);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(16,185,129,.6))"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg><span class="sb-link-text">Lab Pedagógico</span></a></li></ul><div class="menu-section">Más</div><ul class="sidebar-menu"><li><a href="{% url 'notas' %}" data-label="Notas" class="{% if page == 'notas' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="sb-link-text">Notas</span></a></li><li><a href="{% url 'listar_recursos' %}" data-label="Recursos" class="{% if page == 'recursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="sb-link-text">Recursos</span></a></li><li><a href="{% url 'ajustes' %}" data-label="Ajustes" class="{% if page == 'ajustes' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="sb-link-text">Ajustes</span></a></li></ul><div class="sidebar-footer">SkedyClass &copy; 2026</div></aside><!-- Header --><header class="header"><div class="header-left"><h2><span style="color:var(--indigo)">Skedy</span><span style="color:var(--pink)">Class</span></h2><span class="header-badge">Pro</span></div><div class="header-right"><button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menú"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><a href="{% url 'perfil' %}" class="header-btn" title="Perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></a><div class="user-chip"><div class="user-avatar">{{ user.username|first }}</div>{{ user.username }}</div><a href="{% url 'logout' %}" class="header-btn" title="Cerrar sesión"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div></header><!-- Main Content --><main class="main-content">{% block content %}{% endblock %}</main><!-- Toasts (Liquid Glass) --><div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true">{% if messages %}{% for message in messages %}<div class="toast toast-{{ message.tags|default:'info' }}" role="status"><span class="toast-icon" aria-hidden="true">{% if message.tags == 'success' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="20 6 9 17 4 12"/></svg>{% elif message.tags == 'error' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>{% else %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>{% endif %}</span><span class="toast-msg">{{ message }}</span><button type="button" class="toast-close" aria-label="Cerrar" onclick="dismissToast(this.parentNode)">×</button></div>{% endfor %}{% endif %}</div><footer class="footer"><span>&copy; 2026 SkedyClass</span><div><a href="{% url 'terminos' %}">Términos</a><a href="{% url 'privacidad' %}">Privacidad</a><a href="mailto:kynoproducciones@gmail.com">Soporte</a></div></footer>
+
+<!-- ── BOTTOM NAV BAR (mobile only) ── -->
+<nav class="mobile-nav-bar" aria-label="Navegación principal">
+  <a href="{% url 'dashboard' %}" class="mob-nav-item {% if page == 'dashboard' %}active{% endif %}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a href="{% url 'listar_clases' %}" class="mob-nav-item {% if page == 'clases' %}active{% endif %}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Clases</span>
+  </a>
+  <a href="{% url 'planificador' %}" class="mob-nav-item {% if page == 'planificador' %}active{% endif %}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Planifc.</span>
+  </a>
+  <a href="{% url 'lab' %}" class="mob-nav-item {% if page == 'lab' %}active{% endif %}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+    <span>Lab IA</span>
+  </a>
+  <button type="button" class="mob-nav-item" onclick="toggleMobileMenu()" aria-label="Más opciones">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></svg>
+    <span>Más</span>
+  </button>
+</nav>
+
+<!-- ── MOBILE NAV OVERLAY SHEET ── -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="handleOverlayClick(event)">
+  <div class="mob-sheet" id="mobileNavSheet">
+    <div class="mob-handle"></div>
+
+    <div class="mob-section-lbl">Principal</div>
+    <div class="mob-grid">
+      <a href="{% url 'dashboard' %}" class="mob-tile {% if page == 'dashboard' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Inicio
+      </a>
+      <a href="{% url 'planificador' %}" class="mob-tile {% if page == 'planificador' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Planificador
+      </a>
+      <a href="{% url 'horario' %}" class="mob-tile {% if page == 'horario' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        Horario
+      </a>
+      <a href="{% url 'calendario' %}" class="mob-tile {% if page == 'calendario' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/></svg>
+        Calendario
+      </a>
+      <a href="{% url 'listar_clases' %}" class="mob-tile {% if page == 'clases' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Clases
+      </a>
+      <a href="{% url 'listar_cursos' %}" class="mob-tile {% if page == 'cursos' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Cursos
+      </a>
+    </div>
+
+    <div class="mob-section-lbl">Inteligencia Artificial</div>
+    <div class="mob-grid">
+      <a href="{% url 'asistente' %}" class="mob-tile mob-tile-ai {% if page == 'asistente' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Asistente IA
+      </a>
+      <a href="{% url 'lab' %}" class="mob-tile mob-tile-ai {% if page == 'lab' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+        Lab Pedagógico
+      </a>
+    </div>
+
+    <div class="mob-section-lbl">Más</div>
+    <div class="mob-grid">
+      <a href="{% url 'notas' %}" class="mob-tile {% if page == 'notas' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Notas
+      </a>
+      <a href="{% url 'listar_recursos' %}" class="mob-tile {% if page == 'recursos' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Recursos
+      </a>
+      <a href="{% url 'ajustes' %}" class="mob-tile {% if page == 'ajustes' %}active{% endif %}" onclick="closeMobileMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Ajustes
+      </a>
+    </div>
+  </div>
+</div>
+
+</div><!-- Glass Confirmation Modal --><!-- Floating Tooltip (Ethereal Noir) --><div id="sk-tooltip" role="tooltip" aria-hidden="true"><h4 class="sk-tt-title"></h4><div class="sk-tt-body"></div></div><div id="gc-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center"><div id="gc-box" style="background:rgba(14,12,30,.96);border:1px solid rgba(255,61,139,.4);border-radius:22px;padding:32px 36px;max-width:400px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 40px rgba(157,78,221,.15);position:relative;overflow:hidden;transform:scale(.92);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s ease"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ff3d8b,#9d4edd)"></div><div id="gc-icon" style="text-align:center;margin-bottom:14px;color:#cfc9e6"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h3 id="gc-title" style="font-family:'Playfair Display',serif;color:#f5f3ff;margin:0 0 8px;text-align:center;font-size:1.1rem;font-weight:800"></h3><p id="gc-msg" style="color:#b0acc8;font-size:.88rem;text-align:center;margin:0 0 24px;line-height:1.6"></p><div style="display:flex;gap:10px"><button id="gc-cancel" type="button" style="flex:1;padding:12px;border-radius:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfc9e6;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s">Cancelar</button><button id="gc-confirm" type="button" style="flex:1;padding:12px;border-radius:13px;background:linear-gradient(135deg,#ff3d8b,#c0306c);border:none;color:#fff;font-size:.9rem;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(255,61,139,.35);transition:opacity .2s">Confirmar</button></div></div></div><script src="{% static 'js/main.js' %}?v=20260516"></script><script>
 (function(){
   var layout=document.getElementById('appLayout');
   if(localStorage.getItem('sb-collapsed')==='1') layout.classList.add('sb-collapsed');
@@ -217,6 +392,24 @@ window.showToast=function(msg, type){
     if(e.target.hasAttribute('data-confirm')){e.preventDefault();show(e.target);}
   },true);
 })();
+/* ── Mobile nav overlay ── */
+function toggleMobileMenu(){
+  var ov=document.getElementById('mobileNavOverlay');
+  if(!ov) return;
+  var open=ov.classList.toggle('mob-open');
+  document.body.style.overflow=open?'hidden':'';
+}
+function closeMobileMenu(){
+  var ov=document.getElementById('mobileNavOverlay');
+  if(!ov) return;
+  ov.classList.remove('mob-open');
+  document.body.style.overflow='';
+}
+function handleOverlayClick(e){
+  if(!document.getElementById('mobileNavSheet').contains(e.target)) closeMobileMenu();
+}
+/* close overlay on Escape */
+document.addEventListener('keydown',function(e){if(e.key==='Escape') closeMobileMenu();});
 /* ── HOVER TOOLTIP (Ethereal Noir) ──
    Usage: add data-tt-* attributes to any element. Example:
      <td data-tt-objetivo="Resolver ec. lineales" data-tt-curso="Mat 9A" data-tt-recursos="Taller PDF">
