@@ -186,8 +186,12 @@
             <input type="date" id="ia_fecha">
           </div>
           <div class="wz-field">
-            <label>Hora *</label>
+            <label>Hora inicio *</label>
             <input type="time" id="ia_hora">
+          </div>
+          <div class="wz-field">
+            <label>Hora fin <span style="color:#6b7280;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+            <input type="time" id="ia_hora_fin">
           </div>
           <div class="wz-field wz-full">
             <label>Metodología de la clase *</label>
@@ -488,6 +492,9 @@ function wzRunIa(){
     if (fechaEl) fechaEl.value = d.fecha || fecha;
     var horaEl = document.querySelector('input[name="hora_inicio"]');
     if (horaEl) horaEl.value = d.hora_inicio || d.hora || hora;
+    var horaFinEl = document.querySelector('input[name="hora_fin"]');
+    var iaHoraFin = document.getElementById('ia_hora_fin');
+    if (horaFinEl && iaHoraFin && iaHoraFin.value) horaFinEl.value = iaHoraFin.value;
     // Marca 'ia' (no '1'): wzApplyPlantilla solo auto-sobrescribe lo marcado
     // como '1', así el texto generado por IA queda "pegajoso" y no se pierde
     // si el docente vuelve al Paso 1 y toca otra plantilla.
