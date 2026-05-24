@@ -2883,10 +2883,7 @@ def test_recordatorio_email(request):
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
     try:
-        import traceback as _tb
         from django.conf import settings as _cfg
-        from django.core.mail import EmailMultiAlternatives
-        from django.template.loader import render_to_string
 
         if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
             return JsonResponse({
@@ -2901,28 +2898,16 @@ def test_recordatorio_email(request):
                 'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
             }, status=400)
 
-        today = timezone.localdate()
-        clases_hoy = list(
-            Clase.objects.filter(usuario=request.user, fecha=today).order_by('hora_inicio')
+        fecha_str = timezone.localdate().strftime('%d de %B de %Y')
+        subject = f'[PRUEBA] SkedyClass — Correo de prueba {fecha_str}'
+        body = (
+            f'Hola {request.user.first_name or request.user.username},\n\n'
+            'Este es un correo de prueba de SkedyClass.\n'
+            'Si lo recibes, el sistema de recordatorios está correctamente configurado.\n\n'
+            '— SkedyClass'
         )
-        tiene_clases = bool(clases_hoy)
-
-        context = {
-            'usuario': request.user,
-            'clases': clases_hoy,
-            'today': today,
-            'tiene_clases': tiene_clases,
-        }
-        fecha_str = today.strftime('%d de %B de %Y')
-        subject = f'[PRUEBA] SkedyClass — Tu agenda del {fecha_str}'
-        html_body = render_to_string('email/recordatorio_diario.html', context)
-
-        from planificador.management.commands.send_daily_reminders import _build_plain_text
-        text_body = _build_plain_text(request.user, clases_hoy, today, tiene_clases)
-
-        msg = EmailMultiAlternatives(subject=subject, body=text_body, to=[email])
-        msg.attach_alternative(html_body, 'text/html')
-        msg.send(fail_silently=False)
+        from django.core.mail import send_mail
+        send_mail(subject, body, None, [email], fail_silently=False)
 
         try:
             logger.info('Test email enviado a %s (%s)', request.user.username, email)
