@@ -2805,8 +2805,8 @@ def lab_guardar_documento(request):
     try:
         html = _build_lab_pdf_html(modo, data, ctx)
     except Exception as e:
-        logger.error('lab_guardar_documento: error renderizando template PDF: %s', e)
-        return JsonResponse({'ok': False, 'error': 'Error al preparar el PDF. Intenta de nuevo.'}, status=500)
+        logger.error('lab_guardar_documento: error renderizando template PDF: %s', e, exc_info=True)
+        return JsonResponse({'ok': False, 'error': f'Error al preparar el PDF: {type(e).__name__}: {e}'}, status=500)
 
     ok, payload = _render_pdf_from_html(html)
     if not ok:
