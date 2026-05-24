@@ -2711,42 +2711,50 @@ def clase_pdf_guardar(request, id):
     cierre_min = duracion_total - inicio_min - desarrollo_min
     config = getattr(request.user, 'configuracion', None)
 
-    html = render(request, 'clases/pdf.html', {
-        'clase': clase,
-        'institucion': (config.nombre_institucion if config else '') or 'Institución Educativa',
-        'cargo': config.cargo if config else '',
-        'docente_nombre': request.user.get_full_name() or request.user.username,
-        'duracion_total': duracion_total,
-        'inicio_min': inicio_min,
-        'desarrollo_min': desarrollo_min,
-        'cierre_min': cierre_min,
-        'fecha_emision': timezone.now(),
-    }).content.decode('utf-8')
+    try:
+        html = render(request, 'clases/pdf.html', {
+            'clase': clase,
+            'institucion': (config.nombre_institucion if config else '') or 'Institución Educativa',
+            'cargo': config.cargo if config else '',
+            'docente_nombre': request.user.get_full_name() or request.user.username,
+            'duracion_total': duracion_total,
+            'inicio_min': inicio_min,
+            'desarrollo_min': desarrollo_min,
+            'cierre_min': cierre_min,
+            'fecha_emision': timezone.now(),
+        }).content.decode('utf-8')
+    except Exception as e:
+        logger.error('clase_pdf_guardar: error renderizando template: %s', e)
+        return JsonResponse({'ok': False, 'error': 'Error al preparar el PDF. Intenta de nuevo.'}, status=500)
 
     ok, payload = _render_pdf_from_html(html)
     if not ok:
         return JsonResponse({'ok': False, 'error': payload}, status=500)
 
-    # Resolver curso a partir del nombre del grado de la clase si existe
-    curso_match = None
-    if clase.grado_nombre:
-        curso_match = Curso.objects.filter(
-            usuario=request.user, nombre=clase.grado_nombre
-        ).first()
+    try:
+        curso_match = None
+        if clase.grado_nombre:
+            curso_match = Curso.objects.filter(
+                usuario=request.user, nombre=clase.grado_nombre
+            ).first()
 
-    grupo = _slug_filename(clase.grado_nombre or 'General', 'Grupo')
-    tema = _slug_filename(clase.titulo or 'Clase', 'Clase')
-    filename = _unique_filename(f'PlanClase_{grupo}_{tema}', 'pdf')
+        grupo = _slug_filename(clase.grado_nombre or 'General', 'Grupo')
+        tema = _slug_filename(clase.titulo or 'Clase', 'Clase')
+        filename = _unique_filename(f'PlanClase_{grupo}_{tema}', 'pdf')
 
-    recurso = Recurso.objects.create(
-        usuario=request.user,
-        clase=clase,
-        curso=curso_match,
-        titulo=f'Plan de clase — {clase.titulo}'[:200],
-        descripcion=f'Plan exportado para {clase.grado_nombre or "—"} · {clase.fecha}'[:5000],
-        tipo='plan_pdf',
-    )
-    recurso.archivo.save(filename, ContentFile(payload), save=True)
+        recurso = Recurso.objects.create(
+            usuario=request.user,
+            clase=clase,
+            curso=curso_match,
+            titulo=f'Plan de clase — {clase.titulo}'[:200],
+            descripcion=f'Plan exportado para {clase.grado_nombre or "—"} · {clase.fecha}'[:5000],
+            tipo='plan_pdf',
+        )
+        recurso.archivo.save(filename, ContentFile(payload), save=True)
+    except Exception as e:
+        logger.error('clase_pdf_guardar: error guardando recurso: %s', e)
+        return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
+
     return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
 
 
@@ -2794,7 +2802,12 @@ def lab_guardar_documento(request):
         curso_id=body.get('curso_id'),
     )
 
-    html = _build_lab_pdf_html(modo, data, ctx)
+    try:
+        html = _build_lab_pdf_html(modo, data, ctx)
+    except Exception as e:
+        logger.error('lab_guardar_documento: error renderizando template PDF: %s', e)
+        return JsonResponse({'ok': False, 'error': 'Error al preparar el PDF. Intenta de nuevo.'}, status=500)
+
     ok, payload = _render_pdf_from_html(html)
     if not ok:
         return JsonResponse({'ok': False, 'error': payload}, status=500)
@@ -2802,23 +2815,28 @@ def lab_guardar_documento(request):
     from django.core.files.base import ContentFile
     from django.utils.html import strip_tags
 
-    titulo = strip_tags(data.get('titulo') or LAB_MODOS[modo]['label'])[:200]
-    tipo_map = {'quiz': 'quiz', 'refuerzo': 'taller', 'desafio': 'taller', 'guia': 'guia'}
-    tipo = tipo_map.get(modo, 'documento')
-    tipo_prefix = {'quiz': 'Evaluacion', 'refuerzo': 'Taller', 'desafio': 'Problema', 'guia': 'Guia'}[modo]
-    grupo = _slug_filename(ctx['grado'] or 'General')
-    tema = _slug_filename(ctx['tema'] or titulo)
-    filename = _unique_filename(f'Recurso_{tipo_prefix}_{grupo}_{tema}', 'pdf')
+    try:
+        titulo = strip_tags(data.get('titulo') or LAB_MODOS[modo]['label'])[:200]
+        tipo_map = {'quiz': 'quiz', 'refuerzo': 'taller', 'desafio': 'taller', 'guia': 'guia'}
+        tipo = tipo_map.get(modo, 'documento')
+        tipo_prefix = {'quiz': 'Evaluacion', 'refuerzo': 'Taller', 'desafio': 'Problema', 'guia': 'Guia'}[modo]
+        grupo = _slug_filename(ctx['grado'] or 'General')
+        tema = _slug_filename(ctx['tema'] or titulo)
+        filename = _unique_filename(f'Recurso_{tipo_prefix}_{grupo}_{tema}', 'pdf')
 
-    recurso = Recurso.objects.create(
-        usuario=request.user,
-        curso=curso_match,
-        clase=clase_match,
-        titulo=titulo,
-        descripcion=f'{LAB_MODOS[modo]["label"]} · {ctx["materia"]} · {ctx["grado"] or "General"}'[:5000],
-        tipo=tipo,
-    )
-    recurso.archivo.save(filename, ContentFile(payload), save=True)
+        recurso = Recurso.objects.create(
+            usuario=request.user,
+            curso=curso_match,
+            clase=clase_match,
+            titulo=titulo,
+            descripcion=f'{LAB_MODOS[modo]["label"]} · {ctx["materia"]} · {ctx["grado"] or "General"}'[:5000],
+            tipo=tipo,
+        )
+        recurso.archivo.save(filename, ContentFile(payload), save=True)
+    except Exception as e:
+        logger.error('lab_guardar_documento: error guardando recurso: %s', e)
+        return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
+
     return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
 
 
