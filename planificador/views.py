@@ -683,7 +683,7 @@ def crear_clase(request):
         if pre_fecha:
             initial['fecha'] = pre_fecha
         if pre_hora:
-            initial['hora'] = pre_hora
+            initial['hora_inicio'] = pre_hora
         form = ClaseForm(initial=initial)
 
     preselected = request.GET.get('tipo', '').strip()
@@ -744,7 +744,7 @@ def ver_clase(request, id):
     curso_relacionado = None
     if clase.grado_nombre:
         curso_relacionado = Curso.objects.filter(
-            usuario=request.user, nivel_academico=clase.grado_nombre
+            usuario=request.user, nombre=clase.grado_nombre
         ).first()
 
     # Recursos del docente que NO están aún enlazados a esta clase
@@ -798,7 +798,7 @@ def vincular_recurso_clase(request, clase_id):
         # estaba (no se borra la asociación previa).
         if clase.grado_nombre:
             curso_match = Curso.objects.filter(
-                usuario=request.user, nivel_academico=clase.grado_nombre
+                usuario=request.user, nombre=clase.grado_nombre
             ).first()
             if curso_match is not None:
                 recurso.curso = curso_match
@@ -2630,7 +2630,7 @@ def _resolver_curso_clase(user, clase_id=None, curso_id=None):
     if clase is not None and clase.grado_nombre:
         # Deriva el curso desde la clase — fuente de verdad
         curso = Curso.objects.filter(
-            usuario=user, nivel_academico=clase.grado_nombre
+            usuario=user, nombre=clase.grado_nombre
         ).first()
     elif curso_id:
         try:
@@ -2731,7 +2731,7 @@ def clase_pdf_guardar(request, id):
     curso_match = None
     if clase.grado_nombre:
         curso_match = Curso.objects.filter(
-            usuario=request.user, nivel_academico=clase.grado_nombre
+            usuario=request.user, nombre=clase.grado_nombre
         ).first()
 
     grupo = _slug_filename(clase.grado_nombre or 'General', 'Grupo')
