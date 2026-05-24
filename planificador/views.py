@@ -2875,7 +2875,6 @@ def lab_guardar_documento(request):
 # ==================== TEST DE CORREO ====================
 
 @login_required
-@rate_limit('test_email', max_calls=3, window_sec=300, json_response=True)
 def test_recordatorio_email(request):
     """Envía un correo de prueba inmediato al usuario autenticado usando el mismo
     template del recordatorio diario. Solo funciona si EMAIL_HOST_USER está
