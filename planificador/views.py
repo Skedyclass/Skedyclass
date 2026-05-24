@@ -600,6 +600,7 @@ def listar_clases(request):
 
     return render(request, 'clases/listar.html', {
         'clases': page_obj, 'page_obj': page_obj, 'q': q, 'page': 'clases',
+        'today': timezone.localdate(),
     })
 
 
@@ -910,6 +911,14 @@ def cambiar_estado_clase(request, id, estado):
             return JsonResponse({'ok': False, 'error': 'Estado inválido'}, status=400)
         return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
 
+    today = timezone.localdate()
+    if estado in ('in_progress', 'completed') and clase.fecha != today:
+        msg = 'Solo puedes iniciar o completar una clase el día que está programada.'
+        if is_ajax:
+            return JsonResponse({'ok': False, 'error': msg}, status=400)
+        messages.error(request, msg)
+        return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
+
     clase.estado = estado
     clase.save(update_fields=['estado', 'updated_at'])
     logger.info('Estado clase id=%s → %s por %s', clase.id, estado, request.user.username)
@@ -1146,6 +1155,7 @@ def planificador(request):
 
     return render(request, 'planificador.html', {
         'clases': clases, 'q': q, 'estado_filtro': estado_filtro, 'page': 'planificador',
+        'today': timezone.localdate(),
     })
 
 
