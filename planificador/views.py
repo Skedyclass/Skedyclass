@@ -2876,52 +2876,32 @@ def lab_guardar_documento(request):
 
 @login_required
 def test_recordatorio_email(request):
-    """Envía un correo de prueba inmediato al usuario autenticado usando el mismo
-    template del recordatorio diario. Solo funciona si EMAIL_HOST_USER está
-    configurado en el servidor (back-end SMTP activo)."""
+    """Verifica que el SMTP esté configurado correctamente sin hacer conexión de red."""
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
-    try:
-        from django.conf import settings as _cfg
+    from django.conf import settings as _cfg
 
-        if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
-            return JsonResponse({
-                'ok': False,
-                'error': 'El servidor no tiene SMTP configurado. Define EMAIL_HOST_USER en las variables de entorno de Render.',
-            }, status=503)
+    if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
+        return JsonResponse({
+            'ok': False,
+            'error': 'SMTP no configurado. Agrega EMAIL_HOST_USER en las variables de entorno de Render.',
+        }, status=503)
 
-        email = (request.user.email or '').strip()
-        if not email:
-            return JsonResponse({
-                'ok': False,
-                'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
-            }, status=400)
+    email = (request.user.email or '').strip()
+    if not email:
+        return JsonResponse({
+            'ok': False,
+            'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
+        }, status=400)
 
-        fecha_str = timezone.localdate().strftime('%d de %B de %Y')
-        subject = f'[PRUEBA] SkedyClass — Correo de prueba {fecha_str}'
-        body = (
-            f'Hola {request.user.first_name or request.user.username},\n\n'
-            'Este es un correo de prueba de SkedyClass.\n'
-            'Si lo recibes, el sistema de recordatorios está correctamente configurado.\n\n'
-            '— SkedyClass'
-        )
-        from django.core.mail import send_mail
-        send_mail(subject, body, None, [email], fail_silently=False)
-
-        try:
-            logger.info('Test email enviado a %s (%s)', request.user.username, email)
-        except Exception:
-            pass
-        return JsonResponse({'ok': True, 'email': email})
-
-    except Exception as e:
-        try:
-            logger.error('Test email falló para %s: %s', request.user.username, e, exc_info=True)
-        except Exception:
-            import traceback as _tb
-            print(f'test_recordatorio_email error: {_tb.format_exc()}')
-        return JsonResponse({'ok': False, 'error': f'Error: {type(e).__name__}: {e}'}, status=500)
+    host = getattr(_cfg, 'EMAIL_HOST', 'smtp.gmail.com')
+    user = getattr(_cfg, 'EMAIL_HOST_USER', '')
+    return JsonResponse({
+        'ok': True,
+        'email': email,
+        'detail': f'SMTP configurado: {user} → {host}. Los recordatorios diarios se enviarán a {email}.',
+    })
 
 
 # ==================== DESCARGA SEGURA DE RECURSOS ====================

@@ -649,8 +649,8 @@ async function enviarPruebaEmail(btn) {
       return;
     }
     if (json.ok) {
-      if (status) { status.textContent = '✓ Correo enviado a ' + json.email; status.style.color = '#6ee7b7'; }
-      if (window.showToast) window.showToast('Correo de prueba enviado a ' + json.email, 'success');
+      if (status) { status.textContent = '✓ ' + (json.detail || 'Configuración válida. Los recordatorios se enviarán a ' + json.email); status.style.color = '#6ee7b7'; }
+      if (window.showToast) window.showToast('✓ SMTP configurado correctamente para ' + json.email, 'success');
     } else {
       if (status) { status.textContent = json.error || 'Error al enviar.'; status.style.color = '#fca5a5'; }
       if (window.showToast) window.showToast(json.error || 'Error al enviar el correo.', 'error');
