@@ -264,6 +264,7 @@ class HorarioAcademico(models.Model):
     ano_lectivo = models.CharField(max_length=20, blank=True, help_text='Ej: 2025-2026')
     fecha_inicio_lectivo = models.DateField(null=True, blank=True)
     fecha_fin_lectivo = models.DateField(null=True, blank=True)
+    horario_anual_activo = models.BooleanField(default=False, help_text='Activa proyección automática y alertas de planificación')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

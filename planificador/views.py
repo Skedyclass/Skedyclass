@@ -1961,13 +1961,59 @@ def horario(request):
 
     friday = monday + _td(days=4)
 
-    bloques_horario = BloqueHorario.objects.filter(usuario=request.user).select_related('curso')
+    bloques_horario = list(BloqueHorario.objects.filter(usuario=request.user).select_related('curso'))
+
+    # Build template matrix: map BloqueHorario into the same slot/day grid
+    bloque_map = {}
+    for _b in bloques_horario:
+        _slot = _find_slot(_b.hora_inicio)
+        if _slot is None:
+            continue
+        _dia = _WEEKDAY_TO_DIA.get(_b.dia_semana)
+        if _dia:
+            bloque_map.setdefault((_dia, _slot), []).append(_b)
+
+    bloque_grid_rows = []
+    for slot in slots:
+        slot_str = slot.strftime('%H:%M')
+        is_descanso = slot in descanso_slots
+        _slot_end = (_dt.combine(today, slot) + slot_delta).time()
+        _cells = []
+        for dia in dias:
+            _cells.append({
+                'dia': dia,
+                'dia_num': _DIA_TO_WD[dia],
+                'slot': slot_str,
+                'slot_end': _slot_end.strftime('%H:%M'),
+                'bloques': bloque_map.get((dia, slot), []),
+                'is_descanso': is_descanso,
+            })
+        bloque_grid_rows.append({
+            'slot': slot_str,
+            'is_descanso': is_descanso,
+            'cells': _cells,
+        })
+
+    # Auto-archive past pending classes when annual mode is active
+    _now_time = timezone.localtime().time()
+    if horario_obj.horario_anual_activo:
+        Clase.objects.filter(
+            usuario=request.user, estado='pending', fecha__lt=today
+        ).update(estado='completed')
+        if _now_time > horario_obj.hora_fin_jornada:
+            Clase.objects.filter(
+                usuario=request.user, estado='pending', fecha=today
+            ).update(estado='completed')
+
+    # Weekend planning alert: active on Sat/Sun when annual mode is on
+    alerta_planificacion = horario_obj.horario_anual_activo and today.weekday() >= 5
 
     return render(request, 'horario.html', {
         'page': 'horario',
         'horario': horario_obj,
         'descansos': descansos,
         'bloques_horario': bloques_horario,
+        'bloque_grid_rows': bloque_grid_rows,
         'grid_rows': grid_rows,
         'dias': dias,
         'dias_info': dias_info,
@@ -1982,6 +2028,7 @@ def horario(request):
         'week_offset_prev': week_offset - 1,
         'week_offset_next': week_offset + 1,
         'dias_choices': BloqueHorario.DIAS_CHOICES,
+        'alerta_planificacion': alerta_planificacion,
     })
 
 
@@ -2120,6 +2167,7 @@ def guardar_ano_lectivo(request):
             and horario_obj.fecha_fin_lectivo <= horario_obj.fecha_inicio_lectivo):
         messages.error(request, 'La fecha de fin del año lectivo debe ser posterior a la de inicio.')
         return redirect('horario')
+    horario_obj.horario_anual_activo = request.POST.get('horario_anual_activo') == '1'
     horario_obj.save()
     messages.success(request, 'Año lectivo configurado correctamente.')
     return redirect('horario')

@@ -21,6 +21,17 @@
 .week-today-btn{padding:7px 14px;border-radius:10px;border:none;background:rgba(99,102,241,.18);color:#c7d2fe;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .18s}
 .week-today-btn:hover{background:rgba(99,102,241,.32);color:#fff}
 
+/* ─── WEEKEND PLANNING ALERT ───────────────────────────────── */
+.alerta-plan{display:flex;align-items:center;gap:14px;padding:14px 20px;margin-bottom:16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.45);border-radius:14px;animation:alertaPulse 2.8s ease-in-out infinite}
+@keyframes alertaPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.35)}55%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.alerta-dot{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.25);flex-shrink:0;animation:dotBlink 1.2s ease-in-out infinite}
+@keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.35}}
+.alerta-body{flex:1}
+.alerta-title{font-size:.88rem;font-weight:800;color:#fff;margin:0 0 2px}
+.alerta-desc{font-size:.75rem;color:rgba(255,255,255,.65);margin:0}
+.alerta-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#fca5a5;font-size:.76rem;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .18s}
+.alerta-link:hover{background:rgba(239,68,68,.32);color:#fff}
+
 /* ─── CONFLICT BANNER ─────────────────────────────────────── */
 .conflict-banner{display:flex;align-items:center;gap:12px;padding:12px 18px;margin-bottom:16px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);border-radius:12px;color:#fff;font-size:.85rem;font-weight:700;animation:conflictPulse 2s ease-in-out infinite}
 @keyframes conflictPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
@@ -106,7 +117,7 @@
 @media(max-width:1024px){.ht-layout{grid-template-columns:1fr}}
 
 .ht-config-panel{background:rgba(14,12,30,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:20px;color:#fff}
-.ht-config-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;color:#fff !important}
+.ht-config-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;color:#fff !important;display:flex;align-items:center;gap:6px}
 .fl{display:flex;flex-direction:column;gap:10px}
 .fl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fl-label{font-size:.68rem;font-weight:700;color:rgba(255,255,255,.6) !important;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;display:block}
@@ -119,8 +130,21 @@
 .descanso-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;margin-bottom:6px}
 .descanso-name{font-size:.78rem;font-weight:700;color:#fff !important}
 .descanso-time{font-size:.66rem;color:rgba(255,255,255,.6) !important;margin-top:1px}
-.btn-del-sm{width:26px;height:26px;border-radius:7px;border:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5 !important;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0}
+.btn-del-sm{width:26px;height:26px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.15);color:#fca5a5 !important;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0}
 .btn-del-sm:hover{background:rgba(239,68,68,.32)}
+
+/* ─── TOGGLE SWITCH ────────────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.18);border-radius:10px;cursor:pointer}
+.toggle-label-text{font-size:.8rem;font-weight:700;color:#c7d2fe !important}
+.toggle-label-sub{font-size:.66rem;color:rgba(255,255,255,.45) !important;margin-top:1px}
+.toggle-switch{position:relative;width:38px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:rgba(255,255,255,.12);border-radius:22px;transition:background .2s}
+.toggle-thumb{position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle-switch input:checked + .toggle-track{background:#6366f1}
+.toggle-switch input:checked ~ .toggle-thumb{transform:translateX(16px)}
+.toggle-switch:has(input:checked) .toggle-track{background:#6366f1}
+.toggle-switch:has(input:checked) .toggle-thumb{transform:translateX(16px)}
 
 /* ─── STATS ROW ────────────────────────────────────────────── */
 .stat-mini{text-align:center;padding:12px 8px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}
@@ -130,12 +154,64 @@
 /* ─── UNSCHEDULED COURSES ──────────────────────────────────── */
 .unscheduled-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14);border-radius:10px;text-decoration:none;color:rgba(255,255,255,.8) !important;font-size:.78rem;transition:background .18s}
 .unscheduled-chip:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.35);color:#fff !important}
+
+/* ─── TEMPLATE MATRIX SECTION ──────────────────────────────── */
+.tm-section{margin-top:22px;background:rgba(8,6,20,.7);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden}
+.tm-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;cursor:pointer;user-select:none;transition:background .18s}
+.tm-header:hover{background:rgba(255,255,255,.03)}
+.tm-title-text{font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:#fff}
+.tm-badge{padding:3px 10px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.3);border-radius:20px;font-size:.68rem;font-weight:700;color:#c7d2fe}
+.tm-body{padding:0 22px 22px}
+.tm-desc{font-size:.78rem;color:rgba(255,255,255,.5);margin:0 0 16px;line-height:1.6;padding-top:4px}
+
+/* TM table */
+.tm-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,.09)}
+.tm-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:640px}
+.tm-table th,.tm-table td{border:1px solid rgba(255,255,255,.07);color:#fff !important}
+.tm-td{padding:4px;vertical-align:top;height:52px;position:relative;transition:background .15s}
+.tm-td:hover:not(.break-cell){background:rgba(99,102,241,.05)}
+
+/* TM chips (same materia colors as .clase-chip) */
+.tm-chip{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:4px 7px;border-radius:8px;font-size:.68rem;font-weight:700;line-height:1.3;border:1px solid transparent;color:#fff !important;margin-bottom:2px}
+.tm-chip-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff !important}
+.tm-chip-curso{font-size:.58rem;opacity:.7;display:block;color:rgba(255,255,255,.7) !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-del-btn{width:18px;height:18px;border-radius:5px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.15);color:#fca5a5 !important;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:background .15s}
+.tm-del-btn:hover{background:rgba(239,68,68,.35)}
+
+/* TM add button */
+.tm-add-btn{position:absolute;inset:0;width:100%;height:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s;color:rgba(255,255,255,.4) !important}
+.tm-td:hover .tm-add-btn{opacity:1}
+.tm-td:has(.tm-chip) .tm-add-btn{display:none}
+.tm-add-btn:hover{color:rgba(99,102,241,.9) !important}
+
+/* TM break */
+.tm-break-icon{display:flex;align-items:center;justify-content:center;height:100%;padding-top:6px;color:rgba(251,191,36,.5) !important}
+
+/* TM empty state */
+.tm-empty{padding:36px 24px;text-align:center;color:rgba(255,255,255,.35)}
+.tm-empty svg{display:block;margin:0 auto 12px;opacity:.35}
+.tm-empty p{font-size:.82rem;margin:0;line-height:1.5}
+
+/* ─── ASSIGNMENT DIALOG ─────────────────────────────────────── */
+.tm-dialog{background:rgba(14,12,30,.97);border:1px solid rgba(99,102,241,.35);border-radius:18px;padding:0;color:#fff;max-width:380px;width:calc(100% - 32px);box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.tm-dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.td-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.td-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:#fff;margin:0}
+.td-close{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.td-close:hover{background:rgba(255,255,255,.12);color:#fff}
+.td-body{padding:18px 20px 20px}
 </style>
 
 <!-- Page header -->
 <div class="ht-header">
   <div>
-    <h1 class="ht-title">Horario Académico</h1>
+    <h1 class="ht-title">Horario Académico
+      {% if horario.horario_anual_activo %}
+      <span style="display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 10px;border-radius:20px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);font-family:inherit;font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#c7d2fe;vertical-align:middle">
+        <span style="width:6px;height:6px;border-radius:50%;background:#6ee7b7;box-shadow:0 0 6px rgba(110,231,183,.6);flex-shrink:0"></span>Automático activo
+      </span>
+      {% endif %}
+    </h1>
     <p class="ht-subtitle">Cuadrícula semanal &mdash; {{ monday|date:"d M" }} al {{ friday|date:"d M Y" }} (Lun–Vie)</p>
   </div>
   <a href="{% url 'crear_clase' %}" class="ht-nav-btn">
@@ -155,9 +231,24 @@
   {% if week_offset != 0 %}<a href="?semana=0" class="week-today-btn">Hoy</a>{% endif %}
 </div>
 
+<!-- Weekend planning alert -->
+{% if alerta_planificacion %}
+<div class="alerta-plan">
+  <span class="alerta-dot"></span>
+  <div class="alerta-body">
+    <p class="alerta-title">Es momento de planificar</p>
+    <p class="alerta-desc">Es fin de semana. Revisa y completa los temas de la próxima semana antes del lunes.</p>
+  </div>
+  <a href="?semana=1" class="alerta-link">
+    Ver próxima semana
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+  </a>
+</div>
+{% endif %}
+
 {% if has_conflicts %}
 <div class="conflict-banner">
-  <span style="font-size:1.2rem">⚠️</span>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
   <span>Se detectaron clases solapadas en este horario. Revisa las celdas marcadas en rojo.</span>
 </div>
 {% endif %}
@@ -206,7 +297,7 @@
                   <span class="cc-title">{{ clase.titulo }}</span>
                   {% if clase.grado_nombre %}<span class="cc-grado">{{ clase.grado_nombre }}</span>{% endif %}
                 </a>
-                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
+                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">Conflicto</span>{% endif %}
                 {% endwith %}
                 {% endfor %}
 
@@ -223,7 +314,7 @@
       </table>
       {% else %}
       <div style="padding:48px 24px;text-align:center;color:#fff">
-        <div style="font-size:2.5rem;margin-bottom:14px">🗓️</div>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.4" style="display:block;margin:0 auto 14px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <div style="font-size:.95rem;font-weight:700;margin-bottom:6px;color:#fff">Configura tu jornada primero</div>
         <div style="font-size:.82rem;color:rgba(255,255,255,.55)">Define hora de inicio, fin y duración de sesión en el panel de la derecha.</div>
       </div>
@@ -273,7 +364,10 @@
 
     <!-- Jornada config -->
     <div class="ht-config-panel">
-      <div class="ht-config-title">⏱ Configurar Jornada</div>
+      <div class="ht-config-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Configurar Jornada
+      </div>
       <form method="post" action="{% url 'guardar_horario' %}">
         {% csrf_token %}
         <div class="fl">
@@ -304,7 +398,10 @@
 
     <!-- Break blocks -->
     <div class="ht-config-panel">
-      <div class="ht-config-title">☕ Bloques de Descanso</div>
+      <div class="ht-config-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+        Bloques de Descanso
+      </div>
 
       {% for d in descansos %}
       <div class="descanso-row">
@@ -314,7 +411,9 @@
         </div>
         <form method="post" action="{% url 'eliminar_bloque' d.id %}" data-confirm="¿Eliminar el bloque '{{ d.nombre }}'?" data-confirm-title="Eliminar bloque" data-confirm-btn="Eliminar">
           {% csrf_token %}
-          <button type="submit" class="btn-del-sm" title="Eliminar">✕</button>
+          <button type="submit" class="btn-del-sm" title="Eliminar">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </form>
       </div>
       {% empty %}
@@ -338,78 +437,18 @@
               <input type="time" name="hora_fin" class="gl-input" required>
             </div>
           </div>
-          <button type="submit" class="btn-save btn-amber" style="font-size:.8rem">+ Agregar descanso</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Bloques de Horario Semanal -->
-    <div class="ht-config-panel">
-      <div class="ht-config-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-        Bloques de Horario Semanal
-      </div>
-      <p style="font-size:.72rem;color:rgba(255,255,255,.45);margin:0 0 10px;line-height:1.5">Añade los bloques recurrentes de tu semana. Úsalos para proyectar el año lectivo completo.</p>
-
-      {% for b in bloques_horario %}
-      <div class="descanso-row">
-        <div style="flex:1">
-          <div class="descanso-name">{{ b.get_dia_semana_display }} · {{ b.hora_inicio|time:"H:i" }}–{{ b.hora_fin|time:"H:i" }}</div>
-          <div class="descanso-time">{{ b.titulo|default:b.materia|default:"—" }}{% if b.curso %} · {{ b.curso.nombre }}{% endif %}</div>
-        </div>
-        <form method="post" action="{% url 'eliminar_bloque_horario' b.id %}" data-confirm="¿Eliminar este bloque semanal?" data-confirm-title="Eliminar bloque" data-confirm-btn="Eliminar">
-          {% csrf_token %}
-          <button type="submit" class="btn-del-sm" title="Eliminar">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </form>
-      </div>
-      {% empty %}
-      <p style="font-size:.78rem;color:rgba(255,255,255,.35);margin:0 0 12px;text-align:center">Sin bloques configurados</p>
-      {% endfor %}
-
-      <form method="post" action="{% url 'guardar_bloque_horario' %}">
-        {% csrf_token %}
-        <div class="fl">
-          <div>
-            <label class="fl-label">Día</label>
-            <select name="dia_semana" class="gl-input">
-              {% for val, lbl in dias_choices %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="fl-row">
-            <div>
-              <label class="fl-label">Inicio</label>
-              <input type="time" name="hora_inicio" class="gl-input" required>
-            </div>
-            <div>
-              <label class="fl-label">Fin</label>
-              <input type="time" name="hora_fin" class="gl-input" required>
-            </div>
-          </div>
-          <div>
-            <label class="fl-label">Título / Materia (opcional)</label>
-            <input type="text" name="titulo" class="gl-input" placeholder="Ej: Matemáticas 9A" maxlength="200">
-          </div>
-          <div>
-            <label class="fl-label">Curso (opcional)</label>
-            <select name="curso_id" class="gl-input">
-              <option value="">— Sin vincular —</option>
-              {% for c in cursos %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
-            </select>
-          </div>
-          <button type="submit" class="btn-save" style="background:linear-gradient(135deg,rgba(99,102,241,.6),rgba(157,78,221,.5));font-size:.8rem">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Agregar bloque
+          <button type="submit" class="btn-save btn-amber" style="font-size:.8rem">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar descanso
           </button>
         </div>
       </form>
     </div>
 
-    <!-- Año Lectivo -->
+    <!-- Año Lectivo + Automation Toggle -->
     <div class="ht-config-panel" id="panelAnoLectivo">
       <div class="ht-config-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Año Lectivo
       </div>
       <form method="post" action="{% url 'guardar_ano_lectivo' %}">
@@ -429,6 +468,20 @@
               <input type="date" name="fecha_fin_lectivo" class="gl-input" value="{{ horario.fecha_fin_lectivo|date:'Y-m-d'|default:'' }}">
             </div>
           </div>
+
+          <!-- Automation toggle -->
+          <label class="toggle-row" for="togAnual">
+            <div>
+              <div class="toggle-label-text">Automatización anual</div>
+              <div class="toggle-label-sub">Alertas de fin de semana · Archivado automático</div>
+            </div>
+            <div class="toggle-switch">
+              <input type="checkbox" id="togAnual" name="horario_anual_activo" value="1" {% if horario.horario_anual_activo %}checked{% endif %}>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </label>
+
           <button type="submit" class="btn-save" style="font-size:.8rem">Guardar año lectivo</button>
         </div>
       </form>
@@ -439,7 +492,6 @@
           Proyecta <strong style="color:#c4b5fd">{{ bloques_horario|length }} bloque{% if bloques_horario|length != 1 %}s{% endif %}</strong> desde
           <strong style="color:#c4b5fd">{{ horario.fecha_inicio_lectivo|date:"d/m/Y" }}</strong> hasta
           <strong style="color:#c4b5fd">{{ horario.fecha_fin_lectivo|date:"d/m/Y" }}</strong>.
-          Se crearán clases vacías listas para planificar.
         </p>
         <button type="button" id="btnProyectar" onclick="proyectarAnoLectivo()" style="display:flex;align-items:center;gap:8px;width:100%;justify-content:center;padding:11px 16px;border-radius:12px;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(157,78,221,.15));border:1px solid rgba(16,185,129,.35);color:#6ee7b7;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -447,16 +499,16 @@
         </button>
       </div>
       {% elif not bloques_horario %}
-      <p style="font-size:.72rem;color:rgba(255,255,255,.35);margin:8px 0 0;text-align:center">Añade bloques de horario semanal para habilitar la proyección.</p>
+      <p style="font-size:.72rem;color:rgba(255,255,255,.35);margin:10px 0 0;text-align:center">Configura la plantilla de jornada (abajo) para habilitar la proyección.</p>
       {% elif not horario.fecha_inicio_lectivo or not horario.fecha_fin_lectivo %}
-      <p style="font-size:.72rem;color:rgba(255,255,255,.35);margin:8px 0 0;text-align:center">Define las fechas del año lectivo para habilitar la proyección.</p>
+      <p style="font-size:.72rem;color:rgba(255,255,255,.35);margin:10px 0 0;text-align:center">Define las fechas del año lectivo para habilitar la proyección.</p>
       {% endif %}
     </div>
 
     <!-- Quick actions -->
     <div class="ht-config-panel" style="padding:16px">
       <div class="ht-config-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:5px"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         Acciones Rápidas
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -475,10 +527,165 @@
   </div><!-- end right col -->
 </div><!-- end layout -->
 
+<!-- ─── TEMPLATE MATRIX SECTION ────────────────────────────── -->
+<div class="tm-section" id="tmSection">
+  <div class="tm-header" onclick="toggleTM()" role="button" tabindex="0" aria-expanded="{{ bloque_grid_rows|yesno:'true,false' }}">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(199,210,254,.8)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      <span class="tm-title-text">Plantilla de Jornada Semanal</span>
+      {% if bloques_horario %}<span class="tm-badge">{{ bloques_horario|length }} bloque{% if bloques_horario|length != 1 %}s{% endif %}</span>{% endif %}
+    </div>
+    <svg id="tmChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2.5" style="transition:transform .25s;{% if not horario.horario_anual_activo and bloques_horario %}transform:rotate(-90deg){% endif %}"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+
+  <div class="tm-body" id="tmBody" style="{% if not horario.horario_anual_activo and bloques_horario %}display:none{% endif %}">
+    <p class="tm-desc">Define qué curso se imparte en cada franja horaria de la semana. Haz clic en una celda vacía para asignar un curso. El sistema usa esta plantilla para proyectar las clases del año lectivo completo.</p>
+
+    {% if bloque_grid_rows %}
+    <div class="tm-table-wrap">
+      <table class="tm-table ht-table" role="grid">
+        <thead>
+          <tr>
+            <th class="ht-th-time">Hora</th>
+            <th class="ht-th-day">Lunes</th>
+            <th class="ht-th-day">Martes</th>
+            <th class="ht-th-day">Miércoles</th>
+            <th class="ht-th-day">Jueves</th>
+            <th class="ht-th-day">Viernes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in bloque_grid_rows %}
+          <tr class="ht-tr {% if row.is_descanso %}break-row{% endif %}">
+            <td class="ht-td-time">{{ row.slot }}</td>
+            {% for cell in row.cells %}
+            <td class="tm-td {% if row.is_descanso %}break-cell{% endif %}">
+              {% if row.is_descanso %}
+                <span class="tm-break-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+              {% else %}
+                {% for b in cell.bloques %}
+                {% with mat=b.materia|lower|cut:' '|slugify|default:'default' %}
+                <div class="tm-chip mat-{{ mat }}">
+                  <div style="flex:1;min-width:0">
+                    <span class="tm-chip-text">{{ b.titulo|default:b.materia|default:"Bloque" }}</span>
+                    {% if b.curso %}<span class="tm-chip-curso">{{ b.curso.nombre }}</span>{% endif %}
+                  </div>
+                  <form method="post" action="{% url 'eliminar_bloque_horario' b.id %}" data-confirm="¿Eliminar este bloque de la plantilla?" data-confirm-title="Eliminar bloque" data-confirm-btn="Eliminar">
+                    {% csrf_token %}
+                    <button type="submit" class="tm-del-btn" title="Eliminar bloque">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </form>
+                </div>
+                {% endwith %}
+                {% empty %}
+                <button class="tm-add-btn" type="button"
+                  onclick="openBloqueDialog({{ cell.dia_num }}, '{{ cell.slot }}', '{{ cell.slot_end }}')"
+                  title="Asignar curso a {{ cell.slot }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                {% endfor %}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tm-empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <p>Configura primero la jornada (hora de inicio, fin y duración de sesión) para ver la cuadrícula de tiempo.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ─── ASSIGNMENT DIALOG ────────────────────────────────────── -->
+<dialog id="bloqueDialog" class="tm-dialog">
+  <div class="td-header">
+    <h3 class="td-title" id="tdTitle">Asignar bloque</h3>
+    <button type="button" class="td-close" onclick="closeBloqueDialog()" title="Cerrar">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="td-body">
+    <form method="post" action="{% url 'guardar_bloque_horario' %}" id="bloqueForm">
+      {% csrf_token %}
+      <input type="hidden" name="dia_semana" id="tdDia">
+      <input type="hidden" name="hora_inicio" id="tdHoraInicio">
+      <input type="hidden" name="hora_fin" id="tdHoraFin">
+      <div class="fl">
+        <div>
+          <label class="fl-label">Curso</label>
+          <select name="curso_id" class="gl-input">
+            <option value="">— Sin vincular —</option>
+            {% for c in cursos %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="fl-label">Materia</label>
+          <select name="materia" class="gl-input">
+            <option value="">— Sin materia —</option>
+            {% for val, lbl in materia_choices %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="fl-label">Título (opcional)</label>
+          <input type="text" name="titulo" class="gl-input" placeholder="Ej: 9A — Álgebra" maxlength="200">
+        </div>
+        <button type="submit" class="btn-save" style="margin-top:4px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Asignar bloque
+        </button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+/* ─── Template matrix toggle ──────────────────────────────── */
+function toggleTM(){
+  var body = document.getElementById('tmBody');
+  var chevron = document.getElementById('tmChevron');
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
+/* ─── Assignment dialog ───────────────────────────────────── */
+var DIAS_NOMBRES = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+function openBloqueDialog(dia, horaInicio, horaFin){
+  document.getElementById('tdDia').value = dia;
+  document.getElementById('tdHoraInicio').value = horaInicio;
+  document.getElementById('tdHoraFin').value = horaFin;
+  document.getElementById('tdTitle').textContent =
+    'Asignar bloque — ' + (DIAS_NOMBRES[dia] || 'Día') + '  ' + horaInicio + '–' + horaFin;
+  // Reset form fields
+  var form = document.getElementById('bloqueForm');
+  form.querySelector('[name="curso_id"]').value = '';
+  form.querySelector('[name="materia"]').value = '';
+  form.querySelector('[name="titulo"]').value = '';
+  document.getElementById('bloqueDialog').showModal();
+}
+function closeBloqueDialog(){
+  document.getElementById('bloqueDialog').close();
+}
+// Close on backdrop click
+document.getElementById('bloqueDialog').addEventListener('click', function(e){
+  var rect = this.getBoundingClientRect();
+  if(e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom){
+    this.close();
+  }
+});
+
+/* ─── Annual projection ───────────────────────────────────── */
 function proyectarAnoLectivo(){
   var btn = document.getElementById('btnProyectar');
   if(!btn) return;
@@ -513,20 +720,19 @@ function proyectarAnoLectivo(){
 }
 
 (function(){
-  // Show conflict toast on load if conflicts exist
   {% if has_conflicts %}
   if(typeof showToast === 'function'){
     showToast('Se detectaron clases solapadas. Revisa las celdas en rojo.', 'warning');
   }
   {% endif %}
 
-  // Style today column headers (JS fallback for Django template limitation)
-  var todayIso = '{{ today|date:"Y-m-d" }}';
-  document.querySelectorAll('th.ht-th-day').forEach(function(th){
-    var date = th.querySelector('.day-date');
-    if(!date) return;
-    // Already handled via today-col class from template
-  });
+  // Auto-expand TM section when there are no bloques (onboarding prompt)
+  {% if not bloques_horario and bloque_grid_rows %}
+  var tmBody = document.getElementById('tmBody');
+  var tmChev = document.getElementById('tmChevron');
+  if(tmBody){ tmBody.style.display = 'block'; }
+  if(tmChev){ tmChev.style.transform = 'rotate(0deg)'; }
+  {% endif %}
 })();
 </script>
 {% endblock %}
