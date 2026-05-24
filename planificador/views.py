@@ -2893,9 +2893,9 @@ def _enviar_test_email_bg(email, username, first_name):
                 ),
                 from_email=None,
                 recipient_list=[email],
-                fail_silently=True,
+                fail_silently=False,
             )
-            logger.info('Test email (bg) enviado a %s', email)
+            logger.info('TEST EMAIL OK → %s', email)
         except Exception as exc:
             logger.error('Test email (bg) falló para %s: %s', email, exc)
     threading.Thread(target=_send, daemon=True).start()
