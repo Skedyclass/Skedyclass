@@ -913,8 +913,8 @@ def cambiar_estado_clase(request, id, estado):
         return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
 
     today = timezone.localdate()
-    if estado in ('in_progress', 'completed') and clase.fecha != today:
-        msg = 'Solo puedes iniciar o completar una clase el día que está programada.'
+    if estado == 'in_progress' and clase.fecha != today:
+        msg = 'Solo puedes iniciar una clase el día que está programada.'
         if is_ajax:
             return JsonResponse({'ok': False, 'error': msg}, status=400)
         messages.error(request, msg)
@@ -1230,14 +1230,14 @@ def ajustes(request):
             config.notif_tareas = request.POST.get('notif_tareas') == 'on'
             config.notif_resumen = request.POST.get('notif_resumen') == 'on'
             config.recibir_recordatorio_email = 'recibir_recordatorio_email' in request.POST
-            if config.recibir_recordatorio_email:
-                from datetime import time as _time
-                hora_str = request.POST.get('hora_recordatorio_preferida', '06:00')
+            from datetime import time as _time
+            hora_str = (request.POST.get('hora_recordatorio_preferida') or '').strip()
+            if hora_str:
                 try:
                     h, m = [int(x) for x in hora_str.split(':')]
                     config.hora_recordatorio_preferida = _time(h, m)
                 except (ValueError, AttributeError):
-                    config.hora_recordatorio_preferida = _time(6, 0)
+                    pass
             config.save()
             messages.success(request, 'Preferencias de clase guardadas.')
 

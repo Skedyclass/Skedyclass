@@ -140,7 +140,6 @@ try:
     SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # vincular por email si ya existe
     ACCOUNT_EMAIL_VERIFICATION = 'none'
     ACCOUNT_LOGIN_METHODS = {'username', 'email'}
-    LOGIN_REDIRECT_URL = '/dashboard/'
     ACCOUNT_LOGOUT_REDIRECT_URL = '/'
     SOCIALACCOUNT_CONNECT_REDIRECT_URL = '/ajustes/?s=google_calendar'
 except ImportError:

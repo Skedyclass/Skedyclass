@@ -139,8 +139,8 @@
       <div class="cl-card-actions">
         {% if clase.estado == 'pending' and clase.fecha == today %}
         <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-start" style="font:inherit;cursor:pointer">Iniciar</button></form>
-        {% elif clase.estado == 'in_progress' and clase.fecha == today %}
-        <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-done" style="font:inherit;cursor:pointer">✓</button></form>
+        {% elif clase.estado == 'in_progress' %}
+        <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-done" style="font:inherit;cursor:pointer">✓ Completar</button></form>
         {% elif clase.estado == 'completed' %}
         <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act" style="font:inherit;cursor:pointer;color:#fb923c;border-color:rgba(251,146,60,.35)" title="Reutilizar este plan para otra sesión">♻ Reciclar</button></form>
         {% endif %}
