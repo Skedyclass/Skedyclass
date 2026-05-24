@@ -108,7 +108,7 @@
                       data-tt-objetivo="{{ clase.objetivos|truncatechars:180|default:'Sin objetivo definido' }}"
                       data-tt-curso="{{ clase.grado_nombre|default:clase.materia|default:'—' }}"
                       data-tt-recursos="{% for r in clase.recursos.all %}{{ r.titulo }}{% if not forloop.last %}, {% endif %}{% empty %}Sin recursos asociados{% endfor %}"
-                      data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora|time:'H:i' }}">
+                      data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora_inicio|time:'H:i' }}">
                   {{ clase.titulo|truncatechars:16 }}
                 </span>
               {% elif forloop.counter == 4 %}
@@ -142,7 +142,7 @@
         <div class="mcc-meta">
           <span>{{ clase.materia }}</span>
           {% if clase.grado_nombre %}<span>· {{ clase.grado_nombre }}</span>{% endif %}
-          <span>· {{ clase.hora }}</span>
+          <span>· {{ clase.hora_inicio }}</span>
           <span class="mcc-tipo tipo-{{ clase.tipo_clase }}">{{ clase.get_tipo_clase_display }}</span>
         </div>
       </div>

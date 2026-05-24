@@ -53,6 +53,6 @@ class GradoAdmin(admin.ModelAdmin):
 
 @admin.register(Clase)
 class ClaseAdmin(OwnerScopedAdmin):
-    list_display = ['titulo', 'materia', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora', 'estado']
+    list_display = ['titulo', 'materia', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora_inicio', 'estado']
     list_filter = ['estado', 'materia', 'fecha']
     search_fields = ['titulo', 'profesor_nombre']

@@ -239,10 +239,20 @@
           {{ form.fecha }}
           {% if form.fecha.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px">{{ form.fecha.errors|join:", " }}</span>{% endif %}
         </div>
-        <div class="wz-field">
-          <label>Hora *</label>
-          {{ form.hora }}
-          {% if form.hora.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px">{{ form.hora.errors|join:", " }}</span>{% endif %}
+        <div class="wz-field" style="grid-column:1/-1">
+          <label>Horario *</label>
+          <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+            <div style="flex:1;min-width:130px">
+              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora inicio</label>
+              {{ form.hora_inicio }}
+              {% if form.hora_inicio.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_inicio.errors|join:", " }}</span>{% endif %}
+            </div>
+            <div style="flex:1;min-width:130px">
+              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+              {{ form.hora_fin }}
+              {% if form.hora_fin.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_fin.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
         </div>
         <div class="wz-field">
           <label>Estado inicial</label>

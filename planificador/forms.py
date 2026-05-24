@@ -97,12 +97,13 @@ class ClaseForm(forms.ModelForm):
 
     class Meta:
         model = Clase
-        fields = ['titulo', 'tipo_clase', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora', 'estado', 'objetivos', 'notas']
+        fields = ['titulo', 'tipo_clase', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'objetivos', 'notas']
         widgets = {
             'titulo': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Ej: Suma y Resta'}),
             'profesor_nombre': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Nombre del profesor'}),
             'fecha': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
-            'hora': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
+            'hora_inicio': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
+            'hora_fin': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
             'objetivos': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': '¿Que aprendera el estudiante al terminar la sesion?'}),
             'notas': forms.Textarea(attrs={'class': 'form-input', 'rows': 5, 'placeholder': 'Materiales, distribucion de tiempo, recordatorios...'}),
@@ -116,7 +117,7 @@ class ClaseForm(forms.ModelForm):
         # teacher is actually moving the class to a new date/time.
         editing = bool(self.instance and self.instance.pk)
         self._orig_fecha = self.instance.fecha if editing else None
-        self._orig_hora = self.instance.hora if editing else None
+        self._orig_hora = self.instance.hora_inicio if editing else None
 
     def _fecha_sin_cambiar(self, fecha):
         return self._orig_fecha is not None and fecha == self._orig_fecha
@@ -135,19 +136,22 @@ class ClaseForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         fecha = cleaned.get('fecha')
-        hora = cleaned.get('hora')
-        if fecha and hora and fecha == timezone.now().date():
-            # Skip the "hora ya pasó" check when neither date nor time changed
-            # on an existing class (editing notes of a class earlier today).
+        hora_inicio = cleaned.get('hora_inicio')
+        hora_fin = cleaned.get('hora_fin')
+        if fecha and hora_inicio and fecha == timezone.now().date():
             sin_cambiar = (
                 self._fecha_sin_cambiar(fecha)
                 and self._orig_hora is not None
-                and hora == self._orig_hora
+                and hora_inicio == self._orig_hora
             )
-            if not sin_cambiar and hora <= timezone.localtime().time():
+            if not sin_cambiar and hora_inicio <= timezone.localtime().time():
                 raise forms.ValidationError({
-                    'hora': 'La hora ya pasó. Elige una hora futura para una clase de hoy.'
+                    'hora_inicio': 'La hora ya pasó. Elige una hora futura para una clase de hoy.'
                 })
+        if hora_inicio and hora_fin and hora_fin <= hora_inicio:
+            raise forms.ValidationError({
+                'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'
+            })
         return cleaned
 
     def clean_titulo(self):

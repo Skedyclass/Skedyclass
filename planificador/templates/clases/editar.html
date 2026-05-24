@@ -152,10 +152,20 @@
           {{ form.fecha }}
           {% if form.fecha.errors %}<span class="ed-err">{{ form.fecha.errors|join:", " }}</span>{% endif %}
         </div>
-        <div class="ed-field">
-          <label>Hora *</label>
-          {{ form.hora }}
-          {% if form.hora.errors %}<span class="ed-err">{{ form.hora.errors|join:", " }}</span>{% endif %}
+        <div class="ed-field" style="grid-column:1/-1">
+          <label>Horario</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div style="flex:1;min-width:130px">
+              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora inicio</label>
+              {{ form.hora_inicio }}
+              {% if form.hora_inicio.errors %}<span class="ed-err">{{ form.hora_inicio.errors|join:", " }}</span>{% endif %}
+            </div>
+            <div style="flex:1;min-width:130px">
+              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+              {{ form.hora_fin }}
+              {% if form.hora_fin.errors %}<span class="ed-err">{{ form.hora_fin.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
         </div>
       </div>
 

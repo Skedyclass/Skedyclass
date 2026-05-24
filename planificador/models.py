@@ -77,7 +77,8 @@ class Clase(models.Model):
     profesor_nombre = models.CharField(max_length=100, blank=True)
     grado_nombre = models.CharField(max_length=50, blank=True)
     fecha = models.DateField()
-    hora = models.TimeField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField(null=True, blank=True)
     tipo_clase = models.CharField(max_length=20, choices=TIPO_CHOICES, default='normal')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pending')
     objetivos = models.TextField(blank=True)
@@ -89,7 +90,7 @@ class Clase(models.Model):
     class Meta:
         verbose_name = 'Clase'
         verbose_name_plural = 'Clases'
-        ordering = ['-fecha', '-hora']
+        ordering = ['-fecha', '-hora_inicio']
         indexes = [
             models.Index(fields=['usuario', 'fecha']),
             models.Index(fields=['usuario', 'estado']),
@@ -260,6 +261,9 @@ class HorarioAcademico(models.Model):
     hora_inicio_jornada = models.TimeField(default=_default_jornada_inicio)
     hora_fin_jornada = models.TimeField(default=_default_jornada_fin)
     duracion_sesion = models.PositiveSmallIntegerField(default=60, help_text='Minutos por sesión')
+    ano_lectivo = models.CharField(max_length=20, blank=True, help_text='Ej: 2025-2026')
+    fecha_inicio_lectivo = models.DateField(null=True, blank=True)
+    fecha_fin_lectivo = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -284,6 +288,38 @@ class BloqueDescanso(models.Model):
 
     def __str__(self):
         return f'{self.nombre} ({self.hora_inicio}–{self.hora_fin})'
+
+
+class BloqueHorario(models.Model):
+    """Recurring weekly schedule block used as template for annual projection."""
+    DIAS_CHOICES = [
+        (0, 'Lunes'), (1, 'Martes'), (2, 'Miércoles'),
+        (3, 'Jueves'), (4, 'Viernes'),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bloques_horario')
+    dia_semana = models.PositiveSmallIntegerField(choices=DIAS_CHOICES)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    titulo = models.CharField(max_length=200, blank=True)
+    materia = models.CharField(max_length=50, choices=MATERIA_CHOICES, blank=True)
+    curso = models.ForeignKey(
+        Curso, on_delete=models.SET_NULL, null=True, blank=True, related_name='bloques_horario',
+    )
+
+    class Meta:
+        verbose_name = 'Bloque de Horario'
+        verbose_name_plural = 'Bloques de Horario'
+        ordering = ['dia_semana', 'hora_inicio']
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.hora_fin and self.hora_inicio and self.hora_fin <= self.hora_inicio:
+            raise ValidationError({'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'})
+
+    def __str__(self):
+        dia = dict(self.DIAS_CHOICES).get(self.dia_semana, '?')
+        return f'{dia} {self.hora_inicio.strftime("%H:%M")}–{self.hora_fin.strftime("%H:%M")} · {self.titulo or self.materia or "Sin título"}'
 
 
 @receiver(post_save, sender=User)

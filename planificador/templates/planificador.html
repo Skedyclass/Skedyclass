@@ -140,7 +140,7 @@
           </td>
           <td style="color:#c4b5fd">{{ clase.profesor_nombre|default:"—" }}</td>
           <td style="color:#a5b4fc">{{ clase.grado_nombre|default:"—" }}</td>
-          <td style="font-size:.8rem;color:#9ca3af;white-space:nowrap">{{ clase.fecha }}<br><span style="color:#6b7280">{{ clase.hora }}</span></td>
+          <td style="font-size:.8rem;color:#9ca3af;white-space:nowrap">{{ clase.fecha }}<br><span style="color:#6b7280">{{ clase.hora_inicio }}</span></td>
           <td>
             <span class="pl-status {{ clase.estado }}">
               {{ clase.get_estado_display_spanish }}
