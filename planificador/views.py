@@ -2883,23 +2883,24 @@ def test_recordatorio_email(request):
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
-    from django.conf import settings as _cfg
-    if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
-        return JsonResponse({
-            'ok': False,
-            'error': 'El servidor no tiene SMTP configurado. Define EMAIL_HOST_USER en las variables de entorno de Render.',
-        }, status=503)
-
-    email = (request.user.email or '').strip()
-    if not email:
-        return JsonResponse({
-            'ok': False,
-            'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
-        }, status=400)
-
     try:
+        import traceback as _tb
+        from django.conf import settings as _cfg
         from django.core.mail import EmailMultiAlternatives
         from django.template.loader import render_to_string
+
+        if getattr(_cfg, 'EMAIL_BACKEND', '').endswith('dummy.EmailBackend'):
+            return JsonResponse({
+                'ok': False,
+                'error': 'El servidor no tiene SMTP configurado. Define EMAIL_HOST_USER en las variables de entorno de Render.',
+            }, status=503)
+
+        email = (request.user.email or '').strip()
+        if not email:
+            return JsonResponse({
+                'ok': False,
+                'error': 'Tu cuenta no tiene correo registrado. Agrégalo en Ajustes → Perfil.',
+            }, status=400)
 
         today = timezone.localdate()
         clases_hoy = list(
@@ -2924,11 +2925,19 @@ def test_recordatorio_email(request):
         msg.attach_alternative(html_body, 'text/html')
         msg.send(fail_silently=False)
 
-        logger.info('Test email enviado a %s (%s)', request.user.username, email)
+        try:
+            logger.info('Test email enviado a %s (%s)', request.user.username, email)
+        except Exception:
+            pass
         return JsonResponse({'ok': True, 'email': email})
+
     except Exception as e:
-        logger.error('Test email falló para %s: %s', request.user.username, e, exc_info=True)
-        return JsonResponse({'ok': False, 'error': 'No se pudo enviar el correo. Revisa la configuración SMTP.'}, status=500)
+        try:
+            logger.error('Test email falló para %s: %s', request.user.username, e, exc_info=True)
+        except Exception:
+            import traceback as _tb
+            print(f'test_recordatorio_email error: {_tb.format_exc()}')
+        return JsonResponse({'ok': False, 'error': f'Error: {type(e).__name__}: {e}'}, status=500)
 
 
 # ==================== DESCARGA SEGURA DE RECURSOS ====================
