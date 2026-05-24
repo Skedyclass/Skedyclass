@@ -538,7 +538,7 @@ def dashboard(request):
     # Only future/today classes count as "próximas" — past pendings are excluded.
     _pending = clases_qs.filter(
         estado='pending', fecha__gte=today
-    ).order_by('fecha', 'hora_inicio').only('id', 'titulo', 'grado_nombre', 'fecha', 'hora')
+    ).order_by('fecha', 'hora_inicio').only('id', 'titulo', 'grado_nombre', 'fecha', 'hora_inicio')
     _primera_por_grado = {}
     for _cl in _pending:
         if _cl.grado_nombre and _cl.grado_nombre not in _primera_por_grado:
