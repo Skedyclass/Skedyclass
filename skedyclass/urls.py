@@ -93,7 +93,7 @@ urlpatterns = [
     # API interna
     path('api/preferencia/', views.guardar_preferencia, name='guardar_preferencia'),
     path('api/asistente/', views.asistente_api, name='asistente_api'),
-    path('api/test-email/', views.test_recordatorio_email, name='test_recordatorio_email'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Google OAuth (django-allauth) — solo se monta si la app está instalada
