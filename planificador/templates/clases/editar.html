@@ -85,6 +85,16 @@
       </span>
     </div>
 
+    {% if request.GET.reciclada %}
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:14px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.35);margin-bottom:24px">
+      <span style="font-size:1.4rem;line-height:1">♻</span>
+      <div>
+        <p style="margin:0 0 4px;font-size:.88rem;font-weight:800;color:#fb923c">Estás reciclando esta clase</p>
+        <p style="margin:0;font-size:.82rem;color:#fcd34d;line-height:1.55">Actualiza el <strong>título / tema</strong>, la <strong>fecha</strong> y la <strong>hora de inicio y fin</strong> para reutilizar este plan en una nueva sesión. Los objetivos y notas también están disponibles para editar.</p>
+      </div>
+    </div>
+    {% endif %}
+
     <form method="post" id="editForm">
       {% csrf_token %}
 

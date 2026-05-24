@@ -14,6 +14,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
@@ -925,6 +926,10 @@ def cambiar_estado_clase(request, id, estado):
 
     if is_ajax:
         return JsonResponse({'ok': True, 'estado': estado, 'label': clase.get_estado_display_spanish()})
+
+    if estado == 'pending':
+        # Reciclar → llevar al editor para que actualice fecha, hora y tema
+        return redirect(f"{reverse('editar_clase', args=[clase.id])}?reciclada=1")
 
     messages.success(request, f'Estado actualizado a {clase.get_estado_display_spanish()}')
     return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
