@@ -2410,10 +2410,10 @@ def lab_api(request):
         "habilite al docente a dar retroalimentación de calidad. "
     )
 
-    max_tokens = 2048
-
     if modo == 'quiz':
         n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 5
+        # ~500 tokens per question (enunciado + 4 opciones + justificación + distractores)
+        max_tokens = min(8192, max(2048, n_items * 500 + 400))
         fmt_label = {
             'multiple': 'ítems de opción múltiple (4 opciones por pregunta)',
             'desarrollo': 'ítems de desarrollo (pregunta abierta con rúbrica)',
@@ -2436,6 +2436,8 @@ def lab_api(request):
         user_prompt = f"{contexto}\nGenera la Evaluación Diagnóstica de {n_items} ítems."
     elif modo == 'refuerzo':
         n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 6
+        # ~650 tokens per exercise (enunciado + pista + solución paso a paso)
+        max_tokens = min(8192, max(2048, n_items * 650 + 400))
         system_prompt = (
             f"Eres un especialista en diseño curricular basado en la Taxonomía de Bloom revisada. "
             f"Diseña un Taller de Profundización con {n_items} problemas de aplicación graduados, ajustados al nivel "
@@ -2449,6 +2451,7 @@ def lab_api(request):
         )
         user_prompt = f"{contexto}\nGenera el Taller de Profundización con {n_items} problemas."
     elif modo == 'desafio':
+        max_tokens = 2048
         system_prompt = (
             "Eres un diseñador de olimpiadas académicas y situaciones problema de alto nivel cognitivo. "
             "Construye UN Problema de Aplicación de Alta Complejidad ajustado al nivel cognitivo indicado, "
