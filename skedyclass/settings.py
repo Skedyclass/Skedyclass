@@ -205,18 +205,51 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # STATIC_ROOT — destino de `collectstatic` en producción (servido por WhiteNoise).
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Almacenamiento comprimido + hash de cache-busting para los estáticos en prod.
-STORAGES = {
-    'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    },
-    'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-    },
-}
+# ---------------------------------------------------------------------------
+# Almacenamiento de archivos — Cloudflare R2 en producción, disco local en dev.
+# Para activar R2 define estas 4 variables de entorno:
+#   R2_ACCOUNT_ID      → ID de cuenta Cloudflare (32 chars hex)
+#   R2_ACCESS_KEY_ID   → Access Key ID del token R2
+#   R2_SECRET_ACCESS_KEY → Secret Access Key del token R2
+#   R2_BUCKET_NAME     → nombre del bucket (ej: skedyclass-media)
+# ---------------------------------------------------------------------------
+_r2_account_id = os.environ.get('R2_ACCOUNT_ID', '')
+_r2_access_key = os.environ.get('R2_ACCESS_KEY_ID', '')
+_r2_secret_key = os.environ.get('R2_SECRET_ACCESS_KEY', '')
+_r2_bucket     = os.environ.get('R2_BUCKET_NAME', '')
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if _r2_account_id and _r2_access_key and _r2_secret_key and _r2_bucket:
+    USE_R2_STORAGE = True
+    AWS_ACCESS_KEY_ID = _r2_access_key
+    AWS_SECRET_ACCESS_KEY = _r2_secret_key
+    AWS_STORAGE_BUCKET_NAME = _r2_bucket
+    AWS_S3_ENDPOINT_URL = f'https://{_r2_account_id}.r2.cloudflarestorage.com'
+    AWS_S3_REGION_NAME = 'auto'
+    AWS_DEFAULT_ACL = None          # R2 no usa ACLs de S3
+    AWS_S3_FILE_OVERWRITE = False   # nunca sobreescribir nombres idénticos
+    AWS_QUERYSTRING_AUTH = True     # URLs firmadas (privadas)
+    AWS_QUERYSTRING_EXPIRE = 3600   # URL válida 1 hora
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
+    MEDIA_URL = f'https://{_r2_account_id}.r2.cloudflarestorage.com/{_r2_bucket}/'
+else:
+    USE_R2_STORAGE = False
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

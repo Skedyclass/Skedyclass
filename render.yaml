@@ -44,6 +44,15 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      # --- Cloudflare R2 (almacenamiento de archivos persistente) ---
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
       # --- Google OAuth / Calendar ---
       - key: GOOGLE_OAUTH_CLIENT_ID
         sync: false

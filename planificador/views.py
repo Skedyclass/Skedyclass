@@ -2883,6 +2883,23 @@ def _serve_recurso(request, id, attachment):
         from django.http import HttpResponseNotFound
         return HttpResponseNotFound('Este recurso no tiene archivo descargable.')
 
+    from django.conf import settings
+    if getattr(settings, 'USE_R2_STORAGE', False):
+        # Con R2: redirige a URL firmada — el browser descarga directo desde R2,
+        # sin pasar por el servidor Django (ahorra RAM y ancho de banda en Render).
+        from django.shortcuts import redirect
+        try:
+            params = {}
+            if attachment:
+                params['ResponseContentDisposition'] = f'attachment; filename="{recurso.descarga_filename()}"'
+            url = recurso.archivo.storage.url(
+                recurso.archivo.name, parameters=params, expire=3600
+            )
+        except Exception:
+            from django.http import HttpResponseNotFound
+            return HttpResponseNotFound('No se pudo acceder al archivo en el almacenamiento.')
+        return redirect(url)
+
     from django.http import FileResponse
     try:
         f = recurso.archivo.open('rb')
