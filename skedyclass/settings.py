@@ -249,7 +249,10 @@ else:
         },
     }
     MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+
+# MEDIA_ROOT siempre definido — urls.py lo referencia al cargar el módulo,
+# incluso en producción con R2 donde no se usa para almacenamiento.
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
