@@ -576,7 +576,7 @@ def _build_system_prompt_chat(ctx, teacher_name, teacher_materia):
         "COMPORTAMIENTO:\n"
         "- Responde en español con tono profesional y empático.\n"
         "- Sé conciso. Párrafos cortos y listas cuando ayuden.\n"
-        "- Si el docente menciona 'mi clase', 'el grupo' o 'ahora', úsala clase en curso o la próxima.\n"
+        "- Si el docente menciona 'mi clase', 'el grupo' o 'ahora', usa la clase en curso o la próxima.\n"
         "- Cuando haya ambigüedad sobre cuál clase, pregunta antes de asumir.\n"
         "- No generes JSON ni bloques de código salvo petición explícita.\n"
         "- Si no tienes información sobre algo, dilo claramente en vez de inventar."
@@ -3366,6 +3366,8 @@ def asistente_chat_api(request):
 
     ok, result, status_code = ai_generate_text(system_prompt, messages)
     if ok:
+        if not result:
+            return JsonResponse({'ok': False, 'error': 'La IA no generó respuesta. Intenta de nuevo.'}, status=500)
         logger.info('Chat asistente: %s — %d chars', request.user.username, len(result))
         return JsonResponse({'ok': True, 'respuesta': result})
     return JsonResponse(

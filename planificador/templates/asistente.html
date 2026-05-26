@@ -60,7 +60,8 @@
 /* Markdown-lite inside bubbles */
 .msg-bubble p{margin:0 0 8px}
 .msg-bubble p:last-child{margin-bottom:0}
-.msg-bubble ul,.msg-bubble ol{margin:6px 0 8px 18px;padding:0}
+.msg-bubble ul,.msg-bubble ol{margin:6px 0 8px 20px;padding:0}
+.msg-bubble ol{list-style-type:decimal}
 .msg-bubble li{margin-bottom:3px}
 .msg-bubble strong{color:#f5f3ff;font-weight:700}
 .msg-bubble em{color:#c4b5fd;font-style:italic}
@@ -321,10 +322,12 @@ async function enviarMensaje() {
       appendMsg('asistente', json.respuesta);
       historial.push({ rol: 'asistente', contenido: json.respuesta });
     } else {
+      historial.pop();  // remove user msg — no AI response paired with it
       appendError(json.error || 'Error desconocido.');
     }
   } catch (err) {
     removeTyping(typingId);
+    historial.pop();  // remove user msg — request never completed
     appendError('Error de conexión: ' + err.message);
   } finally {
     sendBtn.disabled = false;
@@ -404,8 +407,9 @@ function mdLite(raw) {
   // Unordered list items starting with - or •
   s = s.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
   s = s.replace(/(<li>.*<\/li>(\n)?)+/g, m => '<ul>' + m + '</ul>');
-  // Numbered list items
-  s = s.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // Numbered list items — use temp marker so wrapping doesn't conflict with <ul>
+  s = s.replace(/^\d+\. (.+)$/gm, '<__oli__>$1</__oli__>');
+  s = s.replace(/(<__oli__>.*<\/__oli__>(\n)?)+/g, m => '<ol>' + m.replace(/__oli__/g, 'li') + '</ol>');
   // Paragraph breaks (double newline)
   const paras = s.split(/\n{2,}/);
   return paras.map(p => {
