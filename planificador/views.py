@@ -914,14 +914,6 @@ def cambiar_estado_clase(request, id, estado):
             return JsonResponse({'ok': False, 'error': 'Estado inválido'}, status=400)
         return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
 
-    today = timezone.localdate()
-    if estado == 'in_progress' and clase.fecha != today:
-        msg = 'Solo puedes iniciar una clase el día que está programada.'
-        if is_ajax:
-            return JsonResponse({'ok': False, 'error': msg}, status=400)
-        messages.error(request, msg)
-        return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
-
     update_fields = ['estado', 'updated_at']
     clase.estado = estado
     if estado == 'cancelada':
@@ -1332,7 +1324,7 @@ def perfil(request):
         total=_Count('id'),
         completadas=_Count('id', filter=_Q(estado='completed')),
         pendientes=_Count('id', filter=_Q(estado='pending')),
-        en_progreso=_Count('id', filter=_Q(estado='in_progress')),
+        canceladas=_Count('id', filter=_Q(estado='cancelada')),
     )
 
     filled = [
@@ -1350,7 +1342,7 @@ def perfil(request):
         'clases_count': stats['total'],
         'clases_completadas': stats['completadas'],
         'clases_pendientes': stats['pendientes'],
-        'clases_en_progreso': stats['en_progreso'],
+        'clases_canceladas': stats['canceladas'],
         'cursos_count': Curso.objects.filter(usuario=request.user).count(),
         'notas_count': Nota.objects.filter(usuario=request.user).count(),
         'recursos_count': Recurso.objects.filter(usuario=request.user).count(),

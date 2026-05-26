@@ -92,7 +92,7 @@
 .p-prog-bar{height:10px;background:rgba(255,255,255,.07);border-radius:50px;overflow:hidden;display:flex;margin-bottom:12px}
 .p-prog-seg{height:100%;transition:width 1.1s ease}
 .ps-green{background:linear-gradient(90deg,#059669,#10b981)}
-.ps-blue{background:linear-gradient(90deg,#4f46e5,#6366f1)}
+.ps-red{background:linear-gradient(90deg,#dc2626,#ef4444)}
 .ps-orange{background:linear-gradient(90deg,#d97706,#f59e0b)}
 .p-prog-legend{display:flex;gap:16px;flex-wrap:wrap}
 .p-prog-legend span{font-size:.74rem;color:var(--p-muted);display:flex;align-items:center;gap:5px;font-weight:600}
@@ -103,14 +103,14 @@
 .p-activity-item{display:flex;align-items:center;gap:13px;padding:12px 24px;border-radius:0;transition:background .18s;cursor:default}
 .p-activity-item:hover{background:var(--p-hover)}
 .p-act-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.d-green{background:#10b981}.d-blue{background:#6366f1}.d-orange{background:#f59e0b}
+.d-green{background:#10b981}.d-orange{background:#f59e0b}.d-red{background:#ef4444}
 .p-act-info{flex:1;min-width:0}
 .p-act-title{font-size:.87rem;font-weight:700;color:#f5f3ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-act-sub{font-size:.73rem;color:var(--p-muted);margin-top:1px}
 .p-act-badge{font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:50px;white-space:nowrap;flex-shrink:0}
 .bg-green{background:rgba(16,185,129,.14);color:#6ee7b7}
-.bg-blue{background:rgba(99,102,241,.14);color:#a5b4fc}
 .bg-orange{background:rgba(245,158,11,.14);color:#fcd34d}
+.bg-red{background:rgba(239,68,68,.14);color:#fca5a5}
 .p-empty{text-align:center;padding:32px 20px;color:var(--p-muted)}
 .p-empty-icon{font-size:2.2rem;margin-bottom:10px}
 
@@ -230,13 +230,13 @@
   <div class="p-prog-wrap">
     <div class="p-prog-bar">
       {% widthratio clases_completadas clases_count 100 as pct_comp %}
-      {% widthratio clases_en_progreso clases_count 100 as pct_prog %}
+      {% widthratio clases_canceladas clases_count 100 as pct_cancel %}
       <div class="p-prog-seg ps-green" style="width:{{ pct_comp }}%"></div>
-      <div class="p-prog-seg ps-blue" style="width:{{ pct_prog }}%"></div>
+      <div class="p-prog-seg ps-red" style="width:{{ pct_cancel }}%"></div>
     </div>
     <div class="p-prog-legend">
       <span><i class="pl-dot" style="background:#10b981"></i> Completadas ({{ clases_completadas }})</span>
-      <span><i class="pl-dot" style="background:#6366f1"></i> En progreso ({{ clases_en_progreso }})</span>
+      <span><i class="pl-dot" style="background:#ef4444"></i> Canceladas ({{ clases_canceladas }})</span>
       <span><i class="pl-dot" style="background:#f59e0b"></i> Pendientes ({{ clases_pendientes }})</span>
     </div>
   </div>
@@ -309,12 +309,12 @@
         {% if clases_recientes %}
           {% for clase in clases_recientes %}
           <div class="p-activity-item">
-            <div class="p-act-dot {% if clase.estado == 'completed' %}d-green{% elif clase.estado == 'in_progress' %}d-blue{% else %}d-orange{% endif %}"></div>
+            <div class="p-act-dot {% if clase.estado == 'completed' %}d-green{% elif clase.estado == 'cancelada' %}d-red{% else %}d-orange{% endif %}"></div>
             <div class="p-act-info">
               <div class="p-act-title">{{ clase.titulo }}</div>
               <div class="p-act-sub">{{ clase.materia|default:"Sin materia" }}{% if clase.grado_nombre %} · {{ clase.grado_nombre }}{% endif %} · {{ clase.fecha }}</div>
             </div>
-            <span class="p-act-badge {% if clase.estado == 'completed' %}bg-green{% elif clase.estado == 'in_progress' %}bg-blue{% else %}bg-orange{% endif %}">
+            <span class="p-act-badge {% if clase.estado == 'completed' %}bg-green{% elif clase.estado == 'cancelada' %}bg-red{% else %}bg-orange{% endif %}">
               {{ clase.get_estado_display_spanish }}
             </span>
           </div>

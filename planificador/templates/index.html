@@ -134,9 +134,9 @@
     <div class="stat-desc">Sin iniciar</div>
   </div>
   <div class="stat-card pink">
-    <div class="stat-header"><span>En Progreso</span></div>
-    <div class="stat-value">{{ stats.in_progress }}</div>
-    <div class="stat-desc">En curso</div>
+    <div class="stat-header"><span>Canceladas</span></div>
+    <div class="stat-value">{{ stats.cancelada }}</div>
+    <div class="stat-desc">Canceladas</div>
   </div>
   <div class="stat-card green">
     <div class="stat-header"><span>Completadas</span></div>
@@ -401,7 +401,7 @@
           <span>👤 {{ clase.profesor_nombre }}</span>
         </div>
         <div class="card-actions">
-          <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash">↩ Reabrir</button></form>
+          <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash">↩ Reabrir</button></form>
         </div>
       </div>
       {% empty %}

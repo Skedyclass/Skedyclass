@@ -604,7 +604,7 @@ body {
     border-radius: 18px 18px 0 0;
 }
 .kanban-column[data-status="pending"]::before    { background: linear-gradient(90deg,#4361ee,#9d4edd); }
-.kanban-column[data-status="in_progress"]::before { background: linear-gradient(90deg,#7209b7,#e040fb); }
+.kanban-column[data-status="cancelada"]::before { background: linear-gradient(90deg,#ef4444,#f87171); }
 .kanban-column[data-status="completed"]::before   { background: linear-gradient(90deg,#10b981,#34d399); }
 
 .kanban-header {
@@ -636,7 +636,7 @@ body {
     cursor: pointer;
 }
 .kanban-column[data-status="pending"]     .kanban-card { border-left-color: #4361ee; }
-.kanban-column[data-status="in_progress"] .kanban-card { border-left-color: #e040fb; }
+.kanban-column[data-status="cancelada"]   .kanban-card { border-left-color: #ef4444; }
 .kanban-column[data-status="completed"]   .kanban-card { border-left-color: #10b981; }
 
 .kanban-card:hover {
@@ -799,9 +799,9 @@ body {
     color: #92400E;
 }
 
-.status-badge.in_progress, .status-badge.in-progress {
-    background: #DBEAFE;
-    color: #1D4ED8;
+.status-badge.cancelada {
+    background: #FEE2E2;
+    color: #991B1B;
 }
 
 .status-badge.completed {
@@ -1303,10 +1303,9 @@ body {
     background: rgba(251,191,36,.15);
     color: #fcd34d;
 }
-[data-theme="dark"] .status-badge.in_progress,
-[data-theme="dark"] .status-badge.in-progress {
-    background: rgba(129,140,248,.15);
-    color: #a5b4fc;
+[data-theme="dark"] .status-badge.cancelada {
+    background: rgba(239,68,68,.15);
+    color: #fca5a5;
 }
 [data-theme="dark"] .status-badge.completed {
     background: rgba(16,185,129,.15);
@@ -1790,10 +1789,9 @@ h1, h2, h3, .page-header h1 {
     background: rgba(245,158,11,.15) !important;
     color: #fbbf24 !important;
 }
-[data-theme="dark"] .status-badge.in_progress,
-[data-theme="dark"] .status-badge.in-progress {
-    background: rgba(99,102,241,.15) !important;
-    color: #818cf8 !important;
+[data-theme="dark"] .status-badge.cancelada {
+    background: rgba(239,68,68,.15) !important;
+    color: #fca5a5 !important;
 }
 [data-theme="dark"] .status-badge.completed {
     background: rgba(16,185,129,.15) !important;

@@ -44,7 +44,7 @@
 .estado-pill label{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfc9e6;cursor:pointer;font-size:.82rem;font-weight:700;transition:all .2s}
 .estado-pill label:hover{transform:translateY(-1px)}
 .estado-pill.pending input:checked+label{background:rgba(255,225,77,.12);border-color:rgba(255,225,77,.5);color:#ffe14d;box-shadow:0 0 14px rgba(255,225,77,.25)}
-.estado-pill.in_progress input:checked+label{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.5);color:#a5b4fc;box-shadow:0 0 14px rgba(99,102,241,.25)}
+.estado-pill.cancelada input:checked+label{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.5);color:#fca5a5;box-shadow:0 0 14px rgba(239,68,68,.25)}
 .estado-pill.completed input:checked+label{background:rgba(57,255,122,.1);border-color:rgba(57,255,122,.5);color:#39ff7a;box-shadow:0 0 14px rgba(57,255,122,.25)}
 .estado-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
 
@@ -186,9 +186,9 @@
             <input type="radio" name="estado" id="est_pending" value="pending" {% if clase.estado == 'pending' %}checked{% endif %}>
             <label for="est_pending"><span class="estado-dot"></span>Pendiente</label>
           </div>
-          <div class="estado-pill in_progress">
-            <input type="radio" name="estado" id="est_inprog" value="in_progress" {% if clase.estado == 'in_progress' %}checked{% endif %}>
-            <label for="est_inprog"><span class="estado-dot"></span>En progreso</label>
+          <div class="estado-pill cancelada">
+            <input type="radio" name="estado" id="est_cancelada" value="cancelada" {% if clase.estado == 'cancelada' %}checked{% endif %}>
+            <label for="est_cancelada"><span class="estado-dot"></span>Cancelada</label>
           </div>
           <div class="estado-pill completed">
             <input type="radio" name="estado" id="est_completed" value="completed" {% if clase.estado == 'completed' %}checked{% endif %}>

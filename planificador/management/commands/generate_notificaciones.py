@@ -64,7 +64,7 @@ class Command(BaseCommand):
             )
 
         # ── 2. Notificaciones por clase (pre-alerta, inicio, fin) ─────────────
-        for clase in Clase.objects.filter(fecha=today).select_related('usuario'):
+        for clase in Clase.objects.filter(fecha=today, estado='pending').select_related('usuario'):
             user = clase.usuario
 
             inicio_dt = timezone.make_aware(
