@@ -89,6 +89,18 @@ textarea.form-input{resize:vertical;min-height:60px}
 .btn-icon.btn-preview{background:transparent;border:1px solid rgba(99,102,241,.4);color:#a5b4fc}
 .btn-icon.btn-preview:hover{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.7);color:#f5f3ff;box-shadow:0 4px 14px rgba(99,102,241,.18)}
 
+/* Dropdown de doble versión (Docente / Estudiante) */
+.ver-split{position:relative;flex:1}
+.ver-split-btn{width:100%;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(99,102,241,.4);background:transparent;color:#a5b4fc;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .18s}
+.ver-split-btn:hover{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.7);color:#f5f3ff}
+.ver-split-menu{display:none;position:absolute;bottom:calc(100% + 6px);left:0;min-width:200px;background:rgba(14,12,30,.97);border:1px solid rgba(157,78,221,.35);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:200;padding:6px;overflow:hidden}
+.ver-split-menu.open{display:block}
+.ver-split-row{display:flex;align-items:center;gap:4px;padding:2px 0}
+.ver-split-row-label{font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;padding:6px 8px 2px;display:block}
+.ver-split-row a,.ver-split-row button{flex:1;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#c4b5fd;text-decoration:none;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .15s}
+.ver-split-row a:hover,.ver-split-row button:hover{background:rgba(99,102,241,.15);color:#f5f3ff;border-color:rgba(99,102,241,.4)}
+.ver-split-row.teacher a:hover,.ver-split-row.teacher button:hover{background:rgba(247,37,133,.12);color:#fca5a5;border-color:rgba(247,37,133,.3)}
+
 /* Modal de previsualización */
 .modal-overlay{position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:rgba(14,12,30,.97);border:1px solid rgba(157,78,221,.35);border-radius:18px;width:100%;max-width:900px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.7)}
@@ -174,7 +186,40 @@ textarea.form-input{resize:vertical;min-height:60px}
         {% if recurso.descripcion %}<div class="recurso-desc">{{ recurso.descripcion }}</div>{% endif %}
         {% if recurso.clase %}<div class="recurso-clase-link">🔗 {{ recurso.clase.titulo }}</div>{% endif %}
         <div class="recurso-actions">
-          {% if recurso.archivo %}
+          {% if recurso.archivo_profesor or recurso.archivo_estudiante %}
+          {# Recurso con doble versión generado desde el Lab #}
+          <div class="ver-split" id="split-{{ recurso.id }}">
+            <button class="ver-split-btn" onclick="toggleSplitMenu('split-{{ recurso.id }}')" title="Ver versiones">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Ver
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="ver-split-menu" id="menu-{{ recurso.id }}">
+              {% if recurso.archivo_estudiante %}
+              <span class="ver-split-row-label">Estudiante</span>
+              <div class="ver-split-row">
+                <button onclick="verRecurso('{% url 'inline_recurso_version' recurso.id 'estudiante' %}','{{ recurso.titulo|escapejs }}','{{ recurso.tipo }}');closeSplitMenu('split-{{ recurso.id }}')" title="Ver versión estudiante">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver
+                </button>
+                <a href="{% url 'descargar_recurso_version' recurso.id 'estudiante' %}" title="Descargar versión estudiante">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF
+                </a>
+              </div>
+              {% endif %}
+              {% if recurso.archivo_profesor %}
+              <span class="ver-split-row-label" style="margin-top:4px">Docente</span>
+              <div class="ver-split-row teacher">
+                <button onclick="verRecurso('{% url 'inline_recurso_version' recurso.id 'profesor' %}','{{ recurso.titulo|escapejs }}','{{ recurso.tipo }}');closeSplitMenu('split-{{ recurso.id }}')" title="Ver versión docente">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver
+                </button>
+                <a href="{% url 'descargar_recurso_version' recurso.id 'profesor' %}" title="Descargar versión docente">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% elif recurso.archivo %}
           <button type="button" class="btn-icon btn-preview" onclick="verRecurso('{% url 'inline_recurso' recurso.id %}','{{ recurso.titulo|escapejs }}','{{ recurso.tipo }}')" title="Ver documento">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver
@@ -270,6 +315,20 @@ function updateTipoFields(tipo) {
   document.getElementById('file-row').classList.toggle('visible', tipo !== 'video');
   document.getElementById('url-row').classList.toggle('visible', tipo === 'video');
 }
+
+function toggleSplitMenu(wrapId) {
+  const menu = document.getElementById('menu-' + wrapId.replace('split-', ''));
+  menu.classList.toggle('open');
+}
+function closeSplitMenu(wrapId) {
+  const menu = document.getElementById('menu-' + wrapId.replace('split-', ''));
+  menu.classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ver-split')) {
+    document.querySelectorAll('.ver-split-menu.open').forEach(m => m.classList.remove('open'));
+  }
+});
 
 function verRecurso(url, titulo, tipo) {
   document.getElementById('modal-titulo').textContent = titulo;

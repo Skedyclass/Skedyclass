@@ -60,7 +60,9 @@ urlpatterns = [
     path('recursos/nuevo/', views.crear_recurso, name='crear_recurso'),
     path('recursos/eliminar/<int:id>/', views.eliminar_recurso, name='eliminar_recurso'),
     path('recursos/<int:id>/descargar/', views.descargar_recurso, name='descargar_recurso'),
+    path('recursos/<int:id>/descargar/<str:version>/', views.descargar_recurso_version, name='descargar_recurso_version'),
     path('recursos/<int:id>/ver/', views.inline_recurso, name='inline_recurso'),
+    path('recursos/<int:id>/ver/<str:version>/', views.inline_recurso_version, name='inline_recurso_version'),
 
     # Notas
     path('notas/', views.notas, name='notas'),

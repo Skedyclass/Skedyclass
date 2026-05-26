@@ -137,6 +137,16 @@
   </tr>
 </table>
 
+{% if not mostrar_respuestas %}
+<div style="border:0.8pt solid #aaa;padding:4pt 10pt;margin-bottom:12pt;font-size:9pt;text-align:center;text-transform:uppercase;letter-spacing:0.4pt;color:#555;">
+  Versión Estudiante — Sin soluciones
+</div>
+{% else %}
+<div style="border:0.8pt solid #333;padding:4pt 10pt;margin-bottom:12pt;font-size:9pt;text-align:center;text-transform:uppercase;letter-spacing:0.4pt;background:#f0f0f0;font-weight:bold;">
+  Versión Docente — Con respuestas y soluciones
+</div>
+{% endif %}
+
 {% if modo == 'guia' %}
 
   {# ═══ Parte I — Marco Conceptual y Fundamentación ═══ #}
@@ -203,7 +213,8 @@
     {% endfor %}
   {% endif %}
 
-  {# ═══ Parte IV — Matriz Analítica de Lectura ═══ #}
+  {# ═══ Parte IV — Matriz Analítica de Lectura (solo versión docente) ═══ #}
+  {% if mostrar_respuestas %}
   {% with matriz=data.matriz_analitica|default:data.parte4_matriz_analitica %}
   {% if matriz %}
   <div class="seccion-roman new-page"><span class="num">IV</span>Matriz Analítica de Lectura</div>
@@ -227,6 +238,7 @@
   </table>
   {% endif %}
   {% endwith %}
+  {% endif %}
 
   {# ═══ Bibliografía ═══ #}
   {% if data.bibliografia %}
@@ -242,13 +254,13 @@
       <div class="enun">{{ q.enunciado }}</div>
       <div class="opts">
         {% for o in q.opciones %}
-          <div class="opt{% if forloop.counter0 == q.correcta %} correct{% endif %}">
+          <div class="opt{% if mostrar_respuestas and forloop.counter0 == q.correcta %} correct{% endif %}">
             {{ forloop.counter0|add:65|stringformat:"c" }}) {{ o }}
-            {% if forloop.counter0 == q.correcta %} · CORRECTA{% endif %}
+            {% if mostrar_respuestas and forloop.counter0 == q.correcta %} — CORRECTA{% endif %}
           </div>
         {% endfor %}
       </div>
-      {% if q.justificacion %}
+      {% if mostrar_respuestas and q.justificacion %}
         <div class="just"><strong>Justificación:</strong> {{ q.justificacion }}</div>
       {% endif %}
     </div>
@@ -264,7 +276,7 @@
       <div class="num">Problema {{ forloop.counter }}</div>
       <div class="enun">{{ e.enunciado }}</div>
       {% if e.pista %}<p><em>Orientación metodológica:</em> {{ e.pista }}</p>{% endif %}
-      {% if e.solucion %}
+      {% if mostrar_respuestas and e.solucion %}
         <div class="just"><strong>Desarrollo guiado:</strong> {{ e.solucion }}</div>
       {% endif %}
     </div>
@@ -278,7 +290,7 @@
       <p><strong>Orientaciones:</strong></p>
       <ol>{% for p in data.pistas %}<li>{{ p }}</li>{% endfor %}</ol>
     {% endif %}
-    {% if data.solucion_detallada %}
+    {% if mostrar_respuestas and data.solucion_detallada %}
       <div class="just"><strong>Solución razonada para el docente:</strong><br>{{ data.solucion_detallada|linebreaksbr }}</div>
     {% endif %}
   </div>

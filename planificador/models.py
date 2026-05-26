@@ -198,6 +198,8 @@ class Recurso(models.Model):
     descripcion = models.TextField(blank=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='documento')
     archivo = models.FileField(upload_to=_recurso_upload_path, blank=True, null=True)
+    archivo_profesor = models.FileField(upload_to=_recurso_upload_path, blank=True, null=True)
+    archivo_estudiante = models.FileField(upload_to=_recurso_upload_path, blank=True, null=True)
     url_video = models.URLField(max_length=500, blank=True)
     prompt_origen = models.TextField(
         blank=True,
@@ -308,12 +310,12 @@ def limpiar_archivo_recurso(sender, instance, **kwargs):
     El controlador `eliminar_recurso` ya lo hace explícitamente; este signal
     cubre los casos que pasan por debajo: borrado en cascada y bulk operations.
     Errores en el storage NO bloquean el borrado de la fila — solo se loguean."""
-    if instance.archivo:
-        try:
-            instance.archivo.delete(save=False)
-        except Exception:
-            # Storage falló o el archivo ya no existía: no bloqueamos el borrado.
-            import logging as _logging
-            _logging.getLogger('planificador').warning(
-                'No se pudo borrar el archivo físico del Recurso id=%s', instance.pk,
-            )
+    import logging as _logging
+    _log = _logging.getLogger('planificador')
+    for field in ('archivo', 'archivo_profesor', 'archivo_estudiante'):
+        f = getattr(instance, field)
+        if f:
+            try:
+                f.delete(save=False)
+            except Exception:
+                _log.warning('No se pudo borrar %s del Recurso id=%s', field, instance.pk)

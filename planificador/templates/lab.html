@@ -880,7 +880,7 @@ async function labGuardarRecurso(){
     });
     var json = await resp.json();
     if (!json.ok) throw new Error(json.error || 'Error al guardar');
-    if (window.showToast) window.showToast('PDF guardado en Recursos: ' + (json.filename || 'archivo.pdf'), 'success');
+    if (window.showToast) window.showToast('Versiones Docente y Estudiante guardadas en Recursos.', 'success');
   } catch(e) {
     if (window.showToast) window.showToast('Error al guardar: ' + e.message, 'error');
   }

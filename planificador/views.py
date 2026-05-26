@@ -2788,14 +2788,15 @@ def clase_pdf_guardar(request, id):
 
 # ==================== GUARDADO ENRIQUECIDO DESDE EL AI LAB ====================
 
-def _build_lab_pdf_html(modo, data, ctx):
-    """Construye el HTML completo (con estilos inline) que xhtml2pdf
-    convertirá a PDF. Diseño limpio, optimizado para impresión B/N."""
+def _build_lab_pdf_html(modo, data, ctx, mostrar_respuestas=True):
+    """Construye el HTML que xhtml2pdf convertirá a PDF.
+    mostrar_respuestas=False genera la versión limpia para el estudiante."""
     from django.template.loader import render_to_string
     return render_to_string('lab/pdf_documento.html', {
         'modo': modo,
         'data': data,
         'ctx': ctx,
+        'mostrar_respuestas': mostrar_respuestas,
     })
 
 
@@ -2830,18 +2831,21 @@ def lab_guardar_documento(request):
         curso_id=body.get('curso_id'),
     )
 
+    # Generar versión docente (con respuestas) y versión estudiante (sin respuestas)
     try:
-        html = _build_lab_pdf_html(modo, data, ctx)
+        html_prof = _build_lab_pdf_html(modo, data, ctx, mostrar_respuestas=True)
+        html_est  = _build_lab_pdf_html(modo, data, ctx, mostrar_respuestas=False)
     except Exception as e:
-        logger.error('lab_guardar_documento: error renderizando template PDF: %s', e, exc_info=True)
+        logger.error('lab_guardar_documento: error renderizando templates PDF: %s', e, exc_info=True)
         return JsonResponse({'ok': False, 'error': 'Error al preparar el documento. Inténtalo de nuevo.'}, status=500)
 
     try:
-        ok, payload = _render_pdf_from_html(html)
+        ok_p, pdf_prof = _render_pdf_from_html(html_prof)
+        ok_e, pdf_est  = _render_pdf_from_html(html_est)
     except Exception as e:
         logger.error('lab_guardar_documento: error en xhtml2pdf: %s', e, exc_info=True)
         return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
-    if not ok:
+    if not ok_p or not ok_e:
         return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
 
     from django.core.files.base import ContentFile
@@ -2849,12 +2853,14 @@ def lab_guardar_documento(request):
 
     try:
         titulo = strip_tags(data.get('titulo') or LAB_MODOS[modo]['label'])[:200]
-        tipo_map = {'quiz': 'quiz', 'refuerzo': 'taller', 'desafio': 'taller', 'guia': 'guia'}
-        tipo = tipo_map.get(modo, 'documento')
+        tipo_map    = {'quiz': 'quiz', 'refuerzo': 'taller', 'desafio': 'taller', 'guia': 'guia'}
         tipo_prefix = {'quiz': 'Evaluacion', 'refuerzo': 'Taller', 'desafio': 'Problema', 'guia': 'Guia'}[modo]
+        tipo  = tipo_map.get(modo, 'documento')
         grupo = _slug_filename(ctx['grado'] or 'General')
-        tema = _slug_filename(ctx['tema'] or titulo)
-        filename = _unique_filename(f'Recurso_{tipo_prefix}_{grupo}_{tema}', 'pdf')
+        tema  = _slug_filename(ctx['tema'] or titulo)
+        base  = f'Recurso_{tipo_prefix}_{grupo}_{tema}'
+        fn_prof = _unique_filename(f'{base}_Docente', 'pdf')
+        fn_est  = _unique_filename(f'{base}_Estudiante', 'pdf')
 
         recurso = Recurso.objects.create(
             usuario=request.user,
@@ -2864,12 +2870,18 @@ def lab_guardar_documento(request):
             descripcion=f'{LAB_MODOS[modo]["label"]} · {ctx["materia"]} · {ctx["grado"] or "General"}'[:5000],
             tipo=tipo,
         )
-        recurso.archivo.save(filename, ContentFile(payload), save=True)
+        recurso.archivo_profesor.save(fn_prof, ContentFile(pdf_prof), save=False)
+        recurso.archivo_estudiante.save(fn_est, ContentFile(pdf_est), save=True)
     except Exception as e:
         logger.error('lab_guardar_documento: error guardando recurso: %s', e)
         return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
 
-    return JsonResponse({'ok': True, 'recurso_id': recurso.id, 'filename': filename})
+    return JsonResponse({
+        'ok': True,
+        'recurso_id': recurso.id,
+        'fn_profesor': fn_prof,
+        'fn_estudiante': fn_est,
+    })
 
 
 # ==================== DESCARGA SEGURA DE RECURSOS ====================
@@ -2927,3 +2939,52 @@ def inline_recurso(request, id):
     Verifica propiedad estricta — esta es la única ruta segura para mostrar
     media en producción, ya que /media/ directo no aplica autorización."""
     return _serve_recurso(request, id, attachment=False)
+
+
+def _serve_recurso_version(request, id, version, attachment):
+    """Sirve archivo_profesor o archivo_estudiante según `version`."""
+    recurso = get_object_or_404(Recurso, id=id, usuario=request.user)
+    if version == 'profesor':
+        file_field = recurso.archivo_profesor
+    elif version == 'estudiante':
+        file_field = recurso.archivo_estudiante
+    else:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound('Versión no válida.')
+
+    if not file_field:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound('Esta versión del documento no está disponible.')
+
+    from django.conf import settings
+    if getattr(settings, 'USE_R2_STORAGE', False):
+        from django.shortcuts import redirect
+        try:
+            params = {}
+            if attachment:
+                suffix = '_Docente.pdf' if version == 'profesor' else '_Estudiante.pdf'
+                fname = (recurso.titulo or 'documento')[:80].replace(' ', '_') + suffix
+                params['ResponseContentDisposition'] = f'attachment; filename="{fname}"'
+            url = file_field.storage.url(file_field.name, parameters=params, expire=3600)
+        except Exception:
+            from django.http import HttpResponseNotFound
+            return HttpResponseNotFound('No se pudo acceder al archivo en el almacenamiento.')
+        return redirect(url)
+
+    from django.http import FileResponse
+    try:
+        f = file_field.open('rb')
+    except FileNotFoundError:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound('El archivo no se encontró en el servidor.')
+    return FileResponse(f, as_attachment=attachment)
+
+
+@login_required
+def descargar_recurso_version(request, id, version):
+    return _serve_recurso_version(request, id, version, attachment=True)
+
+
+@login_required
+def inline_recurso_version(request, id, version):
+    return _serve_recurso_version(request, id, version, attachment=False)
