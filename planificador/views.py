@@ -505,58 +505,81 @@ def _build_system_prompt_chat(ctx, teacher_name, teacher_materia):
     today = ctx['today']
 
     partes = [
-        f"Eres el Asesor Pedagógico de SkedyClass. Estás hablando con {nombre}, un docente.",
+        f"Eres el Asesor Pedagógico de SkedyClass. Estás hablando con {nombre}, un docente."
+        + (f" Su materia principal es {teacher_materia}." if teacher_materia else ""),
     ]
 
-    if teacher_materia:
-        partes.append(
-            f"Su materia principal es {teacher_materia}. "
-            "Prioriza siempre ese contexto en tus sugerencias."
-        )
+    # ── REGLA CRÍTICA ────────────────────────────────────────────────────────
+    partes.append(
+        "REGLA ABSOLUTA: Solo puedes afirmar la existencia de clases que aparezcan "
+        "LITERALMENTE en este prompt. Si una sección dice 'ninguna', no existe esa clase "
+        "y debes decirlo con claridad. Nunca inventes, supongas ni inferras clases que "
+        "no estén listadas aquí. Si el docente pregunta si tiene clases y la lista está "
+        "vacía, responde honestamente que no hay clases registradas en ese período."
+    )
 
+    # ── CLASE EN CURSO ───────────────────────────────────────────────────────
     if ctx['clase_actual']:
         c = ctx['clase_actual']
-        hora_fin_str = c.hora_fin.strftime('%H:%M') if c.hora_fin else 'sin fin registrado'
+        hora_fin_str = c.hora_fin.strftime('%H:%M') if c.hora_fin else 'sin hora de fin'
         partes.append(
-            "CLASE EN CURSO AHORA MISMO: "
-            f"'{c.titulo}'" + (f" con {c.grado_nombre}" if c.grado_nombre else "")
-            + f" — Inició: {c.hora_inicio.strftime('%H:%M')}, Termina: {hora_fin_str}."
-            + (f" Materia: {c.materia}." if c.materia else "")
-            + (f" Objetivos: {c.objetivos[:200]}." if c.objetivos else "")
+            "CLASE EN CURSO AHORA MISMO:\n"
+            f"- Título: {c.titulo}\n"
+            + (f"- Grado/Grupo: {c.grado_nombre}\n" if c.grado_nombre else "")
+            + f"- Hora: {c.hora_inicio.strftime('%H:%M')} → {hora_fin_str}\n"
+            + (f"- Materia: {c.materia}\n" if c.materia else "")
+            + (f"- Objetivos: {c.objetivos[:250]}" if c.objetivos else "- Sin objetivos registrados")
         )
+    else:
+        partes.append("CLASE EN CURSO AHORA MISMO: ninguna.")
 
-    if ctx['historial']:
-        lineas = []
-        for c in ctx['historial']:
-            dias = (today - c.fecha).days
-            cuando = f"hace {dias} día{'s' if dias != 1 else ''}"
-            lineas.append(
-                f"- '{c.titulo}'"
-                + (f" ({c.grado_nombre})" if c.grado_nombre else "")
-                + f" — {cuando}"
-                + (f" — {'completada' if c.estado == 'completed' else 'sin confirmar'}")
-                + (f" — Temas: {c.objetivos[:120]}" if c.objetivos else "")
-            )
-        partes.append("HISTORIAL RECIENTE:\n" + "\n".join(lineas))
-
+    # ── PRÓXIMAS CLASES ──────────────────────────────────────────────────────
     if ctx['proximas']:
         lineas = []
         for c in ctx['proximas']:
             dia_str = 'hoy' if c.fecha == today else 'mañana'
             lineas.append(
-                f"- '{c.titulo}'"
+                f"- {c.titulo}"
                 + (f" ({c.grado_nombre})" if c.grado_nombre else "")
-                + f" a las {c.hora_inicio.strftime('%H:%M')} ({dia_str})"
+                + f" — {dia_str} a las {c.hora_inicio.strftime('%H:%M')}"
+                + (f" — Materia: {c.materia}" if c.materia else "")
             )
-        partes.append("PRÓXIMAS CLASES:\n" + "\n".join(lineas))
+        partes.append("PRÓXIMAS CLASES (hoy/mañana):\n" + "\n".join(lineas))
+        if len(ctx['proximas']) > 1:
+            partes.append(
+                "INSTRUCCIÓN: Como hay varias clases próximas, si el docente pregunta "
+                "sobre 'su clase' o pide ayuda sin especificar, pregúntale primero "
+                "¿sobre cuál de estas clases quiere trabajar? Enuméralas brevemente."
+            )
+    else:
+        partes.append("PRÓXIMAS CLASES (hoy/mañana): ninguna registrada.")
 
+    # ── HISTORIAL ────────────────────────────────────────────────────────────
+    if ctx['historial']:
+        lineas = []
+        for c in ctx['historial']:
+            dias = (today - c.fecha).days
+            cuando = f"hace {dias} día{'s' if dias != 1 else ''}"
+            estado_str = 'completada' if c.estado == 'completed' else 'cancelada' if c.estado == 'cancelada' else 'sin confirmar'
+            lineas.append(
+                f"- {c.titulo}"
+                + (f" ({c.grado_nombre})" if c.grado_nombre else "")
+                + f" — {cuando} — {estado_str}"
+                + (f" — Temas: {c.objetivos[:120]}" if c.objetivos else "")
+            )
+        partes.append("HISTORIAL RECIENTE (últimas 3 clases anteriores a hoy):\n" + "\n".join(lineas))
+    else:
+        partes.append("HISTORIAL RECIENTE: ninguna clase anterior registrada.")
+
+    # ── INSTRUCCIONES DE COMPORTAMIENTO ──────────────────────────────────────
     partes.append(
-        "Usa este contexto de manera natural y fluida. "
-        "Si el docente menciona 'mi clase', 'el grupo' o 'ahora', "
-        "asocia con la clase actual o la más próxima sin que él deba repetirlo. "
-        "Responde en español con tono profesional y empático. "
-        "Sé conciso pero completo. Usa párrafos cortos y listas cuando ayuden a la claridad. "
-        "No generes JSON ni bloques de código salvo petición explícita."
+        "COMPORTAMIENTO:\n"
+        "- Responde en español con tono profesional y empático.\n"
+        "- Sé conciso. Párrafos cortos y listas cuando ayuden.\n"
+        "- Si el docente menciona 'mi clase', 'el grupo' o 'ahora', úsala clase en curso o la próxima.\n"
+        "- Cuando haya ambigüedad sobre cuál clase, pregunta antes de asumir.\n"
+        "- No generes JSON ni bloques de código salvo petición explícita.\n"
+        "- Si no tienes información sobre algo, dilo claramente en vez de inventar."
     )
 
     return "\n\n".join(partes)
