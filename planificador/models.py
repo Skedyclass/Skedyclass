@@ -297,6 +297,34 @@ class BloqueDescanso(models.Model):
         return f'{self.nombre} ({self.hora_inicio}–{self.hora_fin})'
 
 
+class Notificacion(models.Model):
+    TIPO_CHOICES = [
+        ('info',    'Información'),
+        ('alerta',  'Alerta'),
+        ('exito',   'Éxito'),
+        ('sistema', 'Sistema'),
+    ]
+    usuario        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
+    titulo         = models.CharField(max_length=200)
+    mensaje        = models.TextField()
+    tipo           = models.CharField(max_length=20, choices=TIPO_CHOICES, default='info')
+    leido          = models.BooleanField(default=False, db_index=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    clave          = models.CharField(max_length=200, blank=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'Notificación'
+        verbose_name_plural = 'Notificaciones'
+        ordering = ['-fecha_creacion']
+        indexes = [
+            models.Index(fields=['usuario', 'leido']),
+            models.Index(fields=['usuario', 'fecha_creacion']),
+        ]
+
+    def __str__(self):
+        return f'[{self.tipo}] {self.titulo} → {self.usuario.username}'
+
+
 @receiver(post_save, sender=User)
 def crear_configuracion_usuario(sender, instance, created, **kwargs):
     if created:

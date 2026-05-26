@@ -96,6 +96,11 @@ urlpatterns = [
     path('api/preferencia/', views.guardar_preferencia, name='guardar_preferencia'),
     path('api/asistente/', views.asistente_api, name='asistente_api'),
 
+    # Notificaciones in-app
+    path('api/notificaciones/', views.notificaciones_api, name='notificaciones_api'),
+    path('api/notificaciones/leer/<int:id>/', views.notificacion_leer, name='notificacion_leer'),
+    path('api/notificaciones/leer-todas/', views.notificaciones_leer_todas, name='notificaciones_leer_todas'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Google OAuth (django-allauth) — solo se monta si la app está instalada

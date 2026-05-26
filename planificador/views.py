@@ -2876,6 +2876,21 @@ def lab_guardar_documento(request):
         logger.error('lab_guardar_documento: error guardando recurso: %s', e)
         return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
 
+    # Notificación in-app inmediata
+    try:
+        from planificador.models import Notificacion
+        Notificacion.objects.create(
+            usuario=request.user,
+            titulo='Material guardado en Recursos',
+            mensaje=(
+                f'Versiones Docente y Estudiante de "{titulo[:80]}" '
+                'están disponibles en la sección Recursos.'
+            ),
+            tipo='exito',
+        )
+    except Exception:
+        pass  # la notificación es no-crítica; no interrumpir el flujo
+
     return JsonResponse({
         'ok': True,
         'recurso_id': recurso.id,
@@ -2988,3 +3003,50 @@ def descargar_recurso_version(request, id, version):
 @login_required
 def inline_recurso_version(request, id, version):
     return _serve_recurso_version(request, id, version, attachment=False)
+
+
+# ==================== NOTIFICACIONES IN-APP ====================
+
+@login_required
+def notificaciones_api(request):
+    """Devuelve las últimas 30 notificaciones del usuario y el conteo de no leídas."""
+    from planificador.models import Notificacion
+    items = list(
+        Notificacion.objects
+        .filter(usuario=request.user)
+        .order_by('-fecha_creacion')[:30]
+    )
+    unread = Notificacion.objects.filter(usuario=request.user, leido=False).count()
+    return JsonResponse({
+        'ok': True,
+        'unread': unread,
+        'items': [
+            {
+                'id': n.id,
+                'titulo': n.titulo,
+                'mensaje': n.mensaje,
+                'tipo': n.tipo,
+                'leido': n.leido,
+                'fecha': n.fecha_creacion.isoformat(),
+            }
+            for n in items
+        ],
+    })
+
+
+@login_required
+def notificacion_leer(request, id):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    from planificador.models import Notificacion
+    Notificacion.objects.filter(id=id, usuario=request.user).update(leido=True)
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def notificaciones_leer_todas(request):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    from planificador.models import Notificacion
+    Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
+    return JsonResponse({'ok': True})
