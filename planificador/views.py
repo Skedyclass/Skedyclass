@@ -23,7 +23,7 @@ from .models import BloqueDescanso, Clase, ConfiguracionUsuario, Curso, Grado, H
 
 logger = logging.getLogger('planificador')
 
-ESTADOS_VALIDOS = ('pending', 'in_progress', 'completed')
+ESTADOS_VALIDOS = ('pending', 'completed', 'cancelada')
 POR_PAGINA = 10
 
 
@@ -466,12 +466,15 @@ def google_login(request):
 def dashboard(request):
     today = timezone.localdate()  # respects TIME_ZONE; avoids UTC drift on cloud servers
     clases_qs = Clase.objects.filter(usuario=request.user)
+    now_local = timezone.localtime()
+    now_time = now_local.time()
     stats = clases_qs.aggregate(
         total=Count('id'),
         pending=Count('id', filter=Q(estado='pending')),
-        in_progress=Count('id', filter=Q(estado='in_progress')),
         completed=Count('id', filter=Q(estado='completed')),
+        cancelada=Count('id', filter=Q(estado='cancelada')),
     )
+    stats['vencidas'] = clases_qs.filter(estado='pending', fecha__lt=today).count()
 
     # Workload heatmap: carga de trabajo del mes actual
     workload_counts = {}
@@ -562,13 +565,12 @@ def dashboard(request):
 
     context = {
         'stats': stats,
-        # Kanban columns: pending/in-progress show the SOONEST classes first
-        # (the model default orders by -fecha, so override it here); completed
-        # shows the most recently finished first.
-        'clases_pending': clases_qs.filter(estado='pending').order_by('fecha', 'hora_inicio')[:5],
-        'clases_in_progress': clases_qs.filter(estado='in_progress').order_by('fecha', 'hora_inicio')[:5],
+        # Kanban: pendientes futuras / vencidas sin confirmar / completadas
+        'clases_pending': clases_qs.filter(estado='pending', fecha__gte=today).order_by('fecha', 'hora_inicio')[:5],
+        'clases_vencidas': clases_qs.filter(estado='pending', fecha__lt=today).order_by('-fecha', '-hora_inicio')[:5],
         'clases_completed': clases_qs.filter(estado='completed').order_by('-fecha', '-hora_inicio')[:5],
-        'next_class': clases_qs.filter(estado='in_progress').order_by('fecha', 'hora_inicio').first(),
+        # "En curso" = pending + hoy + ya inició; shown in hero section
+        'next_class': clases_qs.filter(estado='pending', fecha=today, hora_inicio__lte=now_time).order_by('hora_inicio').first(),
         'user_materia': get_user_materia(request.user),
         'workload_cells': workload_cells,
         'workload_total': sum(workload_counts.values()),
@@ -920,16 +922,17 @@ def cambiar_estado_clase(request, id, estado):
         messages.error(request, msg)
         return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')
 
+    update_fields = ['estado', 'updated_at']
     clase.estado = estado
-    clase.save(update_fields=['estado', 'updated_at'])
+    if estado == 'cancelada':
+        razon = request.POST.get('razon_cancelacion', '').strip()
+        clase.razon_cancelacion = razon
+        update_fields.append('razon_cancelacion')
+    clase.save(update_fields=update_fields)
     logger.info('Estado clase id=%s → %s por %s', clase.id, estado, request.user.username)
 
     if is_ajax:
         return JsonResponse({'ok': True, 'estado': estado, 'label': clase.get_estado_display_spanish()})
-
-    if estado == 'pending':
-        # Reciclar → llevar al editor para que actualice fecha, hora y tema
-        return redirect(f"{reverse('editar_clase', args=[clase.id])}?reciclada=1")
 
     messages.success(request, f'Estado actualizado a {clase.get_estado_display_spanish()}')
     return _safe_redirect(request, request.META.get('HTTP_REFERER'), 'dashboard')

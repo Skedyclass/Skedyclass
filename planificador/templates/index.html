@@ -54,12 +54,12 @@
 /* Barra de acento superior — igual que sidebar::before */
 .kanban-column::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:18px 18px 0 0; }
 .kanban-column[data-status="pending"]::before    { background:linear-gradient(90deg,#4361ee,#9d4edd); }
-.kanban-column[data-status="in_progress"]::before { background:linear-gradient(90deg,#7209b7,#e040fb); }
+.kanban-column[data-status="vencidas"]::before { background:linear-gradient(90deg,#ef4444,#f97316); }
 .kanban-column[data-status="completed"]::before   { background:linear-gradient(90deg,#10b981,#34d399); }
 /* Glow de fondo tenue según estado */
 .kanban-column::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; border-radius:18px; }
 .kanban-column[data-status="pending"]::after     { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(67,97,238,.08) 0%,transparent 70%); }
-.kanban-column[data-status="in_progress"]::after { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(224,64,251,.08) 0%,transparent 70%); }
+.kanban-column[data-status="vencidas"]::after { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(239,68,68,.07) 0%,transparent 70%); }
 .kanban-column[data-status="completed"]::after   { background:radial-gradient(ellipse 240px 100px at 50% 0%,rgba(16,185,129,.07) 0%,transparent 70%); }
 
 /* Header — gradientes idénticos a las stat-cards */
@@ -69,18 +69,18 @@
 .kanban-header .kh-title { flex:1; }
 .kanban-header .kh-count { background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.2); border-radius:50px; padding:2px 10px; font-size:.72rem; font-weight:900; min-width:24px; text-align:center; }
 .kanban-header.pending    { background:linear-gradient(135deg,#4361ee,#9d4edd); box-shadow:0 4px 18px rgba(67,97,238,.4); }
-.kanban-header.in-progress { background:linear-gradient(135deg,#7209b7,#e040fb); box-shadow:0 4px 18px rgba(114,9,183,.4); }
+.kanban-header.vencidas { background:linear-gradient(135deg,#ef4444,#f97316); box-shadow:0 4px 18px rgba(239,68,68,.4); }
 .kanban-header.completed  { background:linear-gradient(135deg,#10b981,#34d399); box-shadow:0 4px 18px rgba(16,185,129,.4); }
 
 /* Tarjeta — fondo oscuro ligeramente elevado sobre la columna */
 .kanban-card { background:#13111e; border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:15px 16px; margin-bottom:10px; border-left:3px solid rgba(157,78,221,.6); transition:background .2s,transform .2s,box-shadow .2s,border-color .2s; position:relative; z-index:1; }
 /* Acento izquierdo por estado */
 .kanban-column[data-status="pending"]     .kanban-card { border-left-color:#4361ee; }
-.kanban-column[data-status="in_progress"] .kanban-card { border-left-color:#e040fb; }
+.kanban-column[data-status="vencidas"] .kanban-card { border-left-color:#ef4444; }
 .kanban-column[data-status="completed"]   .kanban-card { border-left-color:#10b981; }
 /* Hover — resplandor lateral */
 .kanban-column[data-status="pending"]     .kanban-card:hover { background:#13111e; border-color:rgba(99,102,241,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(99,102,241,.3),-4px 0 20px rgba(67,97,238,.15); }
-.kanban-column[data-status="in_progress"] .kanban-card:hover { background:#13111e; border-color:rgba(224,64,251,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(224,64,251,.3),-4px 0 20px rgba(114,9,183,.15); }
+.kanban-column[data-status="vencidas"] .kanban-card:hover { background:#13111e; border-color:rgba(239,68,68,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(239,68,68,.3),-4px 0 20px rgba(239,68,68,.15); }
 .kanban-column[data-status="completed"]   .kanban-card:hover { background:#13111e; border-color:rgba(16,185,129,.4); transform:translateX(3px); box-shadow:inset 0 0 0 1px rgba(16,185,129,.3),-4px 0 20px rgba(16,185,129,.12); }
 
 /* Título de la tarjeta — blanco nítido */
@@ -342,7 +342,6 @@
           <span>👤 {{ clase.profesor_nombre }}</span>
         </div>
         <div class="card-actions">
-          <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash">▶ Iniciar</button></form>
           <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash green">✓ Completar</button></form>
         </div>
       </div>
@@ -355,15 +354,15 @@
     </div>
   </div>
 
-  <!-- In Progress -->
-  <div class="kanban-column" data-status="in_progress">
-    <div class="kanban-header in-progress">
-      <span class="kh-icon">⚡</span>
-      <span class="kh-title">En progreso</span>
-      <span class="kh-count">{{ clases_in_progress|length }}</span>
+  <!-- Vencidas (pendientes sin confirmar de días anteriores) -->
+  <div class="kanban-column" data-status="vencidas">
+    <div class="kanban-header vencidas">
+      <span class="kh-icon">⚠</span>
+      <span class="kh-title">Vencidas</span>
+      <span class="kh-count">{{ clases_vencidas|length }}</span>
     </div>
     <div class="kanban-cards">
-      {% for clase in clases_in_progress %}
+      {% for clase in clases_vencidas %}
       <div class="kanban-card" data-id="{{ clase.id }}">
         <h4>{{ clase.titulo }}</h4>
         <div class="kc-meta">
@@ -372,14 +371,14 @@
           <span>👤 {{ clase.profesor_nombre }}</span>
         </div>
         <div class="card-actions">
-          <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash muted">← Pendiente</button></form>
           <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="btn-small-dash green">✓ Completar</button></form>
+          <a href="{% url 'editar_clase' clase.id %}" class="btn-small-dash">Reprogramar</a>
         </div>
       </div>
       {% empty %}
       <div class="empty-column">
-        <span class="empty-icon">⚡</span>
-        <p>Sin clases en curso</p>
+        <span class="empty-icon">✓</span>
+        <p>Sin clases vencidas</p>
       </div>
       {% endfor %}
     </div>

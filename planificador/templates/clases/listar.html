@@ -32,8 +32,10 @@
 /* Card top accent line per status */
 .cl-card-line{height:3px;border-radius:18px 18px 0 0;margin-bottom:0}
 .cl-card-line.pending{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.cl-card-line.in_progress{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+.cl-card-line.en_curso{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+.cl-card-line.vencida{background:linear-gradient(90deg,#ef4444,#f97316)}
 .cl-card-line.completed{background:linear-gradient(90deg,#059669,#10b981)}
+.cl-card-line.cancelada{background:linear-gradient(90deg,#6b7280,#4b5563)}
 
 /* Card body */
 .cl-card-body{padding:18px 20px 16px}
@@ -57,8 +59,13 @@
 /* Status badge — fijo arriba a la izquierda, no estira */
 .cl-status{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:4px 11px;border-radius:50px;font-size:.72rem;font-weight:800;flex-shrink:0}
 .cl-status.pending{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
-.cl-status.in_progress{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.cl-status.en_curso{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.cl-status.vencida{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
 .cl-status.completed{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+.cl-status.cancelada{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.2)}
+.cl-act-cancel{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
+.cl-act-cancel:hover{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fff}
+.cl-act-restore{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
 
 /* Action buttons — flex-wrap obligatorio: si no caben en una línea, bajan
    ordenadamente a una segunda. white-space:nowrap impide que cada botón se
@@ -112,7 +119,7 @@
 <div class="cl-grid">
   {% for clase in clases %}
   <div class="cl-card">
-    <div class="cl-card-line {{ clase.estado }}"></div>
+    <div class="cl-card-line {{ clase.get_visual_estado }}"></div>
     <div class="cl-card-body">
       <a href="{% url 'ver_clase' clase.id %}" class="cl-card-title" title="Ver detalle: {{ clase.titulo }}" style="display:block;text-decoration:none;color:inherit;cursor:pointer">{{ clase.titulo }}</a>
       <div class="cl-card-meta">
@@ -132,18 +139,18 @@
       {% endif %}
     </div>
     <div class="cl-card-footer">
-      <span class="cl-status {{ clase.estado }}">
-        {% if clase.estado == 'pending' %}⏰{% elif clase.estado == 'in_progress' %}🔵{% else %}✅{% endif %}
-        {{ clase.get_estado_display_spanish }}
+      {% with vs=clase.get_visual_estado %}
+      <span class="cl-status {{ vs }}">
+        {% if vs == 'en_curso' %}● En curso{% elif vs == 'vencida' %}⚠ Vencida{% elif clase.estado == 'completed' %}✅ Completada{% elif clase.estado == 'cancelada' %}✕ Cancelada{% else %}⏰ Pendiente{% endif %}
       </span>
       <div class="cl-card-actions">
-        {% if clase.estado == 'pending' and clase.fecha == today %}
-        <form method="post" action="{% url 'cambiar_estado' clase.id 'in_progress' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-start" style="font:inherit;cursor:pointer">Iniciar</button></form>
-        {% elif clase.estado == 'in_progress' %}
+        {% if clase.estado == 'pending' %}
         <form method="post" action="{% url 'cambiar_estado' clase.id 'completed' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-done" style="font:inherit;cursor:pointer">✓ Completar</button></form>
-        {% elif clase.estado == 'completed' %}
-        <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act" style="font:inherit;cursor:pointer;color:#fb923c;border-color:rgba(251,146,60,.35)" title="Reutilizar este plan para otra sesión">♻ Reciclar</button></form>
+        <button type="button" class="cl-act cl-act-cancel" onclick="abrirCancelar({{ clase.id }})">✕ Cancelar</button>
+        {% elif clase.estado == 'cancelada' %}
+        <form method="post" action="{% url 'cambiar_estado' clase.id 'pending' %}" style="display:inline;margin:0">{% csrf_token %}<button type="submit" class="cl-act cl-act-restore" style="font:inherit;cursor:pointer">↩ Restaurar</button></form>
         {% endif %}
+      {% endwith %}
         <a href="{% url 'ver_clase' clase.id %}" class="cl-act cl-act-edit" title="Ver detalle de la clase">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Ver
@@ -169,6 +176,20 @@
     </div>
   </div>
   {% endfor %}
+</div>
+
+<!-- Modal cancelar clase -->
+<div id="cancelModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:rgba(14,12,30,.97);border:1px solid rgba(239,68,68,.35);border-radius:20px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.7)">
+    <h3 style="font-family:'Playfair Display',serif;color:#f5f3ff;margin:0 0 8px;font-size:1.05rem">Cancelar clase</h3>
+    <p style="color:#9ca3af;font-size:.83rem;margin:0 0 16px;line-height:1.55">La clase quedará marcada como cancelada. Puedes restaurarla después si lo necesitas.</p>
+    <textarea id="cancelRazon" rows="2" placeholder="Razón (opcional)" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#f5f3ff;font-size:.85rem;font-family:'Lora',serif;resize:vertical;box-sizing:border-box;margin-bottom:16px"></textarea>
+    <form id="cancelForm" method="post" style="display:flex;gap:10px">{% csrf_token %}
+      <input type="hidden" name="razon_cancelacion" id="cancelRazonHidden">
+      <button type="button" onclick="cerrarCancelar()" style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfc9e6;font-size:.86rem;font-weight:700;cursor:pointer;font-family:inherit">Volver</button>
+      <button type="submit" style="flex:1;padding:10px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;font-size:.86rem;font-weight:800;cursor:pointer;font-family:inherit">Confirmar cancelación</button>
+    </form>
+  </div>
 </div>
 
 {% if page_obj.has_other_pages %}
@@ -202,6 +223,25 @@ function _csrf(){
   var m = document.cookie.match(/csrftoken=([^;]+)/);
   return m ? m[1] : '';
 }
+var _cancelClaseId = null;
+function abrirCancelar(id){
+  _cancelClaseId = id;
+  document.getElementById('cancelRazon').value = '';
+  document.getElementById('cancelForm').action = '/clases/estado/' + id + '/cancelada/';
+  var modal = document.getElementById('cancelModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function cerrarCancelar(){
+  document.getElementById('cancelModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('cancelForm').addEventListener('submit', function(){
+  document.getElementById('cancelRazonHidden').value = document.getElementById('cancelRazon').value;
+});
+document.getElementById('cancelModal').addEventListener('click', function(e){
+  if (e.target === this) cerrarCancelar();
+});
 async function guardarClaseEnRecursos(claseId, btn){
   btn.disabled = true;
   if (window.showToast) window.showToast('Generando PDF del plan de clase…', 'info');

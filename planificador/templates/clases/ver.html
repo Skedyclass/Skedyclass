@@ -25,8 +25,10 @@
 .vc-badge.materia{background:rgba(157,78,221,.14);color:#c4b5fd;border-color:rgba(157,78,221,.3)}
 .vc-badge.tipo{background:rgba(245,158,11,.12);color:#fcd34d;border-color:rgba(245,158,11,.28)}
 .vc-badge.estado-pending{background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.3)}
-.vc-badge.estado-in_progress{background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.32)}
+.vc-badge.estado-en_curso{background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.32)}
+.vc-badge.estado-vencida{background:rgba(239,68,68,.12);color:#fca5a5;border-color:rgba(239,68,68,.3)}
 .vc-badge.estado-completed{background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.3)}
+.vc-badge.estado-cancelada{background:rgba(107,114,128,.1);color:#9ca3af;border-color:rgba(107,114,128,.25)}
 .vc-temporal{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:50px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border:1px solid}
 .vc-temporal.hoy{background:rgba(16,185,129,.1);color:#6ee7b7;border-color:rgba(16,185,129,.35);box-shadow:0 0 0 1px rgba(16,185,129,.15)}
 .vc-temporal.pasada{background:rgba(107,114,128,.1);color:#9ca3af;border-color:rgba(107,114,128,.25)}
@@ -135,7 +137,9 @@
           </span>{% endif %}
           {% if clase.materia %}<span class="vc-badge materia">{{ clase.materia }}</span>{% endif %}
           <span class="vc-badge tipo">{{ clase.get_tipo_clase_display }}</span>
-          <span class="vc-badge estado-{{ clase.estado }}">{{ clase.get_estado_display_spanish }}</span>
+          {% with vs=clase.get_visual_estado %}
+          <span class="vc-badge estado-{{ vs }}">{% if vs == 'en_curso' %}● En curso{% elif vs == 'vencida' %}⚠ Vencida{% else %}{{ clase.get_estado_display_spanish }}{% endif %}</span>
+          {% endwith %}
           <span class="vc-temporal {{ temporalidad }}">
             {% if temporalidad == 'hoy' %}● Hoy{% elif temporalidad == 'pasada' %}Histórica{% else %}Próxima{% endif %}
           </span>

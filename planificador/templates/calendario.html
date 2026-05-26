@@ -28,8 +28,10 @@
 .cal-cell.is-today .cal-day-num{color:#fff}
 .cal-event-chip{display:block;padding:2px 7px;border-radius:6px;font-size:.68rem;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
 .cal-event-chip.pending{background:rgba(245,158,11,.2);color:#fbbf24}
-.cal-event-chip.in_progress{background:rgba(99,102,241,.2);color:#818cf8}
+.cal-event-chip.en_curso{background:rgba(99,102,241,.2);color:#818cf8}
+.cal-event-chip.vencida{background:rgba(239,68,68,.2);color:#fca5a5}
 .cal-event-chip.completed{background:rgba(16,185,129,.2);color:#34d399}
+.cal-event-chip.cancelada{background:rgba(107,114,128,.15);color:#9ca3af}
 .cal-more{font-size:.65rem;color:var(--muted);padding:1px 4px;font-weight:700}
 
 /* weekend cols */
@@ -53,8 +55,10 @@
 .tipo-mixta{background:rgba(16,185,129,.15);color:#34d399}
 .mcc-status{}
 .status-badge.pending{background:rgba(245,158,11,.15);color:#fbbf24}
-.status-badge.in_progress{background:rgba(99,102,241,.15);color:#818cf8}
+.status-badge.en_curso{background:rgba(99,102,241,.15);color:#818cf8}
+.status-badge.vencida{background:rgba(239,68,68,.15);color:#fca5a5}
 .status-badge.completed{background:rgba(16,185,129,.15);color:#34d399}
+.status-badge.cancelada{background:rgba(107,114,128,.12);color:#9ca3af}
 
 /* ── Empty state ── */
 .cal-empty{text-align:center;padding:48px 24px;color:var(--muted)}
@@ -103,7 +107,7 @@
             <div class="cal-day-num">{{ cell.day }}</div>
             {% for clase in cell.clases %}
               {% if forloop.counter <= 3 %}
-                <span class="cal-event-chip {{ clase.estado }}"
+                <span class="cal-event-chip {{ clase.get_visual_estado }}"
                       data-tt-titulo="{{ clase.titulo }}"
                       data-tt-objetivo="{{ clase.objetivos|truncatechars:180|default:'Sin objetivo definido' }}"
                       data-tt-curso="{{ clase.grado_nombre|default:clase.materia|default:'—' }}"
@@ -147,7 +151,7 @@
         </div>
       </div>
       <div class="mcc-status">
-        <span class="status-badge {{ clase.estado }}">{{ clase.get_estado_display_spanish }}</span>
+        {% with vs=clase.get_visual_estado %}<span class="status-badge {{ vs }}">{% if vs == 'en_curso' %}En curso{% elif vs == 'vencida' %}Vencida{% else %}{{ clase.get_estado_display_spanish }}{% endif %}</span>{% endwith %}
       </div>
     </a>
     {% endfor %}

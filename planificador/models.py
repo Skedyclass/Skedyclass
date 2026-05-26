@@ -67,8 +67,8 @@ class Curso(models.Model):
 class Clase(models.Model):
     ESTADO_CHOICES = [
         ('pending', 'Pendiente'),
-        ('in_progress', 'En Progreso'),
         ('completed', 'Completada'),
+        ('cancelada', 'Cancelada'),
     ]
     TIPO_CHOICES = [
         ('normal', 'Normal'),
@@ -86,6 +86,7 @@ class Clase(models.Model):
     hora_fin = models.TimeField(null=True, blank=True)
     tipo_clase = models.CharField(max_length=20, choices=TIPO_CHOICES, default='normal')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pending')
+    razon_cancelacion = models.CharField(max_length=300, blank=True)
     objetivos = models.TextField(blank=True)
     notas = models.TextField(blank=True)
     google_event_id = models.CharField(max_length=300, blank=True, default='')
@@ -104,11 +105,42 @@ class Clase(models.Model):
     def __str__(self):
         return f"{self.titulo} - {self.materia}"
 
+    @property
+    def en_curso(self):
+        """True si la clase está ocurriendo ahora mismo (pendiente + hoy + dentro del horario)."""
+        from django.utils import timezone
+        if self.estado != 'pending':
+            return False
+        now = timezone.localtime()
+        if self.fecha != now.date():
+            return False
+        return self.hora_inicio <= now.time()
+
+    @property
+    def vencida(self):
+        """True si la clase pasó sin ser confirmada (pendiente + fecha anterior a hoy)."""
+        from django.utils import timezone
+        if self.estado != 'pending':
+            return False
+        return self.fecha < timezone.localdate()
+
+    def get_visual_estado(self):
+        """Estado visual computado: vencida/en_curso tienen prioridad sobre el estado guardado."""
+        if self.vencida:
+            return 'vencida'
+        if self.en_curso:
+            return 'en_curso'
+        return self.estado
+
     def get_estado_emoji(self):
-        return {'pending': '⏰', 'in_progress': '🔵', 'completed': '✅'}.get(self.estado, '')
+        return {'pending': '⏰', 'completed': '✅', 'cancelada': '✕'}.get(self.estado, '')
 
     def get_estado_display_spanish(self):
-        return {'pending': 'Pendiente', 'in_progress': 'En progreso', 'completed': 'Completada'}.get(self.estado, self.estado)
+        return {
+            'pending': 'Pendiente',
+            'completed': 'Completada',
+            'cancelada': 'Cancelada',
+        }.get(self.estado, self.estado)
 
 
 class Nota(models.Model):

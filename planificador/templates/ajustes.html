@@ -621,6 +621,20 @@ async function gcalSyncAll() {
 }
 
 
+// Live color scheme preview
+var _schemeVars = {
+  'default': {primary:'#9d4edd',secondary:'#f72585',indigo:'#6366f1',violet:'#8b5cf6',pink:'#ec4899'},
+  'blue':    {primary:'#3b82f6',secondary:'#6366f1',indigo:'#818cf8',violet:'#a5b4fc',pink:'#3b82f6'},
+  'green':   {primary:'#10b981',secondary:'#34d399',indigo:'#6ee7b7',violet:'#a7f3d0',pink:'#10b981'},
+  'orange':  {primary:'#f59e0b',secondary:'#f97316',indigo:'#fbbf24',violet:'#fde68a',pink:'#f59e0b'},
+  'pink':    {primary:'#f72585',secondary:'#ec4899',indigo:'#f9a8d4',violet:'#fbcfe8',pink:'#f72585'},
+};
+document.querySelectorAll('input[name="color_scheme"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.documentElement.setAttribute('data-scheme', this.value);
+  });
+});
+
 // Blur slider
 var slider = document.getElementById('blurSlider');
 var blurVal = document.getElementById('blurVal');

@@ -1,5 +1,5 @@
 {% load static %}
-<!DOCTYPE html><html lang="es" data-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}SkedyClass{% endblock %}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260516"><style>
+<!DOCTYPE html><html lang="es" data-theme="dark" data-scheme="{{ user_config.color_scheme|default:'default' }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}SkedyClass{% endblock %}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260516"><style>
 /* ── ETHEREAL NOIR LAYOUT (palette preserved) ── */
 *,*::before,*::after{box-sizing:border-box}
 :root{
@@ -21,6 +21,31 @@
   --bg:#000000;
   --radius:14px;
 }
+/* ── Color scheme overrides (data-scheme on <html>) ── */
+[data-scheme="blue"]{--primary:#3b82f6;--secondary:#6366f1;--indigo:#818cf8;--violet:#a5b4fc;--pink:#3b82f6}
+[data-scheme="green"]{--primary:#10b981;--secondary:#34d399;--indigo:#6ee7b7;--violet:#a7f3d0;--pink:#10b981}
+[data-scheme="orange"]{--primary:#f59e0b;--secondary:#f97316;--indigo:#fbbf24;--violet:#fde68a;--pink:#f59e0b}
+[data-scheme="pink"]{--primary:#f72585;--secondary:#ec4899;--indigo:#f9a8d4;--violet:#fbcfe8;--pink:#f72585}
+/* Sidebar accent bar */
+[data-scheme="blue"] .sidebar::before{background:linear-gradient(90deg,#3b82f6,#6366f1,#818cf8)}
+[data-scheme="green"] .sidebar::before{background:linear-gradient(90deg,#10b981,#34d399,#6ee7b7)}
+[data-scheme="orange"] .sidebar::before{background:linear-gradient(90deg,#f59e0b,#f97316,#fbbf24)}
+[data-scheme="pink"] .sidebar::before{background:linear-gradient(90deg,#f72585,#ec4899,#f9a8d4)}
+/* Sidebar logo icon */
+[data-scheme="blue"] .sidebar-logo-icon{background:linear-gradient(135deg,#3b82f6,#6366f1)}
+[data-scheme="green"] .sidebar-logo-icon{background:linear-gradient(135deg,#10b981,#34d399)}
+[data-scheme="orange"] .sidebar-logo-icon{background:linear-gradient(135deg,#f59e0b,#f97316)}
+[data-scheme="pink"] .sidebar-logo-icon{background:linear-gradient(135deg,#f72585,#ec4899)}
+/* Sidebar active link */
+[data-scheme="blue"] .sidebar-menu a.active{background:linear-gradient(135deg,rgba(59,130,246,.25),rgba(99,102,241,.15));box-shadow:inset 0 0 0 1px rgba(59,130,246,.4),0 4px 12px rgba(59,130,246,.15)}
+[data-scheme="green"] .sidebar-menu a.active{background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(52,211,153,.15));box-shadow:inset 0 0 0 1px rgba(16,185,129,.4),0 4px 12px rgba(16,185,129,.15)}
+[data-scheme="orange"] .sidebar-menu a.active{background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(249,115,22,.15));box-shadow:inset 0 0 0 1px rgba(245,158,11,.4),0 4px 12px rgba(245,158,11,.15)}
+[data-scheme="pink"] .sidebar-menu a.active{background:linear-gradient(135deg,rgba(247,37,133,.25),rgba(236,72,153,.15));box-shadow:inset 0 0 0 1px rgba(247,37,133,.4),0 4px 12px rgba(247,37,133,.15)}
+/* User avatar gradient */
+[data-scheme="blue"] .user-avatar{background:linear-gradient(135deg,#3b82f6,#6366f1)}
+[data-scheme="green"] .user-avatar{background:linear-gradient(135deg,#10b981,#34d399)}
+[data-scheme="orange"] .user-avatar{background:linear-gradient(135deg,#f59e0b,#f97316)}
+[data-scheme="pink"] .user-avatar{background:linear-gradient(135deg,#f72585,#ec4899)}
 html,body{height:100%;font-family:'Lora',Georgia,serif;background:#000000;color:var(--text);margin:0}
 body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 
