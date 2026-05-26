@@ -95,6 +95,8 @@ urlpatterns = [
     # API interna
     path('api/preferencia/', views.guardar_preferencia, name='guardar_preferencia'),
     path('api/asistente/', views.asistente_api, name='asistente_api'),
+    path('api/asistente/chat/', views.asistente_chat_api, name='asistente_chat_api'),
+    path('api/asistente/contexto/', views.asistente_contexto_api, name='asistente_contexto_api'),
 
     # Notificaciones in-app
     path('api/notificaciones/', views.notificaciones_api, name='notificaciones_api'),

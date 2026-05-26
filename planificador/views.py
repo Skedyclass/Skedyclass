@@ -354,6 +354,214 @@ def ai_generate(system_prompt, user_prompt, max_tokens=2048, temperature=0.7):
 gemini_generate = ai_generate
 
 
+# ---------------------------------------------------------------------------
+# Text-mode AI helpers (no JSON enforcement) — used by the chat assistant
+# ---------------------------------------------------------------------------
+
+def _groq_generate_text(system_prompt, messages, max_tokens=1024, temperature=0.7):
+    """Groq chat completion returning plain text."""
+    from django.conf import settings as _settings
+
+    api_key = _settings.GROQ_API_KEY
+    if not api_key or api_key == 'TU_API_KEY_AQUI':
+        return False, {'error': 'GROQ_API_KEY no configurada.'}, 503
+
+    try:
+        from groq import Groq, AuthenticationError, RateLimitError, BadRequestError, APIConnectionError
+        try:
+            from groq import APITimeoutError as _GroqTimeoutError
+        except ImportError:
+            _GroqTimeoutError = TimeoutError
+    except ImportError:
+        return False, {'error': 'Falta instalar groq: pip install groq'}, 500
+
+    try:
+        client = Groq(api_key=api_key, timeout=60.0)
+        resp = client.chat.completions.create(
+            model=_settings.GROQ_MODEL,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            messages=[{'role': 'system', 'content': system_prompt}] + messages,
+        )
+        text = (resp.choices[0].message.content or '').strip()
+        return True, text, 200
+    except AuthenticationError:
+        return False, {'error': 'GROQ_API_KEY inválida.'}, 401
+    except RateLimitError:
+        return False, {'error': 'Límite del tier gratuito alcanzado. Espera un minuto.'}, 429
+    except BadRequestError as e:
+        logger.warning('Groq text BadRequest: %s', e)
+        return False, {'error': 'Solicitud inválida a la IA.'}, 400
+    except APIConnectionError as e:
+        logger.warning('Groq text APIConnectionError: %s', e)
+        return False, {'error': 'Error de conexión con la IA. Intenta de nuevo.'}, 502
+    except _GroqTimeoutError:
+        return False, {'error': 'La IA tardó demasiado. Intenta de nuevo.'}, 504
+    except Exception as e:
+        logger.error('Groq text error inesperado: %s', e)
+        return False, {'error': 'Error inesperado al generar respuesta.'}, 500
+
+
+def _gemini_generate_text(system_prompt, messages, max_tokens=1024, temperature=0.7):
+    """Gemini chat completion returning plain text."""
+    from django.conf import settings as _settings
+
+    api_key = _settings.GEMINI_API_KEY
+    if not api_key or api_key == 'TU_API_KEY_AQUI':
+        return False, {'error': 'GEMINI_API_KEY no configurada.'}, 503
+
+    try:
+        import google.generativeai as genai
+        from google.api_core import exceptions as _gx
+    except ImportError:
+        return False, {'error': 'Falta instalar google-generativeai.'}, 500
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(
+            model_name=_settings.GEMINI_MODEL,
+            system_instruction=system_prompt,
+            generation_config={'max_output_tokens': max_tokens, 'temperature': temperature},
+        )
+        # Build Gemini history (all but last message) then send last
+        history = []
+        for msg in messages[:-1]:
+            role = 'model' if msg['role'] == 'assistant' else 'user'
+            history.append({'role': role, 'parts': [msg['content']]})
+        chat = model.start_chat(history=history)
+        last = messages[-1]['content'] if messages else ''
+        resp = chat.send_message(last, request_options={'timeout': 90})
+        return True, (resp.text or '').strip(), 200
+    except _gx.Unauthenticated:
+        return False, {'error': 'GEMINI_API_KEY inválida.'}, 401
+    except _gx.ResourceExhausted:
+        return False, {'error': 'Límite del tier gratuito alcanzado.'}, 429
+    except _gx.DeadlineExceeded:
+        return False, {'error': 'La IA tardó demasiado. Intenta de nuevo.'}, 504
+    except Exception as e:
+        logger.error('Gemini text error: %s', e)
+        return False, {'error': 'Error inesperado al generar respuesta.'}, 500
+
+
+def ai_generate_text(system_prompt, messages, max_tokens=1024, temperature=0.7):
+    """Dispatch to configured AI provider for text-mode chat."""
+    from django.conf import settings as _settings
+    if _settings.AI_PROVIDER == 'gemini':
+        return _gemini_generate_text(system_prompt, messages, max_tokens, temperature)
+    return _groq_generate_text(system_prompt, messages, max_tokens, temperature)
+
+
+# ---------------------------------------------------------------------------
+# Temporal context builder — called before every chat turn
+# ---------------------------------------------------------------------------
+
+def _build_clase_contexto(user):
+    """Query DB for past/present/future classes to inject into AI prompt."""
+    from datetime import timedelta as _td
+    now = timezone.localtime()
+    today = now.date()
+    tomorrow = today + _td(days=1)
+    now_time = now.time()
+
+    # Present: pending class today that has started (and not yet ended)
+    clase_actual = None
+    for c in Clase.objects.filter(
+        usuario=user, fecha=today, estado='pending',
+        hora_inicio__lte=now_time,
+    ).order_by('hora_inicio'):
+        if not c.hora_fin or c.hora_fin >= now_time:
+            clase_actual = c
+            break
+
+    # Past: last 3 classes (any state) before today
+    historial = list(
+        Clase.objects.filter(usuario=user, fecha__lt=today)
+        .order_by('-fecha', '-hora_inicio')[:3]
+    )
+
+    # Future: pending today (not yet started) + tomorrow, up to 3
+    proximas = list(
+        Clase.objects.filter(
+            usuario=user, estado='pending',
+            fecha__in=[today, tomorrow],
+        ).exclude(
+            fecha=today, hora_inicio__lte=now_time,
+        ).order_by('fecha', 'hora_inicio')[:3]
+    )
+
+    return {
+        'clase_actual': clase_actual,
+        'historial': historial,
+        'proximas': proximas,
+        'now': now,
+        'today': today,
+        'has_context': bool(clase_actual or historial or proximas),
+    }
+
+
+def _build_system_prompt_chat(ctx, teacher_name, teacher_materia):
+    """Assemble the dynamic system prompt with temporal class data."""
+    nombre = teacher_name or 'docente'
+    today = ctx['today']
+
+    partes = [
+        f"Eres el Asesor Pedagógico de SkedyClass. Estás hablando con {nombre}, un docente.",
+    ]
+
+    if teacher_materia:
+        partes.append(
+            f"Su materia principal es {teacher_materia}. "
+            "Prioriza siempre ese contexto en tus sugerencias."
+        )
+
+    if ctx['clase_actual']:
+        c = ctx['clase_actual']
+        hora_fin_str = c.hora_fin.strftime('%H:%M') if c.hora_fin else 'sin fin registrado'
+        partes.append(
+            "CLASE EN CURSO AHORA MISMO: "
+            f"'{c.titulo}'" + (f" con {c.grado_nombre}" if c.grado_nombre else "")
+            + f" — Inició: {c.hora_inicio.strftime('%H:%M')}, Termina: {hora_fin_str}."
+            + (f" Materia: {c.materia}." if c.materia else "")
+            + (f" Objetivos: {c.objetivos[:200]}." if c.objetivos else "")
+        )
+
+    if ctx['historial']:
+        lineas = []
+        for c in ctx['historial']:
+            dias = (today - c.fecha).days
+            cuando = f"hace {dias} día{'s' if dias != 1 else ''}"
+            lineas.append(
+                f"- '{c.titulo}'"
+                + (f" ({c.grado_nombre})" if c.grado_nombre else "")
+                + f" — {cuando}"
+                + (f" — {'completada' if c.estado == 'completed' else 'sin confirmar'}")
+                + (f" — Temas: {c.objetivos[:120]}" if c.objetivos else "")
+            )
+        partes.append("HISTORIAL RECIENTE:\n" + "\n".join(lineas))
+
+    if ctx['proximas']:
+        lineas = []
+        for c in ctx['proximas']:
+            dia_str = 'hoy' if c.fecha == today else 'mañana'
+            lineas.append(
+                f"- '{c.titulo}'"
+                + (f" ({c.grado_nombre})" if c.grado_nombre else "")
+                + f" a las {c.hora_inicio.strftime('%H:%M')} ({dia_str})"
+            )
+        partes.append("PRÓXIMAS CLASES:\n" + "\n".join(lineas))
+
+    partes.append(
+        "Usa este contexto de manera natural y fluida. "
+        "Si el docente menciona 'mi clase', 'el grupo' o 'ahora', "
+        "asocia con la clase actual o la más próxima sin que él deba repetirlo. "
+        "Responde en español con tono profesional y empático. "
+        "Sé conciso pero completo. Usa párrafos cortos y listas cuando ayuden a la claridad. "
+        "No generes JSON ni bloques de código salvo petición explícita."
+    )
+
+    return "\n\n".join(partes)
+
+
 def get_user_materia(user):
     """Return the teacher's primary subject from their profile config."""
     try:
@@ -2069,11 +2277,16 @@ def eliminar_bloque(request, id):
 
 @login_required
 def asistente(request):
-    clases = Clase.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+    ctx = _build_clase_contexto(request.user)
+    proxima = ctx['proximas'][0] if ctx['proximas'] else None
     return render(request, 'asistente.html', {
         'page': 'asistente',
-        'clases': clases,
-        'tiene_clases': clases.exists(),
+        'clase_actual': ctx['clase_actual'],
+        'proxima_clase': proxima,
+        'historial_count': len(ctx['historial']),
+        'has_context': ctx['has_context'],
+        'today': ctx['today'],
+        'teacher_name': request.user.first_name or request.user.username,
     })
 
 
@@ -3045,3 +3258,94 @@ def notificaciones_leer_todas(request):
     from planificador.models import Notificacion
     Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
     return JsonResponse({'ok': True})
+
+
+# ==================== ASISTENTE CHAT (contexto temporal) ====================
+
+@login_required
+def asistente_contexto_api(request):
+    """Returns current temporal class context as JSON for the status bar."""
+    ctx = _build_clase_contexto(request.user)
+    today = ctx['today']
+
+    clase_actual_data = None
+    if ctx['clase_actual']:
+        c = ctx['clase_actual']
+        clase_actual_data = {
+            'titulo': c.titulo,
+            'grado': c.grado_nombre or '',
+            'materia': c.materia or '',
+            'hora_inicio': c.hora_inicio.strftime('%H:%M'),
+            'hora_fin': c.hora_fin.strftime('%H:%M') if c.hora_fin else None,
+        }
+
+    proxima_data = None
+    if ctx['proximas']:
+        c = ctx['proximas'][0]
+        proxima_data = {
+            'titulo': c.titulo,
+            'grado': c.grado_nombre or '',
+            'hora_inicio': c.hora_inicio.strftime('%H:%M'),
+            'dia': 'hoy' if c.fecha == today else 'mañana',
+        }
+
+    return JsonResponse({
+        'ok': True,
+        'clase_actual': clase_actual_data,
+        'proxima': proxima_data,
+        'historial_count': len(ctx['historial']),
+        'has_context': ctx['has_context'],
+    })
+
+
+@login_required
+@rate_limit('asistente_chat', max_calls=15, window_sec=60)
+def asistente_chat_api(request):
+    """Chat endpoint: injects temporal class context into every AI turn."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    mensaje = (data.get('mensaje') or '').strip()
+    if not mensaje:
+        return JsonResponse({'ok': False, 'error': 'Escribe un mensaje.'}, status=400)
+    if len(mensaje) > 2000:
+        return JsonResponse(
+            {'ok': False, 'error': 'Mensaje demasiado largo (máx. 2000 caracteres).'},
+            status=400,
+        )
+
+    # Rebuild temporal context on every turn — always fresh from DB
+    ctx = _build_clase_contexto(request.user)
+    teacher_name = request.user.first_name or request.user.username
+    teacher_materia = get_user_materia(request.user)
+    system_prompt = _build_system_prompt_chat(ctx, teacher_name, teacher_materia)
+
+    # Include last 10 exchange turns (20 messages) to stay within token budget
+    raw_history = data.get('historial', [])
+    if len(raw_history) > 20:
+        raw_history = raw_history[-20:]
+
+    messages = []
+    for item in raw_history:
+        rol = item.get('rol', '')
+        contenido = (item.get('contenido') or '').strip()
+        if rol == 'usuario' and contenido:
+            messages.append({'role': 'user', 'content': contenido})
+        elif rol == 'asistente' and contenido:
+            messages.append({'role': 'assistant', 'content': contenido})
+
+    messages.append({'role': 'user', 'content': mensaje})
+
+    ok, result, status_code = ai_generate_text(system_prompt, messages)
+    if ok:
+        logger.info('Chat asistente: %s — %d chars', request.user.username, len(result))
+        return JsonResponse({'ok': True, 'respuesta': result})
+    return JsonResponse(
+        {'ok': False, 'error': result.get('error', 'Error desconocido')},
+        status=status_code,
+    )
