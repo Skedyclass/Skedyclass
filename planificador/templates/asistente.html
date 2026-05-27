@@ -53,7 +53,8 @@
 .msg-avatar-ia{background:linear-gradient(135deg,rgba(157,78,221,.25),rgba(247,37,133,.18));border:1px solid rgba(157,78,221,.3)}
 .msg-avatar-user{background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.28)}
 
-.msg-bubble{max-width:78%;padding:12px 16px;border-radius:14px;font-size:.85rem;line-height:1.65;color:#e9d5ff}
+.msg-body{min-width:0;max-width:78%}
+.msg-bubble{width:100%;padding:12px 16px;border-radius:14px;font-size:.85rem;line-height:1.65;color:#e9d5ff;word-break:break-word;overflow-wrap:break-word;box-sizing:border-box}
 .msg-ia .msg-bubble{background:rgba(14,11,32,.7);border:1px solid rgba(157,78,221,.18);border-radius:14px 14px 14px 4px}
 .msg-user .msg-bubble{background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(157,78,221,.15));border:1px solid rgba(99,102,241,.25);border-radius:14px 14px 4px 14px;color:#f5f3ff}
 
@@ -350,7 +351,7 @@ function appendMsg(rol, contenido) {
 
   div.innerHTML = `
     <div class="msg-avatar ${isUser ? 'msg-avatar-user' : 'msg-avatar-ia'}">${avatarIcon}</div>
-    <div>
+    <div class="msg-body">
       <div class="msg-bubble">${isUser ? esc(contenido).replace(/\n/g,'<br>') : mdLite(contenido)}</div>
       <div class="msg-time">${now}</div>
     </div>`;
