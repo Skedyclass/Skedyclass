@@ -114,7 +114,8 @@ class Clase(models.Model):
         now = timezone.localtime()
         if self.fecha != now.date():
             return False
-        return self.hora_inicio <= now.time()
+        now_t = now.time()
+        return self.hora_inicio <= now_t and (not self.hora_fin or self.hora_fin >= now_t)
 
     @property
     def vencida(self):

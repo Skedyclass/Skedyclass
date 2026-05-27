@@ -622,7 +622,7 @@ body {
     overflow: hidden;
 }
 .kanban-header.pending     { background: linear-gradient(135deg,#4361ee,#9d4edd); box-shadow: 0 4px 18px rgba(67,97,238,.4); }
-.kanban-header.in-progress { background: linear-gradient(135deg,#7209b7,#e040fb); box-shadow: 0 4px 18px rgba(114,9,183,.4); }
+.kanban-header.vencidas    { background: linear-gradient(135deg,#ef4444,#f97316); box-shadow: 0 4px 18px rgba(239,68,68,.4); }
 .kanban-header.completed   { background: linear-gradient(135deg,#10b981,#34d399); box-shadow: 0 4px 18px rgba(16,185,129,.4); }
 
 .kanban-card {
