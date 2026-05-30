@@ -28,7 +28,7 @@ NIVEL_ACADEMICO_CHOICES = [
 # Kept for backward compatibility with ClaseForm grado_nombre field
 GRADO_CHOICES = [('', 'Selecciona un nivel')] + NIVEL_ACADEMICO_CHOICES
 
-CALENDAR_ID_RE = re.compile(r'^[\w._%+\-]+@([\w\-]+\.)+[\w]{2,}$')
+CALENDAR_ID_RE = re.compile(r'^(primary|[\w._%+\-]+@([\w\-]+\.)+[\w]{2,})$')
 
 
 class RegistroForm(UserCreationForm):

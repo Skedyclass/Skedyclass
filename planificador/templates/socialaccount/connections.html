@@ -35,7 +35,7 @@
             <div style="color:var(--muted);font-size:.8rem">{{ base_account.extra_data.email|default:base_account.uid }}</div>
           </div>
         </div>
-        {% if base_account|can_disconnect %}
+        {% if user.has_usable_password or socialaccount_list|length > 1 %}
           <button type="submit" name="account" value="{{ base_account.id }}"
             style="padding:7px 16px;border-radius:8px;background:rgba(185,28,28,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s"
             onmouseover="this.style.background='rgba(185,28,28,.3)'" onmouseout="this.style.background='rgba(185,28,28,.15)'">

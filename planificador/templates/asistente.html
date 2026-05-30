@@ -98,6 +98,16 @@
 .chat-send:hover:not(:disabled){opacity:.85;transform:scale(1.05)}
 .chat-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .chat-hint{font-size:.65rem;color:rgba(255,255,255,.2);text-align:right;margin-top:5px;flex-shrink:0;align-self:flex-end;padding-bottom:2px}
+
+/* ── MOBILE: reservar espacio para bottom-nav (60px) + paddings ── */
+@media(max-width:768px){
+  .chat-wrap{height:calc(100vh - 200px);max-width:100%}
+  .chat-hero-title{font-size:1.3rem}
+  .chat-hero-sub{font-size:.72rem}
+  .msg-body{max-width:86%}
+  .msg-bubble{font-size:.82rem;padding:10px 13px}
+  .ctx-info{font-size:.72rem}
+}
 </style>
 
 <div class="chat-wrap">
