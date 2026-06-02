@@ -183,11 +183,11 @@
           </div>
           <div class="wz-field">
             <label>Día *</label>
-            <input type="date" id="ia_fecha">
+            <input type="date" id="ia_fecha"{% if fecha_prefijada %} value="{{ fecha_prefijada }}"{% endif %}>
           </div>
           <div class="wz-field">
             <label>Hora inicio *</label>
-            <input type="time" id="ia_hora">
+            <input type="time" id="ia_hora"{% if hora_prefijada %} value="{{ hora_prefijada }}"{% endif %}>
           </div>
           <div class="wz-field">
             <label>Hora fin <span style="color:#6b7280;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
@@ -245,18 +245,36 @@
         </div>
         <div class="wz-field" style="grid-column:1/-1">
           <label>Horario *</label>
-          <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
-            <div style="flex:1;min-width:130px">
-              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora inicio</label>
-              {{ form.hora_inicio }}
-              {% if form.hora_inicio.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_inicio.errors|join:", " }}</span>{% endif %}
+          {% if hora_prefijada %}
+            {# Hora ya seleccionada desde el horario — no preguntar de nuevo, solo mostrar #}
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:rgba(157,78,221,.12);border:1px solid rgba(157,78,221,.3);color:#e9d5ff;font-weight:700;font-size:.92rem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c77dff" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Hora inicio: {{ hora_prefijada }}
+              </div>
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+                {{ form.hora_fin }}
+                {% if form.hora_fin.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_fin.errors|join:", " }}</span>{% endif %}
+              </div>
             </div>
-            <div style="flex:1;min-width:130px">
-              <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
-              {{ form.hora_fin }}
-              {% if form.hora_fin.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_fin.errors|join:", " }}</span>{% endif %}
+            {# Input hidden invisible para mandar el valor en el POST #}
+            <input type="hidden" name="hora_inicio" value="{{ hora_prefijada }}">
+            {% if form.hora_inicio.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:6px;display:block">{{ form.hora_inicio.errors|join:", " }}</span>{% endif %}
+          {% else %}
+            <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora inicio</label>
+                {{ form.hora_inicio }}
+                {% if form.hora_inicio.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_inicio.errors|join:", " }}</span>{% endif %}
+              </div>
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+                {{ form.hora_fin }}
+                {% if form.hora_fin.errors %}<span style="color:#ff3d8b;font-size:.75rem;margin-top:3px;display:block">{{ form.hora_fin.errors|join:", " }}</span>{% endif %}
+              </div>
             </div>
-          </div>
+          {% endif %}
         </div>
         <div class="wz-field">
           <label>Estado inicial</label>

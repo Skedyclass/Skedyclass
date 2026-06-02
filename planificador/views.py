@@ -945,6 +945,8 @@ def crear_clase(request):
         'preselected_tipo': preselected,
         'preset_curso': preset_curso,
         'plantillas_json': json.dumps(plantillas_content),
+        'hora_prefijada': request.GET.get('hora', '').strip() if request.method == 'GET' else '',
+        'fecha_prefijada': request.GET.get('fecha', '').strip() if request.method == 'GET' else '',
     })
 
 
