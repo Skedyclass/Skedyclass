@@ -2303,6 +2303,17 @@ def guardar_bloque(request):
             f'({horario_obj.hora_inicio_jornada.strftime("%H:%M")}–{horario_obj.hora_fin_jornada.strftime("%H:%M")}).'
         )
         return redirect('horario')
+    # Regla de rangos: solapamiento estricto. Bloques pegados a otro descanso
+    # o a una clase recurrente del mismo horario son válidos (10:00 fin → 10:00
+    # inicio); sólo bloqueamos cuando hay invasión interna real.
+    for otro in horario_obj.descansos.all():
+        if h_inicio < otro.hora_fin and otro.hora_inicio < h_fin:
+            messages.error(
+                request,
+                f'El bloque se solapa con "{otro.nombre}" '
+                f'({otro.hora_inicio.strftime("%H:%M")}–{otro.hora_fin.strftime("%H:%M")}).'
+            )
+            return redirect('horario')
     BloqueDescanso.objects.create(horario=horario_obj, nombre=nombre, hora_inicio=h_inicio, hora_fin=h_fin)
     messages.success(request, f'Bloque "{nombre}" agregado.')
     return redirect('horario')
