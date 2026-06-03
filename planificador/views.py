@@ -2449,6 +2449,30 @@ def libres_batch_api(request):
     })
 
 
+@login_required
+@rate_limit('libre_nota', max_calls=40, window_sec=60)
+def libre_nota_api(request, id):
+    """Lee o actualiza la nota/recordatorio asociado a una hora libre.
+    GET → devuelve la nota actual; POST → guarda nueva (máx. 500 chars).
+    Sólo opera sobre Clase con es_hora_libre=True del propio usuario.
+    """
+    libre = get_object_or_404(
+        Clase, id=id, usuario=request.user, es_hora_libre=True,
+    )
+    if request.method == 'GET':
+        return JsonResponse({'ok': True, 'nota': libre.notas or ''})
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+        nota = (payload.get('nota') or '').strip()[:500]
+        libre.notas = nota
+        libre.save(update_fields=['notas', 'updated_at'])
+        return JsonResponse({'ok': True, 'nota': nota})
+    return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+
 # ==================== ASISTENTE IA ====================
 
 @login_required

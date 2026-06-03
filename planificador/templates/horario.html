@@ -84,6 +84,29 @@
 .clase-chip.libre .cc-time{color:rgba(167,243,208,.75) !important}
 .clase-chip.libre .cc-title{color:#a7f3d0 !important;letter-spacing:.5px;text-transform:uppercase;font-size:.66rem;display:flex;align-items:center;justify-content:center;gap:5px}
 .clase-chip.libre .cc-libre-icon{display:inline-flex;align-items:center;justify-content:center;opacity:.85}
+.clase-chip.libre .cc-nota-icon{display:inline-flex;align-items:center;margin-left:auto;color:#6ee7b7;opacity:.8}
+.clase-chip.libre .cc-nota-preview{font-size:.58rem;font-weight:500;color:rgba(167,243,208,.65) !important;line-height:1.25;text-transform:none;letter-spacing:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:center;margin-top:auto;font-style:italic}
+.clase-chip.libre.has-nota{border-color:rgba(16,185,129,.6)}
+
+/* ─── MODAL NOTA HORA LIBRE ───────────────────────────────── */
+.libre-nota-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:9900;display:none;align-items:center;justify-content:center;padding:16px}
+.libre-nota-overlay.open{display:flex}
+.libre-nota-modal{background:rgba(14,12,30,.98);border:1px solid rgba(16,185,129,.4);border-radius:18px;width:100%;max-width:480px;box-shadow:0 24px 80px rgba(0,0,0,.7);overflow:hidden}
+.libre-nota-head{padding:18px 22px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(52,211,153,.04))}
+.libre-nota-head h3{margin:0;font-size:1rem;font-weight:800;color:#a7f3d0;font-family:'Playfair Display',serif;flex:1}
+.libre-nota-head .meta{font-size:.74rem;color:rgba(255,255,255,.45);margin-top:2px;font-weight:500}
+.libre-nota-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:1.4rem;cursor:pointer;padding:0 4px;line-height:1;transition:color .15s}
+.libre-nota-close:hover{color:#fff}
+.libre-nota-body{padding:18px 22px}
+.libre-nota-body textarea{width:100%;min-height:120px;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#f5f3ff;font-size:.86rem;font-family:'Lora',serif;resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;transition:border-color .18s}
+.libre-nota-body textarea:focus{border-color:rgba(16,185,129,.5);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+.libre-nota-body .hint{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:6px}
+.libre-nota-foot{padding:14px 22px 18px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,.05)}
+.libre-nota-btn{padding:9px 18px;border-radius:10px;font-size:.83rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#c4b5fd;font-family:inherit;transition:all .18s}
+.libre-nota-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.libre-nota-btn.primary{background:linear-gradient(135deg,#059669,#10b981);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(16,185,129,.3)}
+.libre-nota-btn.primary:hover{opacity:.9}
+.libre-nota-btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* ─── MODO PINCEL ─────────────────────────────────────────────
    Al activarlo, las celdas vacías se vuelven "pintables". Click
@@ -234,17 +257,22 @@
 
                 {% for clase in cell.clases %}
                 {% if clase.es_hora_libre %}
-                <a href="{% url 'editar_clase' clase.id %}" class="clase-chip libre" data-clase-id="{{ clase.id }}" data-libre="1"
+                <a href="#" class="clase-chip libre {% if clase.notas %}has-nota{% endif %}"
+                   data-clase-id="{{ clase.id }}" data-libre="1"
                    style="height:calc({{ clase.span_slots }} * 56px - 4px)"
                    data-tt-titulo="Hora libre"
-                   data-tt-objetivo="Bloque marcado como libre por el docente."
+                   data-tt-objetivo="{{ clase.notas|truncatechars:120|default:'Bloque marcado como libre por el docente.' }}"
                    data-tt-curso="Sin clase"
                    data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %}–{{ clase.hora_fin|time:'H:i' }}{% endif %}">
-                  <span class="cc-time">{{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}</span>
+                  <span class="cc-time">
+                    {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}
+                    {% if clase.notas %}<span class="cc-nota-icon" title="Tiene nota"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>{% endif %}
+                  </span>
                   <span class="cc-title">
                     <span class="cc-libre-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></span>
                     Libre
                   </span>
+                  {% if clase.notas %}<span class="cc-nota-preview">{{ clase.notas|truncatechars:50 }}</span>{% endif %}
                 </a>
                 {% else %}
                 {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
@@ -422,6 +450,28 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Modal nota hora libre -->
+<div class="libre-nota-overlay" id="libreNotaOverlay" onclick="if(event.target===this)cerrarLibreNota()">
+  <div class="libre-nota-modal" role="dialog" aria-labelledby="libreNotaTitle">
+    <div class="libre-nota-head">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div style="flex:1">
+        <h3 id="libreNotaTitle">Nota / Recordatorio</h3>
+        <div class="meta" id="libreNotaMeta"></div>
+      </div>
+      <button class="libre-nota-close" onclick="cerrarLibreNota()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="libre-nota-body">
+      <textarea id="libreNotaTexto" placeholder="Ej: Organizar el horario de la próxima semana, revisar la propuesta del nuevo curso..."></textarea>
+      <p class="hint">Máx. 500 caracteres. Se muestra dentro del bloque verde y como tooltip al hover.</p>
+    </div>
+    <div class="libre-nota-foot">
+      <button class="libre-nota-btn" onclick="cerrarLibreNota()">Cancelar</button>
+      <button class="libre-nota-btn primary" id="libreNotaSave" onclick="guardarLibreNota()">Guardar nota</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   {% if has_conflicts %}
@@ -589,11 +639,88 @@
   // Delegado de clic sobre la tabla
   const table = document.querySelector('.ht-table');
   if (table) table.addEventListener('click', function(e){
+    const libreLink = e.target.closest('.clase-chip.libre');
     if (paintMode) {
-      // Bloquea navegación a editar_clase mientras estamos pintando
+      // Bloquea navegación mientras estamos pintando
       const link = e.target.closest('a');
       if (link) e.preventDefault();
       onCellClick(e);
+      return;
+    }
+    // Fuera del modo pincel: click en un libre abre modal de nota
+    if (libreLink){
+      e.preventDefault();
+      window.abrirLibreNota(libreLink.dataset.claseId, libreLink);
+    }
+  });
+})();
+
+/* ─── MODAL NOTAS PARA HORAS LIBRES ─────────────────────────────────
+   Fuera del modo pincel, click sobre un bloque verde abre un modal
+   con la nota actual. Se guarda vía POST /api/horario/libre/<id>/nota/. */
+(function(){
+  const CSRF = '{{ csrf_token }}';
+  let currentLibreId = null;
+
+  window.abrirLibreNota = async function(id, chipEl){
+    currentLibreId = id;
+    const overlay = document.getElementById('libreNotaOverlay');
+    const ta = document.getElementById('libreNotaTexto');
+    const meta = document.getElementById('libreNotaMeta');
+    const save = document.getElementById('libreNotaSave');
+
+    // Meta: muestra la fecha y horario del bloque
+    if (chipEl && chipEl.dataset.ttFecha){
+      meta.textContent = chipEl.dataset.ttFecha;
+    } else meta.textContent = '';
+
+    ta.value = '';
+    ta.disabled = true;
+    save.disabled = true;
+    overlay.classList.add('open');
+
+    try {
+      const res = await fetch('/api/horario/libre/' + id + '/nota/');
+      const j = await res.json();
+      ta.value = j.ok ? (j.nota || '') : '';
+    } catch(_) {}
+    ta.disabled = false;
+    save.disabled = false;
+    ta.focus();
+  };
+
+  window.cerrarLibreNota = function(){
+    document.getElementById('libreNotaOverlay').classList.remove('open');
+    currentLibreId = null;
+  };
+
+  window.guardarLibreNota = async function(){
+    if (!currentLibreId) return;
+    const ta = document.getElementById('libreNotaTexto');
+    const save = document.getElementById('libreNotaSave');
+    save.disabled = true; ta.disabled = true;
+    try {
+      const res = await fetch('/api/horario/libre/' + currentLibreId + '/nota/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ nota: ta.value }),
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'Error');
+      if (typeof showToast === 'function') showToast('Nota guardada.', 'success');
+      window.cerrarLibreNota();
+      // Recarga ligera para que el chip refleje el icono / preview
+      setTimeout(() => location.reload(), 400);
+    } catch(err){
+      if (typeof showToast === 'function') showToast('Error: ' + err.message, 'error');
+      save.disabled = false; ta.disabled = false;
+    }
+  };
+
+  // Esc cierra modal
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.getElementById('libreNotaOverlay').classList.contains('open')){
+      window.cerrarLibreNota();
     }
   });
 })();

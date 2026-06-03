@@ -67,8 +67,10 @@ class Command(BaseCommand):
                 continue
 
             try:
+                # Excluye horas libres del email — no son clases pedagógicas.
+                # El conteo "Tienes N clases programadas" sólo refleja carga real.
                 clases_hoy = list(
-                    Clase.objects.filter(usuario=user, fecha=today)
+                    Clase.objects.filter(usuario=user, fecha=today, es_hora_libre=False)
                     .order_by('hora_inicio')
                 )
                 tiene_clases = bool(clases_hoy)
