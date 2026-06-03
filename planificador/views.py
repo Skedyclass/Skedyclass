@@ -715,7 +715,8 @@ def google_login(request):
 @login_required
 def dashboard(request):
     today = timezone.localdate()  # respects TIME_ZONE; avoids UTC drift on cloud servers
-    clases_qs = Clase.objects.filter(usuario=request.user)
+    # Stats y kanban excluyen horas libres — no son clases pedagógicas reales.
+    clases_qs = Clase.objects.filter(usuario=request.user, es_hora_libre=False)
     now_local = timezone.localtime()
     now_time = now_local.time()
     stats = clases_qs.aggregate(
@@ -844,7 +845,8 @@ def dashboard(request):
 @login_required
 def listar_clases(request):
     q = request.GET.get('q', '').strip()
-    clases = Clase.objects.filter(usuario=request.user)
+    # El listado de "Clases" no muestra horas libres — se gestionan desde Horario.
+    clases = Clase.objects.filter(usuario=request.user, es_hora_libre=False)
     if q:
         clases = clases.filter(Q(titulo__icontains=q) | Q(materia__icontains=q) | Q(profesor_nombre__icontains=q))
 
@@ -1589,7 +1591,8 @@ def perfil(request):
         return redirect('perfil')
 
     from django.db.models import Count as _Count, Q as _Q
-    clases_qs = Clase.objects.filter(usuario=request.user)
+    # Perfil: stats sólo cuentan clases reales (no las horas libres apartadas).
+    clases_qs = Clase.objects.filter(usuario=request.user, es_hora_libre=False)
     stats = clases_qs.aggregate(
         total=_Count('id'),
         completadas=_Count('id', filter=_Q(estado='completed')),
@@ -2221,13 +2224,14 @@ def horario(request):
             continue
         slot = _find_slot(clase.hora_inicio)
         if slot:
-            clase.span_slots = _span_for(clase)
-            clase_grid.setdefault((dia, slot), []).append(clase)
-            # Marca como cubiertos los slots subsiguientes
             slot_idx = slots.index(slot)
+            # Clamp para que la tarjeta nunca exceda los slots restantes de la
+            # jornada (evita overflow visual si hora_fin > fin_jornada por data
+            # inconsistente o por jornada acortada después de crear la clase).
+            clase.span_slots = min(_span_for(clase), len(slots) - slot_idx)
+            clase_grid.setdefault((dia, slot), []).append(clase)
             for k in range(1, clase.span_slots):
-                if slot_idx + k < len(slots):
-                    covered_cells.add((dia, slots[slot_idx + k]))
+                covered_cells.add((dia, slots[slot_idx + k]))
 
     cursos = list(Curso.objects.filter(usuario=request.user).order_by('nombre'))
 
@@ -2396,6 +2400,7 @@ def libres_batch_api(request):
     from datetime import datetime as _dt
 
     creados, omitidos, eliminados = 0, [], 0
+    today = timezone.localdate()
     with transaction.atomic():
         for item in create_items:
             try:
@@ -2405,6 +2410,14 @@ def libres_batch_api(request):
                 hora_fin = _dt.strptime(hora_fin_str, '%H:%M').time() if hora_fin_str else None
             except (ValueError, TypeError):
                 omitidos.append('Fecha u hora con formato inválido.')
+                continue
+            # Consistente con ClaseForm.clean_fecha: no se apartan libres en el pasado
+            # ni en fines de semana (es para planificar a futuro).
+            if fecha < today:
+                omitidos.append(f'No se pueden apartar bloques en fechas pasadas ({fecha.isoformat()}).')
+                continue
+            if fecha.weekday() >= 5:
+                omitidos.append(f'Fin de semana no permitido ({fecha.isoformat()}).')
                 continue
             ok, err = _validar_clase_horario(
                 request.user, fecha, hora_inicio, hora_fin=hora_fin
