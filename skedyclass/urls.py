@@ -73,6 +73,7 @@ urlpatterns = [
     path('horario/guardar/', views.guardar_horario, name='guardar_horario'),
     path('horario/bloque/nuevo/', views.guardar_bloque, name='guardar_bloque'),
     path('horario/bloque/eliminar/<int:id>/', views.eliminar_bloque, name='eliminar_bloque'),
+    path('api/horario/libres/batch/', views.libres_batch_api, name='libres_batch_api'),
     # Ajustes y perfil
     path('ajustes/', views.ajustes, name='ajustes'),
     path('perfil/', views.perfil, name='perfil'),

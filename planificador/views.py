@@ -2202,14 +2202,32 @@ def horario(request):
         fecha__range=(monday, week_end_date),
     ).order_by('fecha', 'hora_inicio'))
 
+    # Cuántos slots ocupa cada clase. Si no tiene hora_fin, asume 1 slot.
+    # Esto permite estirar verticalmente las tarjetas a su duración real.
+    sess_min = horario_obj.duracion_sesion
+    def _span_for(c):
+        if not c.hora_fin:
+            return 1
+        dur_min = (
+            _dt.combine(today, c.hora_fin) - _dt.combine(today, c.hora_inicio)
+        ).total_seconds() / 60
+        return max(1, int(-(-dur_min // sess_min)))  # ceil
+
     clase_grid = {}
+    covered_cells = set()  # (dia, slot) cubiertos por una clase que arranca antes
     for clase in clases_week:
         dia = _WEEKDAY_TO_DIA.get(clase.fecha.weekday())
         if not dia:
             continue
         slot = _find_slot(clase.hora_inicio)
         if slot:
+            clase.span_slots = _span_for(clase)
             clase_grid.setdefault((dia, slot), []).append(clase)
+            # Marca como cubiertos los slots subsiguientes
+            slot_idx = slots.index(slot)
+            for k in range(1, clase.span_slots):
+                if slot_idx + k < len(slots):
+                    covered_cells.add((dia, slots[slot_idx + k]))
 
     cursos = list(Curso.objects.filter(usuario=request.user).order_by('nombre'))
 
@@ -2233,6 +2251,7 @@ def horario(request):
                 'is_conflict': len(clases_in) > 1,
                 'is_today': fecha_dia == today,
                 'is_descanso': is_descanso,
+                'is_covered': (dia, slot) in covered_cells,
             })
         grid_rows.append({
             'slot': slot_str,
@@ -2344,6 +2363,77 @@ def eliminar_bloque(request, id):
     bloque.delete()
     messages.success(request, f'Bloque "{nombre}" eliminado.')
     return redirect('horario')
+
+
+# ==================== HORAS LIBRES — MODO PINCEL ====================
+
+@login_required
+@rate_limit('libres_batch', max_calls=20, window_sec=60)
+def libres_batch_api(request):
+    """Aplica cambios masivos del 'modo pincel' del horario.
+    Body JSON:
+      {
+        "create": [{"fecha": "YYYY-MM-DD", "hora_inicio": "HH:MM", "hora_fin": "HH:MM"}, ...],
+        "delete": [clase_id, clase_id, ...]   # sólo libres del propio usuario
+      }
+    Devuelve el conteo aplicado; cualquier error no fatal (p.ej. solape con
+    una clase existente) se reporta sin abortar el resto del lote.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+
+    create_items = payload.get('create') or []
+    delete_ids = payload.get('delete') or []
+    if not isinstance(create_items, list) or not isinstance(delete_ids, list):
+        return JsonResponse({'ok': False, 'error': 'Formato inválido'}, status=400)
+    if len(create_items) > 100 or len(delete_ids) > 100:
+        return JsonResponse({'ok': False, 'error': 'Lote demasiado grande (máx. 100).'}, status=400)
+
+    from datetime import datetime as _dt
+
+    creados, omitidos, eliminados = 0, [], 0
+    with transaction.atomic():
+        for item in create_items:
+            try:
+                fecha = _dt.strptime((item.get('fecha') or '').strip(), '%Y-%m-%d').date()
+                hora_inicio = _dt.strptime((item.get('hora_inicio') or '').strip(), '%H:%M').time()
+                hora_fin_str = (item.get('hora_fin') or '').strip()
+                hora_fin = _dt.strptime(hora_fin_str, '%H:%M').time() if hora_fin_str else None
+            except (ValueError, TypeError):
+                omitidos.append('Fecha u hora con formato inválido.')
+                continue
+            ok, err = _validar_clase_horario(
+                request.user, fecha, hora_inicio, hora_fin=hora_fin
+            )
+            if not ok:
+                omitidos.append(err)
+                continue
+            Clase.objects.create(
+                usuario=request.user, titulo='Hora libre',
+                fecha=fecha, hora_inicio=hora_inicio, hora_fin=hora_fin,
+                tipo_clase='normal', estado='pending', materia='',
+                es_hora_libre=True,
+            )
+            creados += 1
+
+        if delete_ids:
+            # Sólo eliminamos libres del propio docente; nunca clases reales.
+            qs = Clase.objects.filter(
+                usuario=request.user, id__in=delete_ids, es_hora_libre=True,
+            )
+            eliminados = qs.count()
+            qs.delete()
+
+    return JsonResponse({
+        'ok': True,
+        'creados': creados,
+        'eliminados': eliminados,
+        'omitidos': omitidos[:10],
+    })
 
 
 # ==================== ASISTENTE IA ====================
