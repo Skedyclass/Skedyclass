@@ -174,9 +174,14 @@ def _session_duration_min(user):
         return 60
 
 
-def _validar_clase_horario(user, fecha, hora, exclude_pk=None):
+def _validar_clase_horario(user, fecha, hora, hora_fin=None, exclude_pk=None):
     """Check schedule rules: jornada bounds, session end fits, break overlap,
-    and time-range overlap with other classes. Returns (ok, error_message)."""
+    and time-range overlap with other classes. Returns (ok, error_message).
+
+    hora_fin (opcional): hora real de fin de la clase a validar. Si se omite,
+    se asume duración = sess_min del usuario. Para clases existentes (other),
+    usamos su hora_fin si está registrado; si no, fallback a sess_min.
+    """
     from datetime import datetime as _dt, timedelta as _td
     try:
         horario_obj = user.horario_academico
@@ -185,7 +190,13 @@ def _validar_clase_horario(user, fecha, hora, exclude_pk=None):
 
     sess_min = _session_duration_min(user)
     new_start_dt = _dt.combine(fecha, hora)
-    new_end_dt = new_start_dt + _td(minutes=sess_min)
+    if hora_fin:
+        if hora_fin <= hora:
+            return False, 'La hora de fin debe ser posterior a la hora de inicio.'
+        new_end_dt = _dt.combine(fecha, hora_fin)
+    else:
+        new_end_dt = new_start_dt + _td(minutes=sess_min)
+    dur_real = int((new_end_dt - new_start_dt).total_seconds() / 60)
 
     if horario_obj:
         if hora < horario_obj.hora_inicio_jornada or hora >= horario_obj.hora_fin_jornada:
@@ -197,7 +208,7 @@ def _validar_clase_horario(user, fecha, hora, exclude_pk=None):
         jornada_fin_dt = _dt.combine(fecha, horario_obj.hora_fin_jornada)
         if new_end_dt > jornada_fin_dt:
             return False, (
-                f'La clase ({sess_min} min) terminaría a las '
+                f'La clase ({dur_real} min) terminaría a las '
                 f'{new_end_dt.strftime("%H:%M")}, después del fin de jornada '
                 f'({horario_obj.hora_fin_jornada.strftime("%H:%M")}).'
             )
@@ -215,11 +226,18 @@ def _validar_clase_horario(user, fecha, hora, exclude_pk=None):
         qs = qs.exclude(pk=exclude_pk)
     for other in qs:
         o_start = _dt.combine(other.fecha, other.hora_inicio)
-        o_end = o_start + _td(minutes=sess_min)
+        # Usa el hora_fin REAL de la otra clase. Si no fue registrado, asume
+        # duración por defecto. Esto evita que una clase de 7:00–8:35 sea
+        # tratada como si terminara a 7:45 (default sess_min).
+        if other.hora_fin:
+            o_end = _dt.combine(other.fecha, other.hora_fin)
+        else:
+            o_end = o_start + _td(minutes=sess_min)
         if new_start_dt < o_end and o_start < new_end_dt:
+            fin_str = other.hora_fin.strftime("%H:%M") if other.hora_fin else f'~{(o_end).strftime("%H:%M")}'
             return False, (
-                f'Se solapa con la clase "{other.titulo}" a las '
-                f'{other.hora_inicio.strftime("%H:%M")}.'
+                f'Se solapa con la clase "{other.titulo}" '
+                f'({other.hora_inicio.strftime("%H:%M")}–{fin_str}).'
             )
     return True, None
 
@@ -855,7 +873,9 @@ def crear_clase(request):
                 clase.materia = get_user_materia(request.user)
 
                 with transaction.atomic():
-                    ok, err = _validar_clase_horario(request.user, clase.fecha, clase.hora_inicio)
+                    ok, err = _validar_clase_horario(
+                        request.user, clase.fecha, clase.hora_inicio, hora_fin=clase.hora_fin
+                    )
                     if not ok:
                         messages.error(request, err)
                         raise ValueError('horario')
@@ -1078,7 +1098,8 @@ def editar_clase(request, id):
                     reprogramada = (updated.fecha, updated.hora_inicio) != (orig_fecha, orig_hora)
                     if reprogramada:
                         ok, err = _validar_clase_horario(
-                            request.user, updated.fecha, updated.hora_inicio, exclude_pk=clase.pk
+                            request.user, updated.fecha, updated.hora_inicio,
+                            hora_fin=updated.hora_fin, exclude_pk=clase.pk,
                         )
                         if not ok:
                             messages.error(request, err)
