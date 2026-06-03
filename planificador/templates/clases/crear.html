@@ -122,10 +122,72 @@
     <div class="wz-step-pill" data-pill="3"><span class="wz-num">3</span>Curso</div>
   </div>
 
+  <!-- ═══ TOGGLE HORA LIBRE — botón principal ═══ -->
+  <div id="libreToggleWrap" style="margin:0 0 18px;display:flex;justify-content:center">
+    <button type="button" id="libreToggleBtn" onclick="toggleHoraLibre()"
+      style="display:inline-flex;align-items:center;gap:9px;padding:10px 20px;border-radius:50px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+      <span id="libreToggleLabel">Marcar como hora libre</span>
+    </button>
+  </div>
+
   <form method="post" enctype="multipart/form-data" id="wizardForm">
     {% csrf_token %}
     <input type="hidden" name="tipo_clase" id="f_tipo_clase" value="normal">
     <input type="hidden" name="grado_nombre" id="f_grado" value="">
+    <input type="hidden" name="es_hora_libre" id="f_es_hora_libre" value="">
+
+    <!-- ═══ PANEL HORA LIBRE — visible solo cuando el toggle está activo ═══ -->
+    <section class="wz-panel" data-panel="libre" id="panelLibre" style="display:none">
+      <h2 style="display:flex;align-items:center;gap:10px;color:#6ee7b7">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+        Hora Libre
+      </h2>
+      <p class="wz-sub">Apartas este bloque en tu horario sin programar una clase. Sólo necesitamos los límites de tiempo.</p>
+
+      <div class="wz-grid">
+        <div class="wz-field">
+          <label>Fecha *</label>
+          <input type="date" name="fecha_libre" id="f_fecha_libre" class="form-input"
+            {% if fecha_prefijada %}value="{{ fecha_prefijada }}"{% endif %} required>
+        </div>
+        <div class="wz-field wz-full">
+          <label>Horario *</label>
+          {% if hora_prefijada %}
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#a7f3d0;font-weight:700;font-size:.92rem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Hora inicio: {{ hora_prefijada }}
+              </div>
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+                <input type="time" name="hora_fin_libre" id="f_hora_fin_libre" class="form-input">
+              </div>
+            </div>
+            <input type="hidden" name="hora_inicio_libre" value="{{ hora_prefijada }}">
+          {% else %}
+            <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora inicio</label>
+                <input type="time" name="hora_inicio_libre" id="f_hora_inicio_libre" class="form-input" required>
+              </div>
+              <div style="flex:1;min-width:130px">
+                <label style="font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:block">Hora fin <span style="color:#6b7280">(opcional)</span></label>
+                <input type="time" name="hora_fin_libre" id="f_hora_fin_libre" class="form-input">
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="wz-nav">
+        <a href="{% url 'dashboard' %}" class="wz-btn wz-btn-ghost">← Cancelar</a>
+        <button type="submit" class="wz-btn wz-btn-primary" style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 5px 18px rgba(16,185,129,.3)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Apartar bloque libre
+        </button>
+      </div>
+    </section>
 
     <!-- ═══ STEP 1 — PLANTILLA ═══ -->
     <section class="wz-panel active" data-panel="1">
@@ -565,5 +627,40 @@ document.querySelectorAll('[name="_curso_sel"]').forEach(function(radio){
     }
   });
 })();
+
+/* ─── HORA LIBRE TOGGLE ─────────────────────────────────────────
+   Alterna entre el wizard normal (3 pasos) y un panel minimal que
+   sólo pide hora_inicio / hora_fin. Persiste el estado en el campo
+   hidden f_es_hora_libre para que el POST lo entienda.            */
+function toggleHoraLibre(){
+  var btn = document.getElementById('libreToggleBtn');
+  var label = document.getElementById('libreToggleLabel');
+  var flag = document.getElementById('f_es_hora_libre');
+  var panelLibre = document.getElementById('panelLibre');
+  var pills = document.querySelector('.wz-steps');
+  var wizardPanels = document.querySelectorAll('.wz-panel[data-panel="1"], .wz-panel[data-panel="2"], .wz-panel[data-panel="3"]');
+
+  var activar = flag.value !== 'on';
+  if (activar){
+    flag.value = 'on';
+    panelLibre.style.display = 'block';
+    if (pills) pills.style.display = 'none';
+    wizardPanels.forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
+    btn.style.background = 'linear-gradient(135deg,rgba(16,185,129,.32),rgba(52,211,153,.22))';
+    btn.style.borderColor = 'rgba(16,185,129,.6)';
+    btn.style.color = '#a7f3d0';
+    label.textContent = 'Volver a crear clase normal';
+  } else {
+    flag.value = '';
+    panelLibre.style.display = 'none';
+    if (pills) pills.style.display = '';
+    wizardPanels.forEach(function(p){ p.style.display = ''; });
+    document.querySelector('.wz-panel[data-panel="1"]').classList.add('active');
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    label.textContent = 'Marcar como hora libre';
+  }
+}
 </script>
 {% endblock %}

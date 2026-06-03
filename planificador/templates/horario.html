@@ -72,6 +72,13 @@
 .clase-chip .cc-grado{font-size:.58rem;opacity:.75;display:block;color:rgba(255,255,255,.75) !important}
 .clase-chip .cc-gcal{font-size:.55rem;opacity:.8}
 
+/* ─── HORA LIBRE: verde suave, formal ───────────────────────── */
+.clase-chip.libre{background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(52,211,153,.10));border:1px solid rgba(16,185,129,.45);color:#a7f3d0 !important;text-align:center}
+.clase-chip.libre:hover{background:linear-gradient(135deg,rgba(16,185,129,.28),rgba(52,211,153,.16));box-shadow:0 4px 14px rgba(16,185,129,.25)}
+.clase-chip.libre .cc-time{color:rgba(167,243,208,.75) !important}
+.clase-chip.libre .cc-title{color:#a7f3d0 !important;letter-spacing:.5px;text-transform:uppercase;font-size:.66rem;display:flex;align-items:center;justify-content:center;gap:5px}
+.clase-chip.libre .cc-libre-icon{display:inline-flex;align-items:center;justify-content:center;opacity:.85}
+
 /* Materia colors */
 .mat-matematicas{background:rgba(99,102,241,.35);border-color:rgba(99,102,241,.6)}
 .mat-lenguaje{background:rgba(236,72,153,.3);border-color:rgba(236,72,153,.55)}
@@ -193,6 +200,19 @@
               {% else %}
 
                 {% for clase in cell.clases %}
+                {% if clase.es_hora_libre %}
+                <a href="{% url 'editar_clase' clase.id %}" class="clase-chip libre"
+                   data-tt-titulo="Hora libre"
+                   data-tt-objetivo="Bloque marcado como libre por el docente."
+                   data-tt-curso="Sin clase"
+                   data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %}–{{ clase.hora_fin|time:'H:i' }}{% endif %}">
+                  <span class="cc-time">{{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}</span>
+                  <span class="cc-title">
+                    <span class="cc-libre-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></span>
+                    Libre
+                  </span>
+                </a>
+                {% else %}
                 {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
                 <a href="{% url 'editar_clase' clase.id %}" class="clase-chip mat-{{ mat }}"
                    data-tt-titulo="{{ clase.titulo }}"
@@ -206,8 +226,9 @@
                   <span class="cc-title">{{ clase.titulo }}</span>
                   {% if clase.grado_nombre %}<span class="cc-grado">{{ clase.grado_nombre }}</span>{% endif %}
                 </a>
-                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
                 {% endwith %}
+                {% endif %}
+                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
                 {% endfor %}
 
                 {% if not cell.clases and not row.is_descanso and cell.fecha >= today %}

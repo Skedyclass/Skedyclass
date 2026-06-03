@@ -94,10 +94,14 @@ class ClaseForm(forms.ModelForm):
         required=False,
         widget=forms.HiddenInput(),
     )
+    # Flag: cuando el docente marca el bloque como hora libre, los campos de
+    # contenido pedagógico (título obligatorio, tipo, objetivos, grado) se
+    # relajan y se autocompleta el título.
+    es_hora_libre = forms.BooleanField(required=False)
 
     class Meta:
         model = Clase
-        fields = ['titulo', 'tipo_clase', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'objetivos', 'notas']
+        fields = ['titulo', 'tipo_clase', 'profesor_nombre', 'grado_nombre', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'objetivos', 'notas', 'es_hora_libre']
         widgets = {
             'titulo': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Ej: Suma y Resta'}),
             'profesor_nombre': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Nombre del profesor'}),
@@ -111,6 +115,9 @@ class ClaseForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # titulo es opcional a nivel de campo para que el modo "hora libre"
+        # pueda autocompletarlo desde clean(). El clean lo exige en modo normal.
+        self.fields['titulo'].required = False
         # Snapshot the original date/time so that editing a class WITHOUT
         # rescheduling it (e.g. fixing notes of a class already taught) is not
         # blocked by the "no past dates" rule. The rule only applies when the
@@ -138,6 +145,17 @@ class ClaseForm(forms.ModelForm):
         fecha = cleaned.get('fecha')
         hora_inicio = cleaned.get('hora_inicio')
         hora_fin = cleaned.get('hora_fin')
+        es_libre = cleaned.get('es_hora_libre')
+        # Hora libre: autocompleta título y relaja exigencias pedagógicas.
+        if es_libre:
+            if not (cleaned.get('titulo') or '').strip():
+                cleaned['titulo'] = 'Hora libre'
+            cleaned['tipo_clase'] = cleaned.get('tipo_clase') or 'normal'
+            cleaned['estado'] = cleaned.get('estado') or 'pending'
+        else:
+            # En modo clase normal el título sí es obligatorio.
+            if not (cleaned.get('titulo') or '').strip():
+                raise forms.ValidationError({'titulo': 'Este campo es obligatorio.'})
         if fecha and hora_inicio and fecha == timezone.now().date():
             sin_cambiar = (
                 self._fecha_sin_cambiar(fecha)

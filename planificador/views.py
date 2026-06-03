@@ -481,10 +481,11 @@ def _build_clase_contexto(user):
     tomorrow = today + _td(days=1)
     now_time = now.time()
 
-    # Present: pending class today that has started (and not yet ended)
+    # Present: pending class today that has started (and not yet ended).
+    # Excluye hora libre — el asesor IA solo razona sobre clases reales.
     clase_actual = None
     for c in Clase.objects.filter(
-        usuario=user, fecha=today, estado='pending',
+        usuario=user, fecha=today, estado='pending', es_hora_libre=False,
         hora_inicio__lte=now_time,
     ).order_by('hora_inicio'):
         if not c.hora_fin or c.hora_fin >= now_time:
@@ -493,14 +494,14 @@ def _build_clase_contexto(user):
 
     # Past: last 3 classes (any state) before today
     historial = list(
-        Clase.objects.filter(usuario=user, fecha__lt=today)
+        Clase.objects.filter(usuario=user, fecha__lt=today, es_hora_libre=False)
         .order_by('-fecha', '-hora_inicio')[:3]
     )
 
     # Future: pending today (not yet started) + tomorrow, up to 3
     proximas = list(
         Clase.objects.filter(
-            usuario=user, estado='pending',
+            usuario=user, estado='pending', es_hora_libre=False,
             fecha__in=[today, tomorrow],
         ).exclude(
             fecha=today, hora_inicio__lte=now_time,
@@ -859,18 +860,29 @@ def listar_clases(request):
 @login_required
 def crear_clase(request):
     cursos = Curso.objects.filter(usuario=request.user)
+    # Hora libre no requiere curso (es un apartado del horario, no una clase).
+    es_libre_post = request.method == 'POST' and request.POST.get('es_hora_libre') == 'on'
     # Block early on BOTH GET and POST: otherwise the teacher fills the whole
     # form and loses it on submit because the class needs a curso.
-    if not cursos.exists():
+    if not cursos.exists() and not es_libre_post:
         messages.error(request, 'Primero debes crear un curso antes de planificar una clase.')
         return redirect('crear_curso')
     if request.method == 'POST':
-        form = ClaseForm(request.POST)
+        # Hora libre: el panel minimal usa inputs *_libre para no chocar con
+        # los del wizard normal. Aquí los mapeamos antes de hidratar el form.
+        post_data = request.POST.copy()
+        if es_libre_post:
+            for src, dst in (('fecha_libre', 'fecha'),
+                             ('hora_inicio_libre', 'hora_inicio'),
+                             ('hora_fin_libre', 'hora_fin')):
+                if post_data.get(src):
+                    post_data[dst] = post_data[src]
+        form = ClaseForm(post_data)
         if form.is_valid():
             try:
                 clase = form.save(commit=False)
                 clase.usuario = request.user
-                clase.materia = get_user_materia(request.user)
+                clase.materia = '' if clase.es_hora_libre else get_user_materia(request.user)
 
                 with transaction.atomic():
                     ok, err = _validar_clase_horario(
@@ -883,11 +895,12 @@ def crear_clase(request):
 
                 # Step 3: attach resource if provided — route through RecursoForm
                 # so that extension whitelist, size cap and URL validation run.
+                # Hora libre no acepta recursos pedagógicos.
                 rec_titulo = request.POST.get('rec_titulo', '').strip()
                 rec_url = request.POST.get('rec_url', '').strip()
                 rec_archivo = request.FILES.get('rec_archivo')
 
-                if rec_titulo and (rec_archivo or rec_url):
+                if not clase.es_hora_libre and rec_titulo and (rec_archivo or rec_url):
                     rec_form = RecursoForm(
                         data={
                             'titulo': rec_titulo,
@@ -910,14 +923,17 @@ def crear_clase(request):
                             f'La clase se guardó pero el recurso adjunto no: {first_err}'
                         )
 
-                logger.info('Clase creada: id=%s "%s" por %s', clase.id, clase.titulo, request.user.username)
-                messages.success(request, f'Clase "{clase.titulo}" planificada con éxito.')
-                ok, sync_msg = _sync_gcal(clase, 'create', request.user)
-                if sync_msg:
-                    if ok:
-                        messages.success(request, sync_msg)
-                    else:
-                        messages.warning(request, sync_msg)
+                logger.info('Clase creada: id=%s "%s" libre=%s por %s', clase.id, clase.titulo, clase.es_hora_libre, request.user.username)
+                if clase.es_hora_libre:
+                    messages.success(request, 'Hora libre marcada en tu horario.')
+                else:
+                    messages.success(request, f'Clase "{clase.titulo}" planificada con éxito.')
+                    ok, sync_msg = _sync_gcal(clase, 'create', request.user)
+                    if sync_msg:
+                        if ok:
+                            messages.success(request, sync_msg)
+                        else:
+                            messages.warning(request, sync_msg)
                 # Honor ?next= for explicit destinations (whitelisted, no open redirects).
                 next_url = request.POST.get('next') or request.GET.get('next')
                 if next_url in ('dashboard', 'listar_clases', 'planificador'):

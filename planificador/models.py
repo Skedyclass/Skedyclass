@@ -89,6 +89,11 @@ class Clase(models.Model):
     razon_cancelacion = models.CharField(max_length=300, blank=True)
     objetivos = models.TextField(blank=True)
     notas = models.TextField(blank=True)
+    es_hora_libre = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Bloque marcado por el docente como hora libre (sin clase).',
+    )
     google_event_id = models.CharField(max_length=300, blank=True, default='')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
