@@ -999,6 +999,11 @@ def ver_clase(request, id):
         Clase.objects.prefetch_related('recursos'),
         id=id, usuario=request.user,
     )
+    # Una hora libre no es una clase pedagógica: no tiene panel de control,
+    # ni guías, ni distribución de momentos. Sólo se gestiona desde Horario.
+    if clase.es_hora_libre:
+        messages.info(request, 'Las horas libres se gestionan desde el Horario.')
+        return redirect('horario')
 
     # Reparto pedagógico de los 3 momentos sobre la duración configurada
     duracion_total = _session_duration_min(request.user)
@@ -1053,6 +1058,8 @@ def vincular_recurso_clase(request, clase_id):
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
     clase = get_object_or_404(Clase, id=clase_id, usuario=request.user)
+    if clase.es_hora_libre:
+        return JsonResponse({'ok': False, 'error': 'Las horas libres no aceptan recursos pedagógicos.'}, status=400)
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -1099,6 +1106,11 @@ def vincular_recurso_clase(request, clase_id):
 @login_required
 def editar_clase(request, id):
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    # Bloqueo: las horas libres no se editan con el formulario académico.
+    # Su único campo editable es la nota (modal del horario).
+    if clase.es_hora_libre:
+        messages.info(request, 'Edita la nota de tu hora libre directamente desde el Horario.')
+        return redirect('horario')
     # Capture the stored schedule BEFORE the form mutates the instance, so we
     # can tell whether the teacher actually rescheduled the class.
     orig_fecha, orig_hora = clase.fecha, clase.hora_inicio
@@ -1419,7 +1431,12 @@ def planificador(request):
     q = request.GET.get('q', '').strip()
     estado_filtro = request.GET.get('estado', 'all')
 
-    clases = Clase.objects.filter(usuario=request.user).order_by('fecha', 'hora_inicio')
+    # El Planificador lista SOLO clases pedagógicas. Las horas libres se
+    # gestionan exclusivamente desde el Horario (sección Modo Pincel).
+    clases = (
+        Clase.objects.filter(usuario=request.user, es_hora_libre=False)
+        .order_by('fecha', 'hora_inicio')
+    )
     if q:
         clases = clases.filter(Q(titulo__icontains=q) | Q(materia__icontains=q))
     if estado_filtro and estado_filtro != 'all':
@@ -3088,6 +3105,9 @@ def clase_pdf(request, id):
     """Exporta una clase planificada como PDF profesional optimizado para
     impresión en blanco y negro. Verifica propiedad estricta."""
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    if clase.es_hora_libre:
+        messages.info(request, 'Una hora libre no genera plan de clase en PDF.')
+        return redirect('horario')
     horario_obj = getattr(request.user, 'horario_academico', None)
     duracion_total = _session_duration_min(request.user)
 

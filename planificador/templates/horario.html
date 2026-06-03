@@ -72,6 +72,17 @@
    La altura se calcula como: span * 56px - 4px (para mantener el
    padding visual entre tarjetas consecutivas).                       */
 .clase-chip{position:absolute;top:2px;left:4px;right:4px;display:flex;flex-direction:column;justify-content:space-between;padding:6px 9px;border-radius:8px;font-size:.68rem;font-weight:700;line-height:1.3;cursor:pointer;text-decoration:none;transition:transform .15s,box-shadow .15s;border:1px solid transparent;color:#fff !important;z-index:2;overflow:hidden}
+
+/* ── HOVER ACTION BAR — esquina inferior derecha del chip ──
+   Aparece sólo al hover, mini-iconos técnicos alineados en fila.
+   pointer-events controlado para no estorbar el clic principal. */
+.chip-actions{position:absolute;bottom:4px;right:4px;display:flex;gap:3px;opacity:0;transform:translateY(2px);transition:opacity .15s,transform .15s;pointer-events:none;z-index:3}
+.clase-chip:hover .chip-actions{opacity:1;transform:translateY(0);pointer-events:auto}
+.chip-act{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.85);text-decoration:none;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.chip-act:hover{background:rgba(0,0,0,.7);color:#fff;border-color:rgba(255,255,255,.3)}
+.chip-act svg{flex-shrink:0}
+/* En modo pincel: la barra queda oculta para no estorbar */
+.ht-table.paint-mode .chip-actions{display:none}
 .clase-chip:hover{transform:scale(1.03);box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .clase-chip .cc-time{font-size:.6rem;opacity:.8;display:block;margin-bottom:1px;color:rgba(255,255,255,.8) !important}
 .clase-chip .cc-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff !important}
@@ -273,18 +284,31 @@
                 </a>
                 {% else %}
                 {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
-                <a href="{% url 'editar_clase' clase.id %}" class="clase-chip mat-{{ mat }}"
+                <div class="clase-chip mat-{{ mat }}" data-clase-id="{{ clase.id }}"
                    style="height:calc({{ clase.span_slots }} * 56px - 4px)"
                    data-tt-asignatura="{{ clase.get_materia_display|default:clase.titulo }}"
                    data-tt-grado="{{ clase.grado_nombre|default:'Sin grado asignado' }}"
-                   data-tt-duracion="{{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:'H:i' }}{% else %} (sin fin){% endif %}">
+                   data-tt-duracion="{{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:'H:i' }}{% else %} (sin fin){% endif %}"
+                   onclick="if(!event.target.closest('.chip-actions'))location.href='{% url 'editar_clase' clase.id %}'">
                   <span class="cc-time">
                     <span class="estado-dot estado-{{ clase.estado }}"></span>
                     {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}{% if clase.google_event_id %} <span class="cc-gcal" title="Sincronizado con Google Calendar">📅</span>{% endif %}
                   </span>
                   <span class="cc-title">{{ clase.titulo }}</span>
                   {% if clase.grado_nombre %}<span class="cc-grado">{{ clase.grado_nombre }}</span>{% endif %}
-                </a>
+                  {# Hover Action Bar — sólo en clases reales, NUNCA en libres #}
+                  <div class="chip-actions" onclick="event.stopPropagation()">
+                    <a href="{% url 'ver_clase' clase.id %}" class="chip-act" title="Ver detalle de la clase">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                    <a href="{% url 'lab' %}?tema={{ clase.titulo|urlencode }}&grado={{ clase.grado_nombre|urlencode }}&modo=guia" class="chip-act" title="Enviar al Lab IA">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+                    </a>
+                    <a href="{% url 'editar_clase' clase.id %}" class="chip-act" title="Editar clase">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </a>
+                  </div>
+                </div>
                 {% endwith %}
                 {% endif %}
                 {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
