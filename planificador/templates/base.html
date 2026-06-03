@@ -476,7 +476,7 @@ function getCsrfToken(){var v=document.cookie.split(';').map(function(s){return 
   var ICONIC_ORDER=['asignatura','grado','duracion'];
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function buildBody(el){
-    // CASO ESPECIAL — Hora libre con nota: muestra SÓLO el texto de la nota.
+    // Bloque libre con nota: muestra sólo el texto de la nota.
     var nota=el.getAttribute('data-tt-nota');
     if(nota && nota.trim()){
       return '<div class="sk-tt-nota">'+esc(nota)+'</div>';
