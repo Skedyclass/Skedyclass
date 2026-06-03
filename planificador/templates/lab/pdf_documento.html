@@ -215,7 +215,7 @@
 
   {# ═══ Parte IV — Matriz Analítica de Lectura (solo versión docente) ═══ #}
   {% if mostrar_respuestas %}
-  {% with matriz=data.matriz_analitica|default:data.parte4_matriz_analitica %}
+  {% with matriz=data.matriz_analitica %}
   {% if matriz %}
   <div class="seccion-roman new-page"><span class="num">IV</span>Matriz Analítica de Lectura</div>
   <table class="matriz">
