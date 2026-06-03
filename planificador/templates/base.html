@@ -241,14 +241,20 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 }
 
 /* ── HOVER TOOLTIP (Ethereal Noir, used in Horario, Calendario, Recursos, Carga) ── */
-#sk-tooltip{position:fixed;z-index:10001;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .2s ease-in-out,transform .2s ease-in-out;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:11px 14px;min-width:220px;max-width:320px;box-shadow:0 12px 36px rgba(0,0,0,.7);font-family:'Lora',Georgia,serif}
+#sk-tooltip{position:fixed;z-index:10001;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s ease-out,transform .18s ease-out;background:rgba(8,6,18,.92);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 13px;min-width:0;max-width:300px;box-shadow:0 14px 38px rgba(0,0,0,.75);font-family:'Lora',Georgia,serif}
 #sk-tooltip.sk-show{opacity:1;transform:translateY(0)}
 #sk-tooltip .sk-tt-title{color:#FFFFFF;font-size:.78rem;font-weight:700;letter-spacing:.2px;margin:0 0 6px;line-height:1.3;font-family:'Playfair Display',serif}
 #sk-tooltip .sk-tt-row{display:flex;gap:6px;margin-top:5px;font-size:.74rem;line-height:1.45;color:#A0A0A0}
 #sk-tooltip .sk-tt-label{color:#FFFFFF;font-weight:700;flex-shrink:0;letter-spacing:.3px;text-transform:uppercase;font-size:.62rem;padding-top:1px}
 #sk-tooltip .sk-tt-value{color:#A0A0A0;flex:1;word-break:break-word}
 #sk-tooltip .sk-tt-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
-[data-tt-objetivo],[data-tt-curso],[data-tt-recursos],[data-tt-horas]{cursor:help}
+/* Nuevo: filas compactas con ícono técnico (clases reales en el horario) */
+#sk-tooltip .sk-tt-icon-row{display:flex;align-items:center;gap:9px;font-size:.78rem;line-height:1.35;color:#E9E9F0;padding:2px 0}
+#sk-tooltip .sk-tt-icon-row + .sk-tt-icon-row{margin-top:3px}
+#sk-tooltip .sk-tt-icon-row svg{flex-shrink:0;color:#9F8BFF;opacity:.85}
+/* Nota libre: tipografía limpia, sin etiqueta, una sola burbuja */
+#sk-tooltip .sk-tt-nota{font-size:.78rem;line-height:1.5;color:#E9E9F0;font-style:italic;letter-spacing:.1px;max-width:260px}
+[data-tt-objetivo],[data-tt-curso],[data-tt-recursos],[data-tt-horas],[data-tt-asignatura],[data-tt-grado],[data-tt-duracion],[data-tt-nota]{cursor:help}
 </style></head><body><div class="layout" id="appLayout"><!-- Sidebar --><aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><div class="sidebar-logo-text"><h1>SkedyClass</h1><p>Planificador de clases</p></div><button class="sb-toggle" onclick="toggleSidebar()" title="Colapsar menú"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button></div><div class="menu-section">Principal</div><ul class="sidebar-menu"><li><a href="{% url 'dashboard' %}" data-label="Inicio" class="{% if page == 'dashboard' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="sb-link-text">Inicio</span></a></li><li><a href="{% url 'planificador' %}" data-label="Planificador" class="{% if page == 'planificador' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="sb-link-text">Planificador</span></a></li><li><a href="{% url 'horario' %}" data-label="Horario" class="{% if page == 'horario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span class="sb-link-text">Horario</span></a></li><li><a href="{% url 'calendario' %}" data-label="Calendario" class="{% if page == 'calendario' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/></svg><span class="sb-link-text">Calendario</span></a></li><li><a href="{% url 'listar_clases' %}" data-label="Clases" class="{% if page == 'clases' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="sb-link-text">Clases</span></a></li></ul><div class="menu-section">Personas</div><ul class="sidebar-menu"><li><a href="{% url 'listar_cursos' %}" data-label="Cursos" class="{% if page == 'cursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span class="sb-link-text">Cursos</span></a></li></ul><div class="menu-section" style="background:linear-gradient(90deg,rgba(157,78,221,.15),transparent);color:#c77dff;border-radius:6px;padding:4px 8px;margin-bottom:4px">Inteligencia Artificial</div><ul class="sidebar-menu"><li><a href="{% url 'asistente' %}" data-label="Asistente IA" class="{% if page == 'asistente' %}active{% endif %}" style="{% if page != 'asistente' %}background:linear-gradient(135deg,rgba(157,78,221,.08),rgba(247,37,133,.05));border:1px solid rgba(157,78,221,.18);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg><span class="sb-link-text">Asistente IA</span></a></li><li><a href="{% url 'lab' %}" data-label="Lab Pedagógico" class="{% if page == 'lab' %}active{% endif %}" style="{% if page != 'lab' %}background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(157,78,221,.08));border:1px solid rgba(16,185,129,.22);box-shadow:inset 0 0 12px rgba(157,78,221,.1);{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(16,185,129,.6))"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg><span class="sb-link-text">Lab Pedagógico</span></a></li></ul><div class="menu-section">Más</div><ul class="sidebar-menu"><li><a href="{% url 'notas' %}" data-label="Notas" class="{% if page == 'notas' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="sb-link-text">Notas</span></a></li><li><a href="{% url 'listar_recursos' %}" data-label="Recursos" class="{% if page == 'recursos' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="sb-link-text">Recursos</span></a></li><li><a href="{% url 'ajustes' %}" data-label="Ajustes" class="{% if page == 'ajustes' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="sb-link-text">Ajustes</span></a></li></ul><div class="sidebar-footer">SkedyClass &copy; 2026</div></aside><!-- Header --><header class="header"><div class="header-left"><h2><span style="color:var(--indigo)">Skedy</span><span style="color:var(--pink)">Class</span></h2><span class="header-badge">Pro</span></div><div class="header-right"><button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menú"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><a href="{% url 'perfil' %}" class="header-btn" title="Perfil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></a><div class="notif-wrap" id="notifWrap"><button class="header-btn notif-btn" id="notifBtn" onclick="toggleNotifPanel()" title="Notificaciones"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none">0</span></button><div class="notif-panel" id="notifPanel"><div class="notif-panel-head"><span class="notif-panel-title">Notificaciones</span><button class="notif-mark-all" onclick="notifMarcarTodas()">Marcar todas leídas</button></div><div class="notif-list" id="notifList"><div class="notif-empty">Sin notificaciones</div></div></div></div><div class="user-chip"><div class="user-avatar">{{ user.username|first }}</div>{{ user.username }}</div><a href="{% url 'logout' %}" class="header-btn" title="Cerrar sesión"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a></div></header><!-- Main Content --><main class="main-content">{% block content %}{% endblock %}</main><!-- Toasts (Liquid Glass) --><div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true">{% if messages %}{% for message in messages %}<div class="toast toast-{{ message.tags|default:'info' }}" role="status"><span class="toast-icon" aria-hidden="true">{% if message.tags == 'success' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="20 6 9 17 4 12"/></svg>{% elif message.tags == 'error' %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>{% else %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>{% endif %}</span><span class="toast-msg">{{ message }}</span><button type="button" class="toast-close" aria-label="Cerrar" onclick="dismissToast(this.parentNode)">×</button></div>{% endfor %}{% endif %}</div><footer class="footer"><span>&copy; 2026 SkedyClass</span><div><a href="{% url 'terminos' %}">Términos</a><a href="{% url 'privacidad' %}">Privacidad</a><a href="mailto:kynoproducciones@gmail.com">Soporte</a></div></footer>
 
 <!-- ── BOTTOM NAV BAR (mobile only) ── -->
@@ -455,17 +461,46 @@ function getCsrfToken(){var v=document.cookie.split(';').map(function(s){return 
   var titleEl=tip.querySelector('.sk-tt-title');
   var bodyEl=tip.querySelector('.sk-tt-body');
   var openTimer=null,activeEl=null;
+  // Legacy keys (calendario, dashboard, etc.) — se conservan tal cual.
   var LABELS={
     objetivo:'Objetivo', curso:'Curso', recursos:'Recursos',
     horas:'Horas', plantilla:'Plantilla', fecha:'Fecha'
   };
+  // Nuevos: filas compactas con ícono. Usados por el horario refactorizado.
+  // SVG inline (no emojis) para mantener la línea formal del proyecto.
+  var ICONIC={
+    asignatura: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    grado:      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    duracion:   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+  };
+  var ICONIC_ORDER=['asignatura','grado','duracion'];
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function buildBody(el){
+    // CASO ESPECIAL — Hora libre con nota: muestra SÓLO el texto de la nota.
+    var nota=el.getAttribute('data-tt-nota');
+    if(nota && nota.trim()){
+      return '<div class="sk-tt-nota">'+esc(nota)+'</div>';
+    }
+    // CASO CLASE REAL — sólo asignatura/grado/duración con íconos.
+    var hasIconic=ICONIC_ORDER.some(function(k){
+      var v=el.getAttribute('data-tt-'+k);return v && v.trim();
+    });
+    if(hasIconic){
+      var out='';
+      ICONIC_ORDER.forEach(function(k){
+        var v=el.getAttribute('data-tt-'+k);
+        if(v && v.trim()){
+          out+='<div class="sk-tt-icon-row">'+ICONIC[k]+'<span>'+esc(v)+'</span></div>';
+        }
+      });
+      return out;
+    }
+    // BACKWARD COMPAT — sintaxis vieja (calendario, dashboard, etc.).
     var rows='';
     Object.keys(LABELS).forEach(function(k){
       var v=el.getAttribute('data-tt-'+k);
       if(v && v.trim()){
-        var safe=v.replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
-        rows+='<div class="sk-tt-row"><span class="sk-tt-label">'+LABELS[k]+'</span><span class="sk-tt-value">'+safe+'</span></div>';
+        rows+='<div class="sk-tt-row"><span class="sk-tt-label">'+LABELS[k]+'</span><span class="sk-tt-value">'+esc(v)+'</span></div>';
       }
     });
     return rows;
@@ -484,9 +519,16 @@ function getCsrfToken(){var v=document.cookie.split(';').map(function(s){return 
     tip.style.top=y+'px';
   }
   function show(el){
-    var titleAttr=el.getAttribute('data-tt-titulo')||el.getAttribute('data-tt-title')||'';
+    // Si tiene nota libre o filas iconic, NO mostramos título (regla del horario).
+    var hasNota=!!(el.getAttribute('data-tt-nota')||'').trim();
+    var hasIconic=ICONIC_ORDER.some(function(k){
+      var v=el.getAttribute('data-tt-'+k);return v && v.trim();
+    });
+    var titleAttr=(hasNota || hasIconic)
+      ? ''
+      : (el.getAttribute('data-tt-titulo')||el.getAttribute('data-tt-title')||'');
     var body=buildBody(el);
-    if(!titleAttr && !body) return;
+    if(!titleAttr && !body) return;  // libre sin nota → no se muestra nada
     titleEl.textContent=titleAttr;
     titleEl.style.display=titleAttr?'block':'none';
     bodyEl.innerHTML=body;
@@ -499,7 +541,7 @@ function getCsrfToken(){var v=document.cookie.split(';').map(function(s){return 
   }
   function findTarget(node){
     while(node && node.nodeType===1){
-      if(node.hasAttribute && (node.hasAttribute('data-tt-objetivo')||node.hasAttribute('data-tt-curso')||node.hasAttribute('data-tt-recursos')||node.hasAttribute('data-tt-horas')||node.hasAttribute('data-tt-plantilla')||node.hasAttribute('data-tt-titulo'))){
+      if(node.hasAttribute && (node.hasAttribute('data-tt-objetivo')||node.hasAttribute('data-tt-curso')||node.hasAttribute('data-tt-recursos')||node.hasAttribute('data-tt-horas')||node.hasAttribute('data-tt-plantilla')||node.hasAttribute('data-tt-titulo')||node.hasAttribute('data-tt-asignatura')||node.hasAttribute('data-tt-grado')||node.hasAttribute('data-tt-duracion')||node.hasAttribute('data-tt-nota'))){
         return node;
       }
       node=node.parentNode;

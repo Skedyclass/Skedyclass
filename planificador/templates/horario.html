@@ -260,10 +260,7 @@
                 <a href="#" class="clase-chip libre {% if clase.notas %}has-nota{% endif %}"
                    data-clase-id="{{ clase.id }}" data-libre="1"
                    style="height:calc({{ clase.span_slots }} * 56px - 4px)"
-                   data-tt-titulo="Hora libre"
-                   data-tt-objetivo="{{ clase.notas|truncatechars:120|default:'Bloque marcado como libre por el docente.' }}"
-                   data-tt-curso="Sin clase"
-                   data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %}–{{ clase.hora_fin|time:'H:i' }}{% endif %}">
+                   {% if clase.notas %}data-tt-nota="{{ clase.notas }}"{% endif %}>
                   <span class="cc-time">
                     {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}
                     {% if clase.notas %}<span class="cc-nota-icon" title="Tiene nota"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>{% endif %}
@@ -278,10 +275,9 @@
                 {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
                 <a href="{% url 'editar_clase' clase.id %}" class="clase-chip mat-{{ mat }}"
                    style="height:calc({{ clase.span_slots }} * 56px - 4px)"
-                   data-tt-titulo="{{ clase.titulo }}"
-                   data-tt-objetivo="{{ clase.objetivos|truncatechars:180|default:'Sin objetivo definido' }}"
-                   data-tt-curso="{{ clase.grado_nombre|default:clase.materia|default:'—' }}"
-                   data-tt-fecha="{{ clase.fecha|date:'d M Y' }} · {{ clase.hora_inicio|time:'H:i' }}">
+                   data-tt-asignatura="{{ clase.get_materia_display|default:clase.titulo }}"
+                   data-tt-grado="{{ clase.grado_nombre|default:'Sin grado asignado' }}"
+                   data-tt-duracion="{{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:'H:i' }}{% else %} (sin fin){% endif %}">
                   <span class="cc-time">
                     <span class="estado-dot estado-{{ clase.estado }}"></span>
                     {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}{% if clase.google_event_id %} <span class="cc-gcal" title="Sincronizado con Google Calendar">📅</span>{% endif %}
