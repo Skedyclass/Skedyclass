@@ -791,16 +791,19 @@ def dashboard(request):
         })
 
     dia_hoy = _WEEKDAY_TO_DIA.get(today.weekday())
-    # Build a map grado_nombre → earliest upcoming pending class (single query, avoids N+1).
-    # Only future/today classes count as "próximas" — past pendings are excluded.
-    _pending = clases_qs.filter(
-        estado='pending', fecha__gte=today
-    ).order_by('fecha', 'hora_inicio').only('id', 'titulo', 'grado_nombre', 'fecha', 'hora_inicio')
+    # "Hoy en clase" muestra SÓLO clases programadas para hoy (no de toda la
+    # semana). Si no hay clases hoy, el widget cae al fallback "Próximas
+    # clases" o al empty state.
+    _hoy_pending = clases_qs.filter(
+        estado='pending', fecha=today
+    ).order_by('hora_inicio').only('id', 'titulo', 'grado_nombre', 'fecha', 'hora_inicio')
     _primera_por_grado = {}
-    for _cl in _pending:
+    for _cl in _hoy_pending:
         if _cl.grado_nombre and _cl.grado_nombre not in _primera_por_grado:
             _primera_por_grado[_cl.grado_nombre] = _cl
     cursos_hoy = []
+    # Sólo los cursos que tienen al menos una clase HOY. Límite de 5 para que
+    # docentes con jornadas largas vean lo más relevante sin scroll.
     for curso in Curso.objects.filter(usuario=request.user):
         clase_proxima = _primera_por_grado.get(curso.nombre)
         if clase_proxima:
@@ -808,6 +811,7 @@ def dashboard(request):
                 'curso': curso,
                 'clase_proxima': clase_proxima,
             })
+    cursos_hoy = cursos_hoy[:5]
 
     # Próximas clases (siguiente semana)
     proximas = clases_qs.filter(
