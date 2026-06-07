@@ -1514,18 +1514,10 @@ def ajustes(request):
                 if gn:
                     grado_obj, _ = Grado.objects.get_or_create(nombre=gn)
                     config.grados.add(grado_obj)
-            config.notif_clases = request.POST.get('notif_clases') == 'on'
-            config.notif_tareas = request.POST.get('notif_tareas') == 'on'
-            config.notif_resumen = request.POST.get('notif_resumen') == 'on'
-            config.recibir_recordatorio_email = 'recibir_recordatorio_email' in request.POST
-            from datetime import time as _time
-            hora_str = (request.POST.get('hora_recordatorio_preferida') or '').strip()
-            if hora_str:
-                try:
-                    h, m = [int(x) for x in hora_str.split(':')]
-                    config.hora_recordatorio_preferida = _time(h, m)
-                except (ValueError, AttributeError):
-                    pass
+            # Los toggles de notificaciones (notif_clases/tareas/resumen) y el
+            # recordatorio por correo se removieron de la UI — no tenían efecto
+            # real. Los campos del modelo permanecen para no churning de migración;
+            # quedan con sus defaults y nadie los modifica.
             config.save()
             messages.success(request, 'Preferencias de clase guardadas.')
 
