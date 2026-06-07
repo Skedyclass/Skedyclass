@@ -292,7 +292,7 @@
                    onclick="if(!event.target.closest('.chip-actions'))location.href='{% url 'editar_clase' clase.id %}'">
                   <span class="cc-time">
                     <span class="estado-dot estado-{{ clase.estado }}"></span>
-                    {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}{% if clase.google_event_id %} <span class="cc-gcal" title="Sincronizado con Google Calendar">📅</span>{% endif %}
+                    {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}{% if clase.google_event_id %} <span class="cc-gcal" title="Sincronizado con Google Calendar" style="display:inline-flex;vertical-align:middle"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>{% endif %}
                   </span>
                   <span class="cc-title">{{ clase.titulo }}</span>
                   {% if clase.grado_nombre %}<span class="cc-grado">{{ clase.grado_nombre }}</span>{% endif %}
@@ -311,7 +311,7 @@
                 </div>
                 {% endwith %}
                 {% endif %}
-                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip">⚠ Conflicto</span>{% endif %}
+                {% if cell.is_conflict and not forloop.last %}<span class="conflict-chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Conflicto</span>{% endif %}
                 {% endfor %}
 
                 {% if not cell.clases and not cell.is_covered and not row.is_descanso and cell.fecha >= today %}
@@ -409,7 +409,7 @@
 
     <!-- Break blocks -->
     <div class="ht-config-panel">
-      <div class="ht-config-title">☕ Bloques de Descanso</div>
+      <div class="ht-config-title" style="display:flex;align-items:center;gap:7px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg> Bloques de Descanso</div>
 
       {% for d in descansos %}
       <div class="descanso-row">
@@ -450,7 +450,7 @@
 
     <!-- Quick actions -->
     <div class="ht-config-panel" style="padding:16px">
-      <div class="ht-config-title">⚡ Acciones Rápidas</div>
+      <div class="ht-config-title" style="display:flex;align-items:center;gap:7px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Acciones Rápidas</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <a href="{% url 'listar_cursos' %}" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;text-decoration:none;color:#c7d2fe !important;font-size:.8rem;font-weight:600;transition:background .18s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.1)'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg> Administrar cursos

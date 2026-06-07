@@ -190,27 +190,27 @@
   <!-- Stats -->
   <div class="p-stats">
     <div class="p-stat">
-      <span class="p-stat-icon">📚</span>
+      <span class="p-stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
       <span class="p-stat-num">{{ clases_count }}</span>
       <span class="p-stat-label">Clases</span>
     </div>
     <div class="p-stat">
-      <span class="p-stat-icon">✅</span>
+      <span class="p-stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></span>
       <span class="p-stat-num">{{ clases_completadas }}</span>
       <span class="p-stat-label">Completadas</span>
     </div>
     <div class="p-stat">
-      <span class="p-stat-icon">🏫</span>
+      <span class="p-stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
       <span class="p-stat-num">{{ cursos_count }}</span>
       <span class="p-stat-label">Cursos</span>
     </div>
-<div class="p-stat">
-      <span class="p-stat-icon">📎</span>
+    <div class="p-stat">
+      <span class="p-stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span>
       <span class="p-stat-num">{{ recursos_count }}</span>
       <span class="p-stat-label">Recursos</span>
     </div>
     <div class="p-stat">
-      <span class="p-stat-icon">📝</span>
+      <span class="p-stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
       <span class="p-stat-num">{{ notas_count }}</span>
       <span class="p-stat-label">Notas</span>
     </div>
@@ -221,7 +221,7 @@
 {% if clases_count > 0 %}
 <div class="p-glass" style="margin-bottom:20px">
   <div class="p-sec-title">
-    <div class="p-sec-icon" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)">📊</div>
+    <div class="p-sec-icon" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
     <div>
       <h3>Progreso de clases</h3>
     </div>
@@ -252,7 +252,7 @@
     <!-- EDIT FORM -->
     <div class="p-glass" id="editCard" style="margin-bottom:20px;display:none">
       <div class="p-sec-title">
-        <div class="p-sec-icon" style="background:rgba(157,78,221,.15);border:1px solid rgba(157,78,221,.25)">✏️</div>
+        <div class="p-sec-icon" style="background:rgba(157,78,221,.15);border:1px solid rgba(157,78,221,.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
         <h3>Editar información</h3>
       </div>
       <form method="post" style="padding:24px">
@@ -301,7 +301,7 @@
     <!-- ACTIVIDAD RECIENTE -->
     <div class="p-glass">
       <div class="p-sec-title">
-        <div class="p-sec-icon" style="background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.25)">🕐</div>
+        <div class="p-sec-icon" style="background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <h3>Clases recientes</h3>
         <a href="{% url 'listar_clases' %}" style="margin-left:auto;font-size:.75rem;color:#c77dff;text-decoration:none;font-weight:700">Ver todas →</a>
       </div>
@@ -321,7 +321,7 @@
           {% endfor %}
         {% else %}
           <div class="p-empty">
-            <div class="p-empty-icon">📚</div>
+            <div class="p-empty-icon" style="color:#9d95c4;display:flex;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
             <p style="font-size:.85rem">Aún no tienes clases creadas.</p>
             <a href="{% url 'crear_clase' %}" class="p-btn p-btn-primary" style="margin-top:14px;display:inline-flex;text-decoration:none">Crear primera clase</a>
           </div>
@@ -336,7 +336,7 @@
     <!-- CUENTA -->
     <div class="p-glass">
       <div class="p-sec-title">
-        <div class="p-sec-icon" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)">🔐</div>
+        <div class="p-sec-icon" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
         <h3>Información de cuenta</h3>
       </div>
       <div style="padding:4px 24px 20px">
@@ -377,7 +377,7 @@
         </div>
         {% if completeness < 100 %}
         <div style="margin-top:12px;padding:10px 12px;background:rgba(157,78,221,.08);border:1px solid rgba(157,78,221,.18);border-radius:10px;font-size:.75rem;color:rgba(255,255,255,.5)">
-          💡 Completa tu perfil para una mejor experiencia — faltan {{ completeness_remaining }}% de campos.
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:5px"><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>Completa tu perfil para una mejor experiencia — faltan {{ completeness_remaining }}% de campos.
           <button onclick="toggleEdit()" style="background:none;border:none;color:#c77dff;font-size:.75rem;cursor:pointer;font-weight:700;padding:0;margin-left:4px">Editar →</button>
         </div>
         {% endif %}
@@ -387,12 +387,12 @@
     <!-- ACCESOS RÁPIDOS -->
     <div class="p-glass">
       <div class="p-sec-title">
-        <div class="p-sec-icon" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)">⚡</div>
+        <div class="p-sec-icon" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
         <h3>Accesos rápidos</h3>
       </div>
       <div class="p-quick-list">
         <a href="{% url 'crear_clase' %}" class="p-quick-item">
-          <div class="p-quick-icon qi-purple">📚</div>
+          <div class="p-quick-icon qi-purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
           <div>
             <strong>Nueva clase</strong>
             <small>Agregar al planificador</small>
@@ -400,7 +400,7 @@
           <svg class="p-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'listar_cursos' %}" class="p-quick-item">
-          <div class="p-quick-icon qi-indigo">🏫</div>
+          <div class="p-quick-icon qi-indigo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
           <div>
             <strong>Mis cursos</strong>
             <small>{{ cursos_count }} curso{{ cursos_count|pluralize:"s" }}</small>
@@ -408,7 +408,7 @@
           <svg class="p-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'notas' %}" class="p-quick-item">
-          <div class="p-quick-icon qi-yellow">📝</div>
+          <div class="p-quick-icon qi-yellow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
           <div>
             <strong>Mis notas</strong>
             <small>{{ notas_count }} nota{{ notas_count|pluralize:"s" }}</small>
@@ -416,7 +416,7 @@
           <svg class="p-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'listar_recursos' %}" class="p-quick-item">
-          <div class="p-quick-icon qi-green">📎</div>
+          <div class="p-quick-icon qi-green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
           <div>
             <strong>Recursos</strong>
             <small>{{ recursos_count }} recurso{{ recursos_count|pluralize:"s" }}</small>
@@ -424,7 +424,7 @@
           <svg class="p-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'asistente' %}" class="p-quick-item">
-          <div class="p-quick-icon qi-pink">✦</div>
+          <div class="p-quick-icon qi-pink"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72"/><path d="M19.5 4.62c-3.72 4.35-8.94 5.66-16.88 5.85"/></svg></div>
           <div>
             <strong>Asistente IA</strong>
             <small>Genera propuestas de clase</small>
@@ -432,7 +432,7 @@
           <svg class="p-quick-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'ajustes' %}" class="p-quick-item">
-          <div class="p-quick-icon" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)">⚙️</div>
+          <div class="p-quick-icon" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
           <div>
             <strong>Ajustes</strong>
             <small>Notificaciones y preferencias</small>

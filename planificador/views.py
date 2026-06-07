@@ -298,6 +298,11 @@ def _groq_generate(system_prompt, user_prompt, max_tokens, temperature=0.7):
         return False, {'error': 'Límite del tier gratuito alcanzado. Espera un minuto e intenta de nuevo.'}, 429
     except BadRequestError as e:
         logger.warning('Groq BadRequest: %s', e)
+        # json_validate_failed = el modelo respondió con JSON malformado.
+        # Es un error transitorio del proveedor; el usuario debe reintentar.
+        msg = str(e).lower()
+        if 'json' in msg or 'validate' in msg:
+            return False, {'error': 'La IA generó una respuesta con formato inválido. Intenta de nuevo.'}, 502
         return False, {'error': 'Solicitud inválida a la IA. Revisa el contenido enviado.'}, 400
     except APIConnectionError as e:
         logger.warning('Groq APIConnectionError: %s', e)
