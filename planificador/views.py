@@ -2302,7 +2302,10 @@ def horario(request):
         'friday': friday,
         'today': today,
         'has_conflicts': has_conflicts,
-        'clases_count': len(clases_week),
+        # Contador "CLASES" del panel inferior excluye horas libres — son
+        # apartados de agenda, no carga académica. clases_week sigue completo
+        # porque alimenta el render del grid (libres visibles en verde).
+        'clases_count': sum(1 for cl in clases_week if not cl.es_hora_libre),
         'cursos': cursos,
         'materia_choices': MATERIA_CHOICES,
         'week_offset_prev': week_offset - 1,
