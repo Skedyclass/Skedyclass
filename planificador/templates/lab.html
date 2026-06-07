@@ -553,6 +553,11 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
     // Primer check inmediato, luego cada 1.5s hasta 120 intentos (~3 min).
     var ready = await labPollTask(taskId, 120);
     if (ready.status === 'ready') {
+      // Verificación defensiva: si por cualquier razón data llega vacía
+      // (race condition, error del worker, AI devolvió null), no crashear.
+      if (!ready.data || typeof ready.data !== 'object') {
+        throw new Error('La IA terminó pero no devolvió contenido. Intenta de nuevo en un minuto.');
+      }
       LAB_STATE.lastData = ready.data;
       labRender(ready.modo, ready.data);
       var toastMsg = ready.modo === 'guia'
@@ -592,6 +597,12 @@ async function labPollTask(taskId, maxIntentos){
 }
 
 function labRender(modo, data){
+  // Defensa: si data llega null/undefined o no es objeto, abortamos en vez
+  // de crashear con "Cannot read properties of undefined".
+  if (!data || typeof data !== 'object') {
+    if (window.showToast) window.showToast('La IA no devolvió contenido. Intenta de nuevo.', 'error');
+    return;
+  }
   var out = document.getElementById('labOutput');
   var contE = document.getElementById('labContenidoEstudiante');
   var contD = document.getElementById('labContenidoDocente');
@@ -930,7 +941,7 @@ async function labGuardarRecurso(){
     .then(function(r){ return r.json(); })
     .then(function(j){
       if (!j.ok) return;
-      if (j.status === 'ready' && j.data) {
+      if (j.status === 'ready' && j.data && typeof j.data === 'object') {
         LAB_STATE.modo = j.modo;
         LAB_STATE.lastData = j.data;
         labRender(j.modo, j.data);
