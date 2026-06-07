@@ -1,12 +1,13 @@
 {% load static %}
-<!DOCTYPE html><html lang="es" data-theme="dark" data-scheme="{{ user_config.color_scheme|default:'default' }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}SkedyClass{% endblock %}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260516"><style>
+<!DOCTYPE html><html lang="es" data-theme="dark" data-scheme="{{ user_config.color_scheme|default:'default' }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}SkedyClass{% endblock %}</title><script>/* Aplica el blur guardado ANTES del primer paint para evitar flash. */(function(){try{var b=localStorage.getItem('glass-blur');if(b)document.documentElement.style.setProperty('--glass-blur',b+'px');}catch(e){}})();</script><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260516"><style>
 /* ── ETHEREAL NOIR LAYOUT (palette preserved) ── */
 *,*::before,*::after{box-sizing:border-box}
 :root{
   --glass-bg:rgba(8,8,12,.78);
   --glass-border:rgba(255,255,255,.1);
   --glass-shadow:0 8px 32px rgba(0,0,0,.6);
-  --glass-blur:12px;
+  /* Valor default; el slider de Ajustes lo sobreescribe vía localStorage. */
+  --glass-blur:24px;
   --sidebar-w:240px;
   --sidebar-collapsed-w:64px;
   --header-h:64px;
@@ -70,7 +71,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 .layout.sb-collapsed .sidebar-logo-text{opacity:0;max-width:0;margin:0}
 
 /* Collapse toggle — premium glass pill */
-.sb-toggle{flex-shrink:0;width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);backdrop-filter:blur(8px);color:#c4b5fd;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s ease,color .2s ease,transform .25s cubic-bezier(.4,0,.2,1),border-color .2s;z-index:110;position:relative}
+.sb-toggle{flex-shrink:0;width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);backdrop-filter:blur(var(--glass-blur));color:#c4b5fd;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s ease,color .2s ease,transform .25s cubic-bezier(.4,0,.2,1),border-color .2s;z-index:110;position:relative}
 .sb-toggle:hover{background:linear-gradient(135deg,rgba(157,78,221,.2),rgba(247,37,133,.15));color:#f5f3ff;border-color:rgba(157,78,221,.4);transform:scale(1.08)}
 .sb-toggle svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
 .layout.sb-collapsed .sb-toggle svg{transform:rotate(180deg)}
@@ -98,13 +99,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 
 /* Tooltip for collapsed links */
 .layout.sb-collapsed .sidebar-menu a{position:relative}
-.layout.sb-collapsed .sidebar-menu a:hover::after{content:attr(data-label);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:rgba(20,16,45,.96);backdrop-filter:blur(10px);border:1px solid rgba(157,78,221,.3);color:#f5f3ff;padding:6px 10px;border-radius:8px;font-size:.78rem;font-weight:600;white-space:nowrap;pointer-events:none;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.layout.sb-collapsed .sidebar-menu a:hover::after{content:attr(data-label);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:rgba(20,16,45,.96);backdrop-filter:blur(var(--glass-blur));border:1px solid rgba(157,78,221,.3);color:#f5f3ff;padding:6px 10px;border-radius:8px;font-size:.78rem;font-weight:600;white-space:nowrap;pointer-events:none;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 
 .sidebar-footer{padding:12px 14px;border-top:1px solid var(--glass-border);font-size:.65rem;color:var(--muted);white-space:nowrap;overflow:hidden;transition:opacity .18s,height .28s,padding .28s;position:relative;z-index:1}
 .layout.sb-collapsed .sidebar-footer{opacity:0;height:0;padding:0;overflow:hidden}
 
 /* HEADER */
-.header{grid-column:2;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--glass-bg);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--glass-border);box-shadow:0 1px 0 var(--glass-border);position:sticky;top:0;z-index:90}
+.header{grid-column:2;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);border-bottom:1px solid var(--glass-border);box-shadow:0 1px 0 var(--glass-border);position:sticky;top:0;z-index:90}
 .header-left{display:flex;align-items:center;gap:10px}
 .header-left h2{font-size:.95rem;font-weight:700;color:var(--text);font-family:'Playfair Display',serif}
 .header-badge{padding:3px 10px;border-radius:50px;font-size:.65rem;font-weight:700;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(236,72,153,.1));color:#a5b4fc;border:1px solid rgba(99,102,241,.25)}
@@ -120,7 +121,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 
 /* TOASTS — Ethereal Noir (no bright fill, vertical accent bar) */
 .toast-container{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:360px}
-.toast{pointer-events:auto;min-width:240px;padding:13px 18px 13px 16px;border-radius:10px;font-size:.86rem;font-weight:500;color:#fff;background:rgba(8,8,12,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.55);display:flex;align-items:flex-start;gap:11px;position:relative;overflow:hidden;animation:toast-in .28s cubic-bezier(.2,.8,.2,1) both}
+.toast{pointer-events:auto;min-width:240px;padding:13px 18px 13px 16px;border-radius:10px;font-size:.86rem;font-weight:500;color:#fff;background:rgba(8,8,12,.85);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border:1px solid rgba(255,255,255,.1);box-shadow:0 6px 24px rgba(0,0,0,.55);display:flex;align-items:flex-start;gap:11px;position:relative;overflow:hidden;animation:toast-in .28s cubic-bezier(.2,.8,.2,1) both}
 .toast::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:currentColor}
 .toast .toast-icon{flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:currentColor;opacity:.85;font-size:.78rem}
 .toast .toast-msg{flex:1;color:#fff;line-height:1.4}
@@ -135,7 +136,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 @media(max-width:520px){.toast-container{left:12px;right:12px;max-width:none}}
 
 /* FOOTER */
-.footer{grid-column:2;padding:12px 32px;font-size:.72rem;color:var(--muted);border-top:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);backdrop-filter:blur(12px)}
+.footer{grid-column:2;padding:12px 32px;font-size:.72rem;color:var(--muted);border-top:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur))}
 .footer a{color:var(--muted);text-decoration:none;margin-left:14px}
 .footer a:hover{color:var(--indigo)}
 
@@ -179,7 +180,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
   /* ── Bottom nav bar ── */
   .mobile-nav-bar{
     display:flex;position:fixed;bottom:0;left:0;right:0;z-index:500;
-    background:rgba(6,4,18,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    background:rgba(6,4,18,.97);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
     border-top:1px solid rgba(255,255,255,.1);
     height:60px;
     padding-bottom:env(safe-area-inset-bottom,0px);
@@ -241,7 +242,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:#000000}
 }
 
 /* ── HOVER TOOLTIP (Ethereal Noir, used in Horario, Calendario, Recursos, Carga) ── */
-#sk-tooltip{position:fixed;z-index:10001;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s ease-out,transform .18s ease-out;background:rgba(8,6,18,.92);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 13px;min-width:0;max-width:300px;box-shadow:0 14px 38px rgba(0,0,0,.75);font-family:'Lora',Georgia,serif}
+#sk-tooltip{position:fixed;z-index:10001;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s ease-out,transform .18s ease-out;background:rgba(8,6,18,.92);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 13px;min-width:0;max-width:300px;box-shadow:0 14px 38px rgba(0,0,0,.75);font-family:'Lora',Georgia,serif}
 #sk-tooltip.sk-show{opacity:1;transform:translateY(0)}
 #sk-tooltip .sk-tt-title{color:#FFFFFF;font-size:.78rem;font-weight:700;letter-spacing:.2px;margin:0 0 6px;line-height:1.3;font-family:'Playfair Display',serif}
 #sk-tooltip .sk-tt-row{display:flex;gap:6px;margin-top:5px;font-size:.74rem;line-height:1.45;color:#A0A0A0}
