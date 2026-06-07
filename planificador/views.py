@@ -2798,22 +2798,17 @@ def lab(request):
     })
 
 
-@login_required
-@rate_limit('lab', max_calls=10, window_sec=60)
-def lab_api(request):
-    if request.method != 'POST':
-        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
-
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
-
+def _lab_build_prompts(data, user):
+    """Construye los prompts (system + user) para una solicitud del Lab.
+    Retorna (modo, system_prompt, user_prompt, max_tokens, temperature) o
+    lanza ValueError con mensaje legible para el usuario si la entrada es
+    inválida. Pura — sin side-effects, llamable desde main thread o worker.
+    """
     modo = data.get('modo', 'quiz')
     if modo not in LAB_MODOS:
-        return JsonResponse({'ok': False, 'error': 'Modo no válido'}, status=400)
+        raise ValueError('Modo no válido')
 
-    materia = (data.get('materia') or get_user_materia(request.user) or 'Matemáticas').strip()
+    materia = (data.get('materia') or get_user_materia(user) or 'Matemáticas').strip()
     grado = (data.get('grado') or '').strip()
     tema = (data.get('tema') or '').strip()
     objetivos = (data.get('objetivos') or '').strip()
@@ -2821,10 +2816,7 @@ def lab_api(request):
     # ── Validaciones CONDICIONALES por modo ──────────────────────────────
     # Tema es obligatorio en TODOS los modos (sin él la IA no tiene foco).
     if not tema:
-        return JsonResponse({
-            'ok': False,
-            'error': 'Indica el tema central del recurso.',
-        }, status=400)
+        raise ValueError('Indica el tema central del recurso.')
 
     # Campos específicos de quiz/refuerzo/desafio
     nivel = (data.get('nivel') or 'intermedio').strip()
@@ -2996,10 +2988,127 @@ def lab_api(request):
         )
 
     temperature = 0.3 if modo == 'guia' else 0.7
-    ok, payload, status = ai_generate(system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature)
-    if ok:
-        return JsonResponse({'ok': True, 'modo': modo, 'data': payload})
-    return JsonResponse({'ok': False, **payload}, status=status)
+    return modo, system_prompt, user_prompt, max_tokens, temperature
+
+
+def _lab_worker(task_id):
+    """Daemon thread que ejecuta la llamada a la IA y persiste el resultado
+    en LabTask. Crea una Notificacion in-app con deep-link al terminar.
+    Cierra la conexión DB al final para no agotar el pool.
+    """
+    from django.db import connection
+    from planificador.models import LabTask, Notificacion
+    try:
+        task = LabTask.objects.get(id=task_id)
+    except LabTask.DoesNotExist:
+        return
+    titulo_msg = 'Material generado'
+    msg = ''
+    tipo_notif = 'exito'
+    try:
+        modo, system_prompt, user_prompt, max_tokens, temperature = _lab_build_prompts(
+            task.params, task.usuario
+        )
+        ok, payload, _ = ai_generate(
+            system_prompt, user_prompt, max_tokens=max_tokens, temperature=temperature
+        )
+        task.refresh_from_db()
+        if ok:
+            task.status = 'ready'
+            task.result_data = {'modo': modo, 'data': payload}
+            label = LAB_MODOS[modo]['label']
+            msg = f'Tu {label} está listo en el Lab. Haz clic para abrirlo.'
+        else:
+            task.status = 'failed'
+            err = payload.get('error') if isinstance(payload, dict) else str(payload)
+            task.error = (err or 'Error desconocido')[:500]
+            titulo_msg = 'Error al generar material'
+            tipo_notif = 'alerta'
+            msg = task.error[:140]
+    except ValueError as ve:
+        task.refresh_from_db()
+        task.status = 'failed'
+        task.error = str(ve)[:500]
+        titulo_msg = 'Error al generar material'
+        tipo_notif = 'alerta'
+        msg = task.error[:140]
+    except Exception as e:
+        logger.exception('lab_worker error inesperado: %s', e)
+        task.refresh_from_db()
+        task.status = 'failed'
+        task.error = 'Error interno al procesar la solicitud.'
+        titulo_msg = 'Error al generar material'
+        tipo_notif = 'alerta'
+        msg = task.error
+    finally:
+        task.fecha_completado = timezone.now()
+        try:
+            task.save(update_fields=['status', 'result_data', 'error', 'fecha_completado'])
+        except Exception:
+            pass
+        try:
+            Notificacion.objects.create(
+                usuario=task.usuario,
+                titulo=titulo_msg,
+                mensaje=msg or 'Proceso completado.',
+                tipo=tipo_notif,
+                clave=f'lab_task_{task.id}',
+            )
+        except Exception:
+            pass
+        connection.close()
+
+
+@login_required
+@rate_limit('lab', max_calls=10, window_sec=60)
+def lab_api(request):
+    """Encola una generación de Lab. Retorna inmediatamente {task_id}.
+    El worker daemon procesa la IA y al terminar crea una notificación con
+    deep-link a /lab/?task=<id>.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+    # Validamos input síncrono — feedback inmediato si está mal.
+    try:
+        _lab_build_prompts(data, request.user)
+    except ValueError as ve:
+        return JsonResponse({'ok': False, 'error': str(ve)}, status=400)
+    # Encolamos y disparamos worker.
+    from planificador.models import LabTask
+    task = LabTask.objects.create(
+        usuario=request.user,
+        modo=data.get('modo', 'quiz'),
+        params=data,
+        status='pending',
+    )
+    import threading
+    t = threading.Thread(target=_lab_worker, args=(task.id,), daemon=True)
+    t.start()
+    return JsonResponse({
+        'ok': True,
+        'task_id': task.id,
+        'status': 'pending',
+        'poll_url': f'/api/lab/task/{task.id}/',
+    })
+
+
+@login_required
+def lab_task_status_api(request, id):
+    """Devuelve el estado de una LabTask. El frontend lo polea hasta status
+    ready/failed, o el usuario llega vía deep-link de notificación."""
+    from planificador.models import LabTask
+    task = get_object_or_404(LabTask, id=id, usuario=request.user)
+    return JsonResponse({
+        'ok': True,
+        'status': task.status,
+        'modo': task.modo,
+        'data': (task.result_data or {}).get('data') if task.status == 'ready' else None,
+        'error': task.error if task.status == 'failed' else '',
+    })
 
 
 @login_required
@@ -3271,13 +3380,23 @@ def lab_guardar_documento(request):
         logger.error('lab_guardar_documento: error renderizando templates PDF: %s', e, exc_info=True)
         return JsonResponse({'ok': False, 'error': 'Error al preparar el documento. Inténtalo de nuevo.'}, status=500)
 
+    # Guías metodológicas → archivo único (contenido expositivo, sin "respuestas
+    # de docente" diferenciadas). Talleres y quizzes → dos versiones.
+    es_guia = (modo == 'guia')
+
     try:
-        ok_p, pdf_prof = _render_pdf_from_html(html_prof)
-        ok_e, pdf_est  = _render_pdf_from_html(html_est)
+        if es_guia:
+            # Una sola versión completa para la guía.
+            ok_p, pdf_unico = _render_pdf_from_html(html_prof)
+            if not ok_p:
+                return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
+        else:
+            ok_p, pdf_prof = _render_pdf_from_html(html_prof)
+            ok_e, pdf_est  = _render_pdf_from_html(html_est)
+            if not ok_p or not ok_e:
+                return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
     except Exception as e:
         logger.error('lab_guardar_documento: error en xhtml2pdf: %s', e, exc_info=True)
-        return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
-    if not ok_p or not ok_e:
         return JsonResponse({'ok': False, 'error': 'Error al generar el PDF. Inténtalo de nuevo.'}, status=500)
 
     from django.core.files.base import ContentFile
@@ -3291,8 +3410,6 @@ def lab_guardar_documento(request):
         grupo = _slug_filename(ctx['grado'] or 'General')
         tema  = _slug_filename(ctx['tema'] or titulo)
         base  = f'Recurso_{tipo_prefix}_{grupo}_{tema}'
-        fn_prof = _unique_filename(f'{base}_Docente', 'pdf')
-        fn_est  = _unique_filename(f'{base}_Estudiante', 'pdf')
 
         recurso = Recurso.objects.create(
             usuario=request.user,
@@ -3302,8 +3419,18 @@ def lab_guardar_documento(request):
             descripcion=f'{LAB_MODOS[modo]["label"]} · {ctx["materia"]} · {ctx["grado"] or "General"}'[:5000],
             tipo=tipo,
         )
-        recurso.archivo_profesor.save(fn_prof, ContentFile(pdf_prof), save=False)
-        recurso.archivo_estudiante.save(fn_est, ContentFile(pdf_est), save=True)
+        if es_guia:
+            # Guardamos en el campo 'archivo' (primario, único). El UI detecta
+            # ausencia de archivo_profesor/archivo_estudiante y muestra un solo
+            # botón de descarga.
+            fn_unico = _unique_filename(base, 'pdf')
+            recurso.archivo.save(fn_unico, ContentFile(pdf_unico), save=True)
+            fn_prof = fn_est = fn_unico  # para el response (deep-link)
+        else:
+            fn_prof = _unique_filename(f'{base}_Docente', 'pdf')
+            fn_est  = _unique_filename(f'{base}_Estudiante', 'pdf')
+            recurso.archivo_profesor.save(fn_prof, ContentFile(pdf_prof), save=False)
+            recurso.archivo_estudiante.save(fn_est, ContentFile(pdf_est), save=True)
     except Exception as e:
         logger.error('lab_guardar_documento: error guardando recurso: %s', e)
         return JsonResponse({'ok': False, 'error': 'Error al guardar el recurso. Intenta de nuevo.'}, status=500)
@@ -3311,13 +3438,17 @@ def lab_guardar_documento(request):
     # Notificación in-app inmediata
     try:
         from planificador.models import Notificacion
+        if es_guia:
+            msg = f'La guía "{titulo[:80]}" está disponible en la sección Recursos.'
+        else:
+            msg = (
+                f'Versiones Docente y Estudiante de "{titulo[:80]}" '
+                'están disponibles en la sección Recursos.'
+            )
         Notificacion.objects.create(
             usuario=request.user,
             titulo='Material guardado en Recursos',
-            mensaje=(
-                f'Versiones Docente y Estudiante de "{titulo[:80]}" '
-                'están disponibles en la sección Recursos.'
-            ),
+            mensaje=msg,
             tipo='exito',
         )
     except Exception:
@@ -3460,6 +3591,9 @@ def notificaciones_api(request):
                 'tipo': n.tipo,
                 'leido': n.leido,
                 'fecha': n.fecha_creacion.isoformat(),
+                # clave permite al frontend deep-link a contextos específicos
+                # (p.ej. lab_task_<id> → /lab/?task=<id>).
+                'clave': n.clave or '',
             }
             for n in items
         ],

@@ -530,26 +530,38 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
       if (elFormato) payload.formato_preguntas = elFormato.value;
     }
 
+    // Encolar tarea — respuesta inmediata con task_id
     var resp = await fetch("{% url 'lab_api' %}", {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'X-CSRFToken': labGetCSRF()},
       body: JSON.stringify(payload),
     });
     var json = await resp.json();
-    if (!json.ok) throw new Error(json.error || 'Error desconocido');
+    if (!json.ok) throw new Error(json.error || 'Error al encolar la solicitud');
+    var taskId = json.task_id;
 
-    LAB_STATE.lastData = json.data;
-    labRender(json.modo, json.data);
-
-    // Step 3 done, step 4 active
-    document.getElementById('indStep3').classList.remove('active');
+    // El docente puede irse a otra pantalla; el thread sigue. Cuando termine,
+    // se dispara una notificación (campana) con deep-link /lab/?task=<id>.
+    if (window.showToast) {
+      window.showToast('Generando en segundo plano. Puedes seguir navegando — te avisaremos al terminar.', 'info');
+    }
     document.getElementById('indStep3').classList.add('done');
     document.getElementById('indStep4').classList.add('active');
 
-    var toastMsg = json.modo === 'guia'
-      ? 'Guía de contenido generada correctamente.'
-      : 'Documentos generados: vista estudiante y guía docente.';
-    if (window.showToast) window.showToast(toastMsg, 'success');
+    // Polling del estado mientras el usuario sigue en esta pantalla.
+    var ready = await labPollTask(taskId, 90); // hasta 90 intentos x 2s = 3 min
+    if (ready.status === 'ready') {
+      LAB_STATE.lastData = ready.data;
+      labRender(ready.modo, ready.data);
+      var toastMsg = ready.modo === 'guia'
+        ? 'Guía de contenido generada correctamente.'
+        : 'Documentos generados: vista estudiante y guía docente.';
+      if (window.showToast) window.showToast(toastMsg, 'success');
+    } else if (ready.status === 'failed') {
+      throw new Error(ready.error || 'La IA no pudo completar el material.');
+    } else {
+      throw new Error('La generación tardó demasiado. Revisa la campana de notificaciones en unos minutos.');
+    }
 
   } catch(e) {
     errBox.textContent = 'Error: ' + e.message;
@@ -561,6 +573,22 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
     btn.disabled = false;
   }
 });
+
+/* Polea el estado del task cada 2s. Termina cuando ready/failed o se agotan
+   los intentos. Si el usuario se va a otra página, la notificación con
+   deep-link /lab/?task=<id> lo trae de vuelta cuando esté listo. */
+async function labPollTask(taskId, maxIntentos){
+  var url = '/api/lab/task/' + taskId + '/';
+  for (var i = 0; i < maxIntentos; i++){
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      var r = await fetch(url);
+      var j = await r.json();
+      if (j.status === 'ready' || j.status === 'failed') return j;
+    } catch(_) { /* network blip; reintentar */ }
+  }
+  return { status: 'timeout' };
+}
 
 function labRender(modo, data){
   var out = document.getElementById('labOutput');
@@ -880,10 +908,43 @@ async function labGuardarRecurso(){
     });
     var json = await resp.json();
     if (!json.ok) throw new Error(json.error || 'Error al guardar');
-    if (window.showToast) window.showToast('Versiones Docente y Estudiante guardadas en Recursos.', 'success');
+    var msg = LAB_STATE.modo === 'guia'
+      ? 'Guía guardada en Recursos.'
+      : 'Versiones Docente y Estudiante guardadas en Recursos.';
+    if (window.showToast) window.showToast(msg, 'success');
   } catch(e) {
     if (window.showToast) window.showToast('Error al guardar: ' + e.message, 'error');
   }
 }
+
+/* ─── DEEP-LINK desde notificación: /lab/?task=<id> ───
+   Si el usuario llega vía la campana después de una generación async, cargamos
+   el resultado guardado en la LabTask y lo renderizamos como si lo acabara
+   de generar — listo para "Guardar en Recursos" o "Descargar". */
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var taskId = params.get('task');
+  if (!taskId) return;
+  fetch('/api/lab/task/' + taskId + '/')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j.ok) return;
+      if (j.status === 'ready' && j.data) {
+        LAB_STATE.modo = j.modo;
+        LAB_STATE.lastData = j.data;
+        labRender(j.modo, j.data);
+        var step3 = document.getElementById('indStep3');
+        var step4 = document.getElementById('indStep4');
+        if (step3) step3.classList.add('done');
+        if (step4) step4.classList.add('active');
+        if (window.showToast) window.showToast('Recurso listo — guárdalo en tu biblioteca o descárgalo.', 'success');
+      } else if (j.status === 'failed') {
+        if (window.showToast) window.showToast('La generación falló: ' + (j.error || 'error'), 'error');
+      } else if (j.status === 'pending') {
+        if (window.showToast) window.showToast('Generación aún en progreso. Esperando…', 'info');
+      }
+    })
+    .catch(function(){});
+})();
 </script>
 {% endblock %}

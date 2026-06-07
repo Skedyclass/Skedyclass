@@ -142,11 +142,7 @@ textarea.form-input{resize:vertical;min-height:60px}
   <div>
     <div class="recursos-grid">
       {% for recurso in recursos %}
-      <div class="recurso-card tipo-{{ recurso.tipo }}"
-           data-tt-titulo="{{ recurso.titulo }}"
-           data-tt-objetivo="{% if recurso.clase %}{{ recurso.clase.objetivos|truncatechars:160|default:'Sin objetivo definido' }}{% else %}{{ recurso.descripcion|truncatechars:160|default:'Recurso independiente' }}{% endif %}"
-           data-tt-curso="{% if recurso.clase %}{{ recurso.clase.titulo }}{% else %}—{% endif %}"
-           data-tt-fecha="{{ recurso.fecha_creacion|date:'d M Y' }}">
+      <div class="recurso-card tipo-{{ recurso.tipo }}">
         {% if recurso.tipo == 'imagen' or recurso.tipo == 'imagen_ia' %}
           {% if recurso.archivo %}
           <div class="recurso-preview"><img src="{% url 'inline_recurso' recurso.id %}" alt="{{ recurso.titulo }}" loading="lazy"></div>

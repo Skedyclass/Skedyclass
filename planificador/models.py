@@ -363,6 +363,38 @@ class Notificacion(models.Model):
         return f'[{self.tipo}] {self.titulo} → {self.usuario.username}'
 
 
+class LabTask(models.Model):
+    """Tarea de generación asíncrona del Lab Pedagógico.
+
+    El docente dispara `POST /api/lab/` que crea esta tarea y devuelve
+    inmediatamente el `id`. Un thread daemon procesa la llamada a la IA
+    en segundo plano y al terminar:
+      - actualiza status a 'ready' o 'failed' y guarda result_data/error
+      - crea una Notificacion con deep-link a /lab/?task=<id>
+    El frontend puede o polear /api/lab/task/<id>/ o esperar la campana.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('ready', 'Listo'),
+        ('failed', 'Falló'),
+    ]
+    usuario      = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lab_tasks')
+    modo         = models.CharField(max_length=20)  # quiz/refuerzo/desafio/guia
+    params       = models.JSONField(default=dict)   # tema, grado, materia, etc.
+    status       = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
+    result_data  = models.JSONField(null=True, blank=True)
+    error        = models.CharField(max_length=500, blank=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_completado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        indexes = [models.Index(fields=['usuario', 'status'])]
+
+    def __str__(self):
+        return f'LabTask #{self.id} {self.modo} ({self.status})'
+
+
 @receiver(post_save, sender=User)
 def crear_configuracion_usuario(sender, instance, created, **kwargs):
     if created:

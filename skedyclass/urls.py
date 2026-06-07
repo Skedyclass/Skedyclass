@@ -85,6 +85,7 @@ urlpatterns = [
     # AI Pedagogical Lab
     path('lab/', views.lab, name='lab'),
     path('api/lab/', views.lab_api, name='lab_api'),
+    path('api/lab/task/<int:id>/', views.lab_task_status_api, name='lab_task_status_api'),
     path('api/lab/guardar/', views.lab_guardar_recurso, name='lab_guardar_recurso'),
     path('api/lab/guardar-pdf/', views.lab_guardar_documento, name='lab_guardar_documento'),
 
