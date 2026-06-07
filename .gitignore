@@ -34,3 +34,4 @@ env/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+media/
