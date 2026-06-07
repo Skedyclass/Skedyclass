@@ -543,13 +543,15 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
     // El docente puede irse a otra pantalla; el thread sigue. Cuando termine,
     // se dispara una notificación (campana) con deep-link /lab/?task=<id>.
     if (window.showToast) {
-      window.showToast('Generando en segundo plano. Puedes seguir navegando — te avisaremos al terminar.', 'info');
+      window.showToast('Generando — puedes navegar a otra sección, te avisaremos al terminar.', 'info');
     }
+    loadingStatus.textContent = 'Generando en segundo plano (10–30 segundos)…';
     document.getElementById('indStep3').classList.add('done');
     document.getElementById('indStep4').classList.add('active');
 
     // Polling del estado mientras el usuario sigue en esta pantalla.
-    var ready = await labPollTask(taskId, 90); // hasta 90 intentos x 2s = 3 min
+    // Primer check inmediato, luego cada 1.5s hasta 120 intentos (~3 min).
+    var ready = await labPollTask(taskId, 120);
     if (ready.status === 'ready') {
       LAB_STATE.lastData = ready.data;
       labRender(ready.modo, ready.data);
@@ -574,13 +576,12 @@ document.getElementById('labGenerarBtn').addEventListener('click', async functio
   }
 });
 
-/* Polea el estado del task cada 2s. Termina cuando ready/failed o se agotan
-   los intentos. Si el usuario se va a otra página, la notificación con
-   deep-link /lab/?task=<id> lo trae de vuelta cuando esté listo. */
+/* Polea el estado del task. Primer check INMEDIATO (sin esperar), luego
+   cada 1.5s. Termina cuando ready/failed o se agotan los intentos. */
 async function labPollTask(taskId, maxIntentos){
   var url = '/api/lab/task/' + taskId + '/';
   for (var i = 0; i < maxIntentos; i++){
-    await new Promise(r => setTimeout(r, 2000));
+    if (i > 0) await new Promise(r => setTimeout(r, 1500));
     try {
       var r = await fetch(url);
       var j = await r.json();
