@@ -3683,13 +3683,19 @@ def asistente_chat_api(request):
     teacher_materia = get_user_materia(request.user)
     system_prompt = _build_system_prompt_chat(ctx, teacher_name, teacher_materia)
 
-    # Include last 10 exchange turns (20 messages) to stay within token budget
+    # Include last 10 exchange turns (20 messages) to stay within token budget.
+    # Validamos defensivamente: clientes maliciosos o buggy pueden enviar
+    # historial como string, número o cualquier otra cosa — no debe crashear.
     raw_history = data.get('historial', [])
+    if not isinstance(raw_history, list):
+        raw_history = []
     if len(raw_history) > 20:
         raw_history = raw_history[-20:]
 
     messages = []
     for item in raw_history:
+        if not isinstance(item, dict):
+            continue  # ignorar items malformados sin romper el flujo
         rol = item.get('rol', '')
         contenido = (item.get('contenido') or '').strip()
         if rol == 'usuario' and contenido:
