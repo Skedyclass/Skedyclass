@@ -270,7 +270,7 @@
                 {% if clase.es_hora_libre %}
                 <a href="#" class="clase-chip libre {% if clase.notas %}has-nota{% endif %}"
                    data-clase-id="{{ clase.id }}" data-libre="1"
-                   style="height:calc({{ clase.span_slots }} * 56px - 4px)"
+                   style="top:calc({% widthratio clase.offset_min sess_min 56 %}px + 2px);height:calc({% widthratio clase.duration_min sess_min 56 %}px - 4px)"
                    {% if clase.notas %}data-tt-nota="{{ clase.notas }}"{% endif %}>
                   <span class="cc-time">
                     {{ clase.hora_inicio|time:"H:i" }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:"H:i" }}{% endif %}
@@ -285,7 +285,7 @@
                 {% else %}
                 {% with mat=clase.materia|lower|cut:' '|slugify|default:'default' %}
                 <div class="clase-chip mat-{{ mat }}" data-clase-id="{{ clase.id }}"
-                   style="height:calc({{ clase.span_slots }} * 56px - 4px)"
+                   style="top:calc({% widthratio clase.offset_min sess_min 56 %}px + 2px);height:calc({% widthratio clase.duration_min sess_min 56 %}px - 4px)"
                    data-tt-asignatura="{{ clase.get_materia_display|default:clase.titulo }}"
                    data-tt-grado="{{ clase.grado_nombre|default:'Sin grado asignado' }}"
                    data-tt-duracion="{{ clase.hora_inicio|time:'H:i' }}{% if clase.hora_fin %} – {{ clase.hora_fin|time:'H:i' }}{% else %} (sin fin){% endif %}"

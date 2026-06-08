@@ -2247,6 +2247,18 @@ def horario(request):
             # jornada (evita overflow visual si hora_fin > fin_jornada por data
             # inconsistente o por jornada acortada después de crear la clase).
             clase.span_slots = min(_span_for(clase), len(slots) - slot_idx)
+            # Minutos exactos para posicionamiento pixel-perfecto. Si dos
+            # clases comparten slot (p.ej. 8:00-8:35 y 8:35-9:35 con
+            # sesión=60min) sus chips se apilan visualmente con top/height
+            # proporcionales en lugar de superponerse en absolute:top=2px.
+            slot_dt = _dt.combine(today, slot)
+            inicio_dt = _dt.combine(today, clase.hora_inicio)
+            clase.offset_min = int((inicio_dt - slot_dt).total_seconds() / 60)
+            if clase.hora_fin:
+                fin_dt = _dt.combine(today, clase.hora_fin)
+                clase.duration_min = max(15, int((fin_dt - inicio_dt).total_seconds() / 60))
+            else:
+                clase.duration_min = sess_min
             clase_grid.setdefault((dia, slot), []).append(clase)
             for k in range(1, clase.span_slots):
                 covered_cells.add((dia, slots[slot_idx + k]))
@@ -2315,6 +2327,7 @@ def horario(request):
         'materia_choices': MATERIA_CHOICES,
         'week_offset_prev': week_offset - 1,
         'week_offset_next': week_offset + 1,
+        'sess_min': sess_min,
     })
 
 
