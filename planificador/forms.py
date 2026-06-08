@@ -118,6 +118,16 @@ class ClaseForm(forms.ModelForm):
         # titulo es opcional a nivel de campo para que el modo "hora libre"
         # pueda autocompletarlo desde clean(). El clean lo exige en modo normal.
         self.fields['titulo'].required = False
+        # CRÍTICO — wizard de 3 pasos: fecha/hora viven en el Paso 2 (panel
+        # display:none cuando estás en el Paso 3). Si el browser ve un input
+        # `required` vacío y oculto, intenta focus para mostrar validación
+        # nativa, falla con "An invalid form control is not focusable" y
+        # BLOQUEA el submit silenciosamente. Solución: quitamos required del
+        # field level (no se emite el atributo HTML5) y validamos en clean()
+        # manualmente. Backend sigue rechazando datos inválidos.
+        for f in ('fecha', 'hora_inicio'):
+            if f in self.fields:
+                self.fields[f].required = False
         # Snapshot the original date/time so that editing a class WITHOUT
         # rescheduling it (e.g. fixing notes of a class already taught) is not
         # blocked by the "no past dates" rule. The rule only applies when the
@@ -130,7 +140,11 @@ class ClaseForm(forms.ModelForm):
         return self._orig_fecha is not None and fecha == self._orig_fecha
 
     def clean_fecha(self):
-        fecha = self.cleaned_data['fecha']
+        fecha = self.cleaned_data.get('fecha')
+        # Si vino vacía (campo opcional a nivel field), dejar pasar — clean()
+        # general decidirá si exigirla según modo normal vs hora libre.
+        if fecha is None:
+            return fecha
         # Unchanged date on an existing class → allow (past/weekend ok).
         if self._fecha_sin_cambiar(fecha):
             return fecha
@@ -153,9 +167,18 @@ class ClaseForm(forms.ModelForm):
             cleaned['tipo_clase'] = cleaned.get('tipo_clase') or 'normal'
             cleaned['estado'] = cleaned.get('estado') or 'pending'
         else:
-            # En modo clase normal el título sí es obligatorio.
+            # En modo clase normal título/fecha/hora_inicio son obligatorios.
+            # Validamos aquí porque a nivel field los pusimos required=False
+            # para no romper el wizard (ver __init__).
+            field_errors = {}
             if not (cleaned.get('titulo') or '').strip():
-                raise forms.ValidationError({'titulo': 'Este campo es obligatorio.'})
+                field_errors['titulo'] = 'Este campo es obligatorio.'
+            if not cleaned.get('fecha'):
+                field_errors['fecha'] = 'Selecciona una fecha.'
+            if not cleaned.get('hora_inicio'):
+                field_errors['hora_inicio'] = 'Selecciona una hora de inicio.'
+            if field_errors:
+                raise forms.ValidationError(field_errors)
         if fecha and hora_inicio and fecha == timezone.now().date():
             sin_cambiar = (
                 self._fecha_sin_cambiar(fecha)
