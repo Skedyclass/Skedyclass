@@ -2259,6 +2259,10 @@ def horario(request):
                 clase.duration_min = max(15, int((fin_dt - inicio_dt).total_seconds() / 60))
             else:
                 clase.duration_min = sess_min
+            # Clamp duración al espacio visible: si la jornada quedó acortada
+            # después de crear la clase, evita que el chip sobresalga del grid.
+            max_visible = clase.span_slots * sess_min - clase.offset_min
+            clase.duration_min = min(clase.duration_min, max(15, max_visible))
             clase_grid.setdefault((dia, slot), []).append(clase)
             for k in range(1, clase.span_slots):
                 covered_cells.add((dia, slots[slot_idx + k]))
