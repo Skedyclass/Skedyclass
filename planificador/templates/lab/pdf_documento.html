@@ -252,16 +252,78 @@
     <div class="item">
       <div class="num">Ítem {{ forloop.counter }}</div>
       <div class="enun">{{ q.enunciado }}</div>
-      <div class="opts">
-        {% for o in q.opciones %}
-          <div class="opt{% if mostrar_respuestas and forloop.counter0 == q.correcta %} correct{% endif %}">
-            {{ forloop.counter0|add:65|stringformat:"c" }}) {{ o }}
-            {% if mostrar_respuestas and forloop.counter0 == q.correcta %} — CORRECTA{% endif %}
+
+      {% if q.respuesta_modelo or q.rubrica %}
+        {# ─── FORMATO: DESARROLLO (pregunta abierta) ─── #}
+        {% if not mostrar_respuestas %}
+          <div class="opts">
+            <div style="border-top:1px dashed #999;margin-top:14px;padding-top:14px;font-size:.85em;color:#555">Desarrolla tu respuesta:</div>
+            {% for _ in "123456" %}
+              <div style="border-bottom:1px solid #aaa;height:18px;margin-bottom:10px"></div>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
-      {% if mostrar_respuestas and q.justificacion %}
-        <div class="just"><strong>Justificación:</strong> {{ q.justificacion }}</div>
+        {% else %}
+          {% if q.respuesta_modelo %}
+            <div class="just"><strong>Respuesta modelo:</strong> {{ q.respuesta_modelo }}</div>
+          {% endif %}
+          {% if q.rubrica %}
+            <div class="just" style="margin-top:6px"><strong>Rúbrica:</strong>
+              <ol style="margin:4px 0 0 22px">
+                {% for c in q.rubrica %}<li>{{ c }}</li>{% endfor %}
+              </ol>
+            </div>
+          {% endif %}
+          {% if q.justificacion %}
+            <div class="just" style="margin-top:6px"><strong>Justificación:</strong> {{ q.justificacion }}</div>
+          {% endif %}
+        {% endif %}
+
+      {% elif q.columna_a or q.pares_correctos %}
+        {# ─── FORMATO: EMPAREJAMIENTO ─── #}
+        <table style="width:100%;border-collapse:collapse;margin-top:10px">
+          <tr>
+            <td style="width:48%;vertical-align:top;padding-right:8px">
+              <div style="font-size:.78em;color:#666;text-transform:uppercase;font-weight:bold;margin-bottom:6px">Columna A</div>
+              {% for it in q.columna_a %}
+                <div class="opt">{{ forloop.counter }}) {{ it }}</div>
+              {% endfor %}
+            </td>
+            <td style="width:48%;vertical-align:top;padding-left:8px;border-left:1px solid #ddd">
+              <div style="font-size:.78em;color:#666;text-transform:uppercase;font-weight:bold;margin-bottom:6px">Columna B</div>
+              {% for it in q.columna_b %}
+                <div class="opt">{{ forloop.counter0|add:65|stringformat:"c" }}) {{ it }}</div>
+              {% endfor %}
+            </td>
+          </tr>
+        </table>
+        {% if not mostrar_respuestas %}
+          <div style="margin-top:10px;font-size:.85em">Tus respuestas: 1→__, 2→__, 3→__, 4→__</div>
+        {% else %}
+          {% if q.pares_correctos %}
+            <div class="just" style="margin-top:10px"><strong>Pares correctos:</strong>
+              <ol style="margin:4px 0 0 22px">
+                {% for par in q.pares_correctos %}<li>{{ par.0|add:1 }} ↔ {{ par.1|add:65|stringformat:"c" }}</li>{% endfor %}
+              </ol>
+            </div>
+          {% endif %}
+          {% if q.justificacion %}
+            <div class="just" style="margin-top:6px"><strong>Justificación:</strong> {{ q.justificacion }}</div>
+          {% endif %}
+        {% endif %}
+
+      {% else %}
+        {# ─── FORMATO: OPCIÓN MÚLTIPLE (default) ─── #}
+        <div class="opts">
+          {% for o in q.opciones %}
+            <div class="opt{% if mostrar_respuestas and forloop.counter0 == q.correcta %} correct{% endif %}">
+              {{ forloop.counter0|add:65|stringformat:"c" }}) {{ o }}
+              {% if mostrar_respuestas and forloop.counter0 == q.correcta %} — CORRECTA{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        {% if mostrar_respuestas and q.justificacion %}
+          <div class="just"><strong>Justificación:</strong> {{ q.justificacion }}</div>
+        {% endif %}
       {% endif %}
     </div>
   {% endfor %}

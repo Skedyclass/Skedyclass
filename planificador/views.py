@@ -2863,26 +2863,54 @@ def _lab_build_prompts(data, user):
         n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 5
         # ~500 tokens per question (enunciado + 4 opciones + justificación + distractores)
         max_tokens = min(8192, max(2048, n_items * 500 + 400))
-        fmt_label = {
-            'multiple': 'ítems de opción múltiple (4 opciones por pregunta)',
-            'desarrollo': 'ítems de desarrollo (pregunta abierta con rúbrica)',
-            'emparejamiento': 'ítems de emparejamiento (dos columnas A↔B)',
-        }[formato_preguntas]
+
+        # Esquema JSON específico por formato. CRÍTICO: cada formato exige una
+        # estructura DISTINTA; si dejamos el esquema de opción múltiple genérico
+        # la IA ignora "desarrollo" y arma A/B/C/D igual.
+        if formato_preguntas == 'desarrollo':
+            fmt_label = 'ítems de desarrollo (pregunta abierta con rúbrica)'
+            esquema = (
+                '{"titulo": "Evaluación Diagnóstica — [Tema]", '
+                '"formato": "desarrollo", '
+                '"preguntas": [{"enunciado": "Situación real + pregunta abierta…", '
+                '"respuesta_modelo": "Respuesta esperada completa y razonada (5-8 líneas) que el docente usa como referencia para corregir.", '
+                '"rubrica": ["Criterio 1: qué debe demostrar (puntaje)", "Criterio 2: qué debe demostrar (puntaje)", "Criterio 3: qué debe demostrar (puntaje)"], '
+                '"justificacion": "Por qué esta pregunta evalúa el nivel cognitivo indicado de Bloom"}]}'
+            )
+            esquema_nota = 'En este modo NO uses "opciones", "correcta" ni "errores_distractores". Solo enunciado, respuesta_modelo, rubrica y justificacion.'
+        elif formato_preguntas == 'emparejamiento':
+            fmt_label = 'ítems de emparejamiento (dos columnas A↔B)'
+            esquema = (
+                '{"titulo": "Evaluación Diagnóstica — [Tema]", '
+                '"formato": "emparejamiento", '
+                '"preguntas": [{"enunciado": "Instrucción para el estudiante (ej: Relaciona cada concepto de la columna A con su definición en la columna B).", '
+                '"columna_a": ["Concepto 1", "Concepto 2", "Concepto 3", "Concepto 4"], '
+                '"columna_b": ["Definición A", "Definición B", "Definición C", "Definición D"], '
+                '"pares_correctos": [[0,2],[1,0],[2,3],[3,1]], '
+                '"justificacion": "Fundamento pedagógico del emparejamiento + nivel Bloom"}]}'
+            )
+            esquema_nota = 'En este modo NO uses "opciones" ni "correcta". pares_correctos es array de [idx_columna_a, idx_columna_b]. Mínimo 4 pares por ítem; las columnas deben tener igual longitud.'
+        else:  # multiple (default)
+            fmt_label = 'ítems de opción múltiple (4 opciones por pregunta)'
+            esquema = (
+                '{"titulo": "Evaluación Diagnóstica — [Tema]", '
+                '"formato": "multiple", '
+                '"preguntas": [{"enunciado": "Situación real + pregunta…", '
+                '"opciones": ["…","…","…","…"], "correcta": 0, '
+                '"justificacion": "Por qué la opción correcta es correcta + fundamento Bloom", '
+                '"errores_distractores": ["Error conceptual que revela la opción A", "Error que revela B", '
+                '"Error que revela C", "Error que revela D"]}]}'
+            )
+            esquema_nota = 'En errores_distractores, la posición correspondiente a la opción correcta puede contener "—". correcta es índice 0–3.'
+
         system_prompt = (
             f"Eres un evaluador educativo experto en Taxonomía de Bloom revisada y en análisis de errores "
             f"conceptuales documentados por la investigación didáctica. "
             f"Diseña una Evaluación Diagnóstica de {n_items} {fmt_label}, ajustada al nivel cognitivo indicado. "
             + lineamientos_evaluativos +
-            "Devuelve SOLO JSON válido sin comentarios ni markdown con este esquema exacto: "
-            '{"titulo": "Evaluación Diagnóstica — [Tema]", "preguntas": [{"enunciado": "Situación real + pregunta…", '
-            '"opciones": ["…","…","…","…"], "correcta": 0, '
-            '"justificacion": "Por qué la opción correcta es correcta + fundamento Bloom", '
-            '"errores_distractores": ["Error conceptual que revela la opción A", "Error que revela B", '
-            '"Error que revela C", "Error que revela D"]}]}. '
-            'En errores_distractores, la posición correspondiente a la opción correcta puede contener "—". '
-            'correcta es índice 0–3.'
+            f"Devuelve SOLO JSON válido sin comentarios ni markdown con este esquema EXACTO: {esquema}. {esquema_nota}"
         )
-        user_prompt = f"{contexto}\nGenera la Evaluación Diagnóstica de {n_items} ítems."
+        user_prompt = f"{contexto}\nGenera la Evaluación Diagnóstica de {n_items} {fmt_label}."
     elif modo == 'refuerzo':
         n_items = cantidad_preguntas if 3 <= cantidad_preguntas <= 20 else 6
         # ~650 tokens per exercise (enunciado + pista + solución paso a paso)

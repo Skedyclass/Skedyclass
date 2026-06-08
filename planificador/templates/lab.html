@@ -624,39 +624,95 @@ function labRender(modo, data){
   labCambiarTab('estudiante');
 
   if (modo === 'quiz') {
+    // Detectar formato del primer item (el AI puede devolver el campo 'formato'
+    // en el root, o lo inferimos por las keys presentes).
+    var fmt = data.formato || '';
+    if (!fmt) {
+      var sample = (data.preguntas || [])[0] || {};
+      if (sample.respuesta_modelo || sample.rubrica) fmt = 'desarrollo';
+      else if (sample.columna_a || sample.pares_correctos) fmt = 'emparejamiento';
+      else fmt = 'multiple';
+    }
     (data.preguntas || []).forEach(function(q, i){
-      // Vista estudiante: opciones sin marcar correcta, sin justificación
-      var optsHTMLEst = (q.opciones || []).map(function(o, idx){
-        return '<div class="lab-opt">'+
-          '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
-          labEsc(o)+
+      if (fmt === 'desarrollo') {
+        // ─── DESARROLLO: pregunta abierta + espacio + (docente) respuesta modelo + rubrica
+        contE.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+'</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+          '<div class="lab-respuesta-espacio" style="margin-top:10px;padding:14px 0;border-top:1px dashed rgba(255,255,255,.12)">Desarrolla tu respuesta:<br><br>'+
+            '<span style="display:block;border-bottom:1px solid #6b7280;height:18px;margin-bottom:14px"></span>'.repeat(6)+
+          '</div>'+
           '</div>';
-      }).join('');
-      contE.innerHTML += '<div class="lab-q">'+
-        '<div class="lab-q-num">Ítem '+(i+1)+'</div>'+
-        '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
-        '<div class="lab-opts">'+optsHTMLEst+'</div>'+
-        '<div class="lab-respuesta-espacio">Respuesta: <span style="display:inline-block;border-bottom:1px solid #6b7280;min-width:120px;height:18px"></span></div>'+
-        '</div>';
-
-      // Vista docente: marca correcta + nota de error en cada distractor + justificación
-      var errores = q.errores_distractores || [];
-      var optsHTMLDoc = (q.opciones || []).map(function(o, idx){
-        var isCorrect = idx === q.correcta;
-        var errNote = (!isCorrect && errores[idx] && errores[idx] !== '—')
-          ? '<span class="lab-distractor-note">Error revelado: '+labEsc(errores[idx])+'</span>'
-          : '';
-        return '<div class="lab-opt '+(isCorrect ? 'correct' : '')+'">'+
-          '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
-          labEsc(o)+(isCorrect ? '  ·  CORRECTA' : '')+errNote+
+        var rubricaHTML = (q.rubrica || []).map(function(c){
+          return '<li>'+labEsc(c)+'</li>';
+        }).join('');
+        contD.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+' — Clave</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+          '<div class="lab-just"><strong>Respuesta modelo:</strong> '+labEsc(q.respuesta_modelo || '')+'</div>'+
+          (rubricaHTML ? '<div class="lab-just" style="margin-top:8px"><strong>Rúbrica:</strong><ol style="margin:6px 0 0 22px">'+rubricaHTML+'</ol></div>' : '')+
+          (q.justificacion ? '<div class="lab-just" style="margin-top:8px"><strong>Justificación pedagógica:</strong> '+labEsc(q.justificacion)+'</div>' : '')+
           '</div>';
-      }).join('');
-      contD.innerHTML += '<div class="lab-q">'+
-        '<div class="lab-q-num">Ítem '+(i+1)+' — Clave</div>'+
-        '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
-        '<div class="lab-opts">'+optsHTMLDoc+'</div>'+
-        '<div class="lab-just"><strong>Justificación pedagógica:</strong> '+labEsc(q.justificacion || '')+'</div>'+
+      } else if (fmt === 'emparejamiento') {
+        // ─── EMPAREJAMIENTO: dos columnas A↔B
+        var colA = (q.columna_a || []).map(function(it, idx){
+          return '<div class="lab-opt"><span class="lab-opt-marker">'+(idx+1)+'</span>'+labEsc(it)+'</div>';
+        }).join('');
+        var colB = (q.columna_b || []).map(function(it, idx){
+          return '<div class="lab-opt"><span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+labEsc(it)+'</div>';
+        }).join('');
+        var twoCols = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px">'+
+          '<div><div style="font-size:.7rem;color:#9d95c4;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Columna A</div>'+colA+'</div>'+
+          '<div><div style="font-size:.7rem;color:#9d95c4;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">Columna B</div>'+colB+'</div>'+
         '</div>';
+        contE.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+'</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+twoCols+
+          '<div class="lab-respuesta-espacio" style="margin-top:10px">Tus respuestas: 1→__ , 2→__ , 3→__ , 4→__</div>'+
+          '</div>';
+        var paresHTML = (q.pares_correctos || []).map(function(par){
+          var a = (q.columna_a||[])[par[0]] || '?';
+          var b = (q.columna_b||[])[par[1]] || '?';
+          return '<li>'+(par[0]+1)+' ('+labEsc(a)+') ↔ '+String.fromCharCode(65+par[1])+' ('+labEsc(b)+')</li>';
+        }).join('');
+        contD.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+' — Clave</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+twoCols+
+          (paresHTML ? '<div class="lab-just" style="margin-top:10px"><strong>Pares correctos:</strong><ol style="margin:6px 0 0 22px">'+paresHTML+'</ol></div>' : '')+
+          (q.justificacion ? '<div class="lab-just" style="margin-top:8px"><strong>Justificación:</strong> '+labEsc(q.justificacion)+'</div>' : '')+
+          '</div>';
+      } else {
+        // ─── MULTIPLE (default) — comportamiento original
+        var optsHTMLEst = (q.opciones || []).map(function(o, idx){
+          return '<div class="lab-opt">'+
+            '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
+            labEsc(o)+
+            '</div>';
+        }).join('');
+        contE.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+'</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+          '<div class="lab-opts">'+optsHTMLEst+'</div>'+
+          '<div class="lab-respuesta-espacio">Respuesta: <span style="display:inline-block;border-bottom:1px solid #6b7280;min-width:120px;height:18px"></span></div>'+
+          '</div>';
+        var errores = q.errores_distractores || [];
+        var optsHTMLDoc = (q.opciones || []).map(function(o, idx){
+          var isCorrect = idx === q.correcta;
+          var errNote = (!isCorrect && errores[idx] && errores[idx] !== '—')
+            ? '<span class="lab-distractor-note">Error revelado: '+labEsc(errores[idx])+'</span>'
+            : '';
+          return '<div class="lab-opt '+(isCorrect ? 'correct' : '')+'">'+
+            '<span class="lab-opt-marker">'+String.fromCharCode(65+idx)+'</span>'+
+            labEsc(o)+(isCorrect ? '  ·  CORRECTA' : '')+errNote+
+            '</div>';
+        }).join('');
+        contD.innerHTML += '<div class="lab-q">'+
+          '<div class="lab-q-num">Ítem '+(i+1)+' — Clave</div>'+
+          '<div class="lab-q-text">'+labEsc(q.enunciado)+'</div>'+
+          '<div class="lab-opts">'+optsHTMLDoc+'</div>'+
+          '<div class="lab-just"><strong>Justificación pedagógica:</strong> '+labEsc(q.justificacion || '')+'</div>'+
+          '</div>';
+      }
     });
   } else if (modo === 'refuerzo') {
     if (data.introduccion) {
