@@ -433,11 +433,13 @@
           Atrás
         </button>
         {% if cursos %}
-        {# Submit con respaldo programático. Si el submit nativo del browser
-           se bloquea (validación HTML5 sobre input oculto, conflicto JS) el
-           handler fuerza f.submit() a los 300ms. Detectamos beforeunload —
-           si la página se está navegando, el submit nativo ya disparó y NO
-           hacemos doble submit. #}
+        {% comment %}
+        Submit con respaldo programático. Si el submit nativo del browser
+        se bloquea (validación HTML5 sobre input oculto, conflicto JS) el
+        handler fuerza f.submit() a los 300ms. Detectamos beforeunload —
+        si la página se está navegando, el submit nativo ya disparó y NO
+        hacemos doble submit.
+        {% endcomment %}
         <button type="submit" id="wzCrearClaseBtn" class="wz-btn wz-btn-primary"
           onclick="wzForceSubmit(this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
