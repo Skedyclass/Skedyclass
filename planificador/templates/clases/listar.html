@@ -22,66 +22,69 @@
 /* Card grid */
 .cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 
-/* Class card — Liquid Glass with zoom */
-.cl-card{position:relative;background:rgba(10,8,24,.52);border:1px solid transparent;background-clip:padding-box;border-radius:18px;backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1)}
-.cl-card::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(157,78,221,.4),rgba(247,37,133,.28) 55%,rgba(99,102,241,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;transition:opacity .25s}
-.cl-card:hover{transform:scale(1.025) translateY(-3px);box-shadow:0 16px 48px rgba(157,78,221,.22),0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)}
-.cl-card:hover::before{opacity:1.5}
-.cl-card>*{position:relative;z-index:1}
+/* Class card — Liquid Glass calmo, sin ruido visual.
+   Paleta muy desaturada: bordes 1px sutiles, sin gradiente animado en el
+   contorno, sin barra superior llamativa. Solo el badge de estado lleva
+   color para que el ojo identifique el estado rápido. */
+.cl-card{position:relative;background:rgba(14,12,28,.58);border:1px solid rgba(255,255,255,.06);border-radius:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 16px rgba(0,0,0,.25);overflow:hidden;transition:border-color .2s ease,box-shadow .2s ease}
+.cl-card:hover{border-color:rgba(157,78,221,.22);box-shadow:0 6px 22px rgba(0,0,0,.35)}
 
-/* Card top accent line per status */
-.cl-card-line{height:3px;border-radius:18px 18px 0 0;margin-bottom:0}
-.cl-card-line.pending{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.cl-card-line.en_curso{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
-.cl-card-line.vencida{background:linear-gradient(90deg,#ef4444,#f97316)}
-.cl-card-line.completed{background:linear-gradient(90deg,#059669,#10b981)}
-.cl-card-line.cancelada{background:linear-gradient(90deg,#6b7280,#4b5563)}
+/* Indicador de estado: una franja FINA al borde IZQUIERDO en lugar de una
+   barra de color saturado arriba. Discreto pero identifica el estado. */
+.cl-card-line{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;opacity:.55}
+.cl-card-line.pending{background:#a78bfa}
+.cl-card-line.en_curso{background:#818cf8}
+.cl-card-line.vencida{background:#f87171}
+.cl-card-line.completed{background:#34d399}
+.cl-card-line.cancelada{background:#6b7280}
 
 /* Card body */
-.cl-card-body{padding:18px 20px 16px}
-.cl-card-title{font-size:1rem;font-weight:800;color:#f5f3ff;font-family:'Playfair Display',serif;margin-bottom:6px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cl-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.cl-meta-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:50px;font-size:.7rem;font-weight:700}
-.cl-meta-materia{background:rgba(157,78,221,.15);color:#c4b5fd;border:1px solid rgba(157,78,221,.25)}
-.cl-meta-grado{background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.2)}
-.cl-meta-tipo-normal{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.2)}
-.cl-meta-tipo-dinamica{background:rgba(236,72,153,.12);color:#f472b6;border:1px solid rgba(236,72,153,.2)}
-.cl-meta-tipo-mixta{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.cl-card-body{padding:16px 18px 12px}
+.cl-card-title{font-size:.98rem;font-weight:700;color:#ece9f9;font-family:'Playfair Display',serif;margin-bottom:8px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px}
+.cl-card-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.cl-meta-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:50px;font-size:.66rem;font-weight:600;letter-spacing:.2px;background:rgba(255,255,255,.04);color:#a8a3c4;border:1px solid rgba(255,255,255,.06)}
+/* Materia/grado/tipo: variantes muy desaturadas — el ojo las lee sin esfuerzo */
+.cl-meta-materia{color:#b8a8de}
+.cl-meta-grado{color:#9eacd6}
+.cl-meta-tipo-normal{color:#9ba5d4}
+.cl-meta-tipo-dinamica{color:#d4a3b8}
+.cl-meta-tipo-mixta{color:#9bcfb5}
 
-/* Card info row */
-.cl-card-info{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#9ca3af;margin-bottom:4px}
-.cl-card-info svg{opacity:.6;flex-shrink:0}
+/* Card info row (fecha, hora, profesor) */
+.cl-card-info{display:flex;align-items:center;gap:6px;font-size:.74rem;color:#8a85a8;margin-bottom:3px}
+.cl-card-info svg{opacity:.5;flex-shrink:0}
 
-/* Card footer — column layout para que status quede arriba y la fila de
-   acciones pueda hacer wrap a ancho completo sin colisionar con el badge */
-.cl-card-footer{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px 14px;border-top:1px solid rgba(255,255,255,.06);box-sizing:border-box;min-width:0}
+/* Card footer */
+.cl-card-footer{display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:11px 16px 13px;border-top:1px solid rgba(255,255,255,.04);box-sizing:border-box;min-width:0}
 
-/* Status badge — fijo arriba a la izquierda, no estira */
-.cl-status{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:4px 11px;border-radius:50px;font-size:.72rem;font-weight:800;flex-shrink:0}
-.cl-status.pending{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
-.cl-status.en_curso{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
-.cl-status.vencida{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
-.cl-status.completed{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
-.cl-status.cancelada{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.2)}
-.cl-act-cancel{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
-.cl-act-cancel:hover{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fff}
-.cl-act-restore{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+/* Status badge — el único elemento con color en la tarjeta. Tonos suaves. */
+.cl-status{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;font-size:.68rem;font-weight:700;letter-spacing:.2px;flex-shrink:0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.cl-status.pending{color:#cfb377}
+.cl-status.en_curso{color:#9faaef}
+.cl-status.vencida{color:#e89a9a}
+.cl-status.completed{color:#7fc9a8}
+.cl-status.cancelada{color:#8b8ba1}
 
-/* Action buttons — flex-wrap obligatorio: si no caben en una línea, bajan
-   ordenadamente a una segunda. white-space:nowrap impide que cada botón se
-   parta y rompa la grilla. */
-.cl-card-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;box-sizing:border-box;min-width:0}
+/* Action buttons — fondo transparente uniforme, solo cambia el color del
+   borde/texto. Hover sutil sin transform agresivo. */
+.cl-card-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;box-sizing:border-box;min-width:0}
 .cl-card-actions form{margin:0;display:inline-flex}
-.cl-act{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:'Lora',serif;transition:opacity .15s,transform .12s;white-space:nowrap;flex-shrink:0}
-.cl-act:hover{opacity:.8;transform:translateY(-1px)}
-.cl-act-edit{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
-.cl-act-del{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
-.cl-act-start{background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.2)}
-.cl-act-done{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.2)}
-.cl-act-pdf{background:transparent;color:#c4b5fd;border:1px solid rgba(157,78,221,.4)}
-.cl-act-pdf:hover{background:rgba(157,78,221,.12);color:#f5f3ff;border-color:rgba(157,78,221,.7)}
-.cl-act-save{background:rgba(16,185,129,.08);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
-.cl-act-save:hover{background:rgba(16,185,129,.18);color:#ecfdf5}
+.cl-act{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;font-size:.7rem;font-weight:600;text-decoration:none;cursor:pointer;font-family:'Lora',serif;transition:background .15s,border-color .15s,color .15s;white-space:nowrap;flex-shrink:0;background:transparent;border:1px solid rgba(255,255,255,.09);color:#a8a3c4}
+.cl-act:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.16);color:#ece9f9}
+.cl-act-edit{color:#9faaef}
+.cl-act-edit:hover{border-color:rgba(129,140,248,.35);color:#c7d0ff}
+.cl-act-del{color:#cf9595}
+.cl-act-del:hover{border-color:rgba(248,113,113,.32);background:rgba(248,113,113,.06)}
+.cl-act-done{color:#7fc9a8}
+.cl-act-done:hover{border-color:rgba(52,211,153,.32);background:rgba(52,211,153,.06)}
+.cl-act-cancel{color:#cf9595}
+.cl-act-cancel:hover{border-color:rgba(248,113,113,.32);background:rgba(248,113,113,.06)}
+.cl-act-restore{color:#cfb377}
+.cl-act-start{color:#9faaef}
+.cl-act-pdf{color:#b8a8de}
+.cl-act-pdf:hover{border-color:rgba(167,139,250,.35);color:#d4c9f0}
+.cl-act-save{color:#7fc9a8}
+.cl-act-save:hover{border-color:rgba(52,211,153,.32);background:rgba(52,211,153,.06)}
 
 /* Empty state */
 .cl-empty{position:relative;background:rgba(10,8,24,.45);border-radius:20px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(157,78,221,.2);box-shadow:0 12px 44px rgba(0,0,0,.4);text-align:center;padding:64px 32px}
