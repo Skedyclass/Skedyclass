@@ -642,7 +642,7 @@ def login_view(request):
         return _safe_redirect(request, next_url, 'dashboard')
 
     LOGIN_MAX_ATTEMPTS = 5
-    LOGIN_WINDOW = 15 * 60  # 15 min lockout window
+    LOGIN_WINDOW = 15  # 15 s lockout window
 
     error = None
     if request.method == 'POST':
@@ -658,7 +658,7 @@ def login_view(request):
         if max(ip_count, user_count) >= LOGIN_MAX_ATTEMPTS:
             logger.warning('Login throttle: ip=%s user=%s attempts=%s/%s',
                            ip, username, ip_count, user_count)
-            error = 'Demasiados intentos. Espera 15 minutos antes de volver a intentarlo.'
+            error = 'Demasiados intentos. Espera 15 segundos antes de volver a intentarlo.'
             return render(request, 'login.html', {'error': error, 'next': next_url})
 
         user = authenticate(request, username=username, password=password)
