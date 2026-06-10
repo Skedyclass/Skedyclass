@@ -70,6 +70,66 @@
     --input-bg: #252440;
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   MODO CLARO — Paleta "Professional Slate" (premium).
+   Fondo slate-50 plano (sin gradiente pastel), contenedores blancos con
+   bordes slate-200 y SOMBRAS suaves en lugar de glows. Texto slate-900 /
+   slate-500. El acento de marca (violeta/borgoña) se conserva intacto.
+   ════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+    --bg-gradient: #f8fafc;            /* slate-50 plano, reduce fatiga visual */
+    --sidebar-gradient: #ffffff;
+    --header-bg: rgba(255,255,255,.85);
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --surface-2: #f1f5f9;             /* slate-100 */
+    --input-bg: #ffffff;
+    --text-dark: #0f172a;             /* slate-900 — más elegante que el negro puro */
+    --text-gray: #64748b;             /* slate-500 — descripciones y horas */
+    --text-light: #94a3b8;            /* slate-400 */
+    --border: #e2e8f0;                /* slate-200 */
+    --white: #ffffff;
+    --shadow: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+    --shadow-lg: 0 4px 6px -1px rgba(15,23,42,.07), 0 12px 28px -6px rgba(15,23,42,.09);
+}
+
+/* Tarjetas y paneles: blanco, borde fino slate-200, sombra suave → "flotan". */
+[data-theme="light"] .card,
+[data-theme="light"] .glass-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 8px 24px -6px rgba(15,23,42,.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+/* En claro NO usamos el borde-glow púrpura del modo oscuro. */
+[data-theme="light"] .card::before,
+[data-theme="light"] .glass-panel::before { display: none; }
+[data-theme="light"] .glass-panel.soft {
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 4px 16px -6px rgba(15,23,42,.06);
+}
+[data-theme="light"] .glass-panel.strong {
+    background: #ffffff;
+    box-shadow: 0 4px 12px -2px rgba(15,23,42,.1), 0 14px 34px -10px rgba(15,23,42,.12);
+}
+
+/* Inputs: fondo blanco, borde slate y anillo de foco con el color de marca. */
+[data-theme="light"] .form-input,
+[data-theme="light"] .form-select,
+[data-theme="light"] .form-textarea {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #0f172a;
+}
+[data-theme="light"] .form-input:focus,
+[data-theme="light"] .form-select:focus,
+[data-theme="light"] .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(157,78,221,.16);
+}
+[data-theme="light"] .form-input::placeholder,
+[data-theme="light"] .form-textarea::placeholder { color: #94a3b8; }
+
 /* Reset */
 * {
     margin: 0;
