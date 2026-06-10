@@ -143,10 +143,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
       Personalización
     </button>
-    {% comment %}
-    Google Calendar oculto de la UI: integración inactiva (0 SocialTokens).
-    El backend sigue presente para reactivar cuando se configure OAuth completo.
-    {% endcomment %}
+    <button class="aj-nav-item {% if seccion_activa == 'google_calendar' %}active{% endif %}" data-panel="google_calendar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Google Calendar
+    </button>
     <div class="aj-nav-sep"></div>
     <p class="aj-nav-title">Sistema</p>
     <button class="aj-nav-item" data-panel="acerca">
@@ -310,6 +310,26 @@
 
         <div class="aj-section">
           <div class="aj-section-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-5.4-5.4A5.39 5.39 0 0 1 13.36 3.1 9.43 9.43 0 0 0 12 3z"/></svg>
+            Tema de la interfaz
+          </div>
+          <div class="toggle-list">
+            <label class="toggle-item" style="cursor:pointer">
+              <span class="toggle-info">
+                <span class="toggle-title">Modo claro</span>
+                <span class="toggle-desc">Fondo gris ultra-claro con texto profundo — alto contraste para entornos iluminados.</span>
+              </span>
+              <span class="toggle-wrap">
+                <input type="checkbox" class="toggle-checkbox" id="themeToggleSwitch" onchange="setThemeFromSwitch(this.checked)" {% if config.tema == 'light' %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+              </span>
+            </label>
+          </div>
+          <p style="font-size:.75rem;color:#9ca3af;margin-top:6px">El cambio se aplica al instante y queda guardado en tu cuenta y en este navegador.</p>
+        </div>
+
+        <div class="aj-section">
+          <div class="aj-section-label">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6.5" cy="13" r="2.5"/><circle cx="13.5" cy="19" r="2.5"/><path d="M13.5 9v1M13.5 16v1M16 6.5h1M7 13H6M17 13h1M10 6.5H9M16.5 15.5l.7.7M7 10l.7.7"/></svg>
             Color de acento
           </div>
@@ -363,8 +383,8 @@
       </form>
     </div>
 
-    <!-- ── GOOGLE CALENDAR — OCULTO (integración inactiva por falta de SocialTokens) ── -->
-    {% if False %}
+    <!-- ── GOOGLE CALENDAR — Sincronización omnicanal (reactivada tras sustentación) ── -->
+    {% if True %}
     <div class="aj-panel glass-panel {% if seccion_activa == 'google_calendar' %}active{% endif %}" id="panel-google_calendar">
       <div class="aj-panel-head">
         <div class="aj-panel-icon" style="background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(16,185,129,.15));box-shadow:0 4px 16px rgba(16,185,129,.2)">
@@ -555,6 +575,24 @@ async function gcalSyncAll() {
   }
 }
 
+
+// Theme switch (Modo claro / oscuro) — aplica al instante, persiste local + servidor.
+function setThemeFromSwitch(isLight){
+  var next = isLight ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('sk-theme', next); } catch(e){}
+  try {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    var token = m ? m[1] : '';
+    var body = new URLSearchParams(); body.set('tema', next);
+    fetch('/api/preferencia/', {
+      method: 'POST',
+      headers: {'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body.toString()
+    }).catch(function(){});
+  } catch(e){}
+  if (window.showToast) window.showToast(isLight ? 'Modo claro activado' : 'Modo oscuro activado', 'info');
+}
 
 // Live color scheme preview
 var _schemeVars = {

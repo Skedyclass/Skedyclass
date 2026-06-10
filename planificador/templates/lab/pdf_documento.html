@@ -12,7 +12,11 @@
       left: 1.6cm; right: 1.6cm; bottom: 0.9cm; height: 0.8cm;
     }
   }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; color: #000; line-height: 1.5; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; color: #000; line-height: 1.25; }
+  /* Justificación editorial de párrafos (Observación jurado): texto a bloque
+     en guías, talleres y exámenes, con interlineado académico 1.15–1.25.
+     Se excluyen listas de opciones cortas, que se leen mejor alineadas a la izq. */
+  p, .item .enun, .just, .bloque-conceptual, ol.pasos-doc li, .momento-block li { text-align: justify; }
   /* Page break helpers para tablas extensas y bloques que no deben cortarse */
   .keep-together { page-break-inside: avoid; -fs-table-paginate: paginate; }
   .new-page { page-break-before: always; }
@@ -37,7 +41,7 @@
     border-left: 2.5pt solid #444;
     margin-bottom: 6pt;
     font-size: 10pt;
-    line-height: 1.55;
+    line-height: 1.25;
     text-align: justify;
   }
   .momento-block {

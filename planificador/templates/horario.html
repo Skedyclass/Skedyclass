@@ -86,7 +86,7 @@
 .clase-chip:hover{transform:scale(1.03);box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .clase-chip .cc-time{font-size:.6rem;opacity:.8;display:block;margin-bottom:1px;color:rgba(255,255,255,.8) !important}
 .clase-chip .cc-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff !important}
-.clase-chip .cc-grado{font-size:.58rem;opacity:.75;display:block;color:rgba(255,255,255,.75) !important}
+.clase-chip .cc-grado{font-size:.6rem;opacity:1;display:block;color:rgba(255,255,255,.92) !important;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .clase-chip .cc-gcal{font-size:.55rem;opacity:.8}
 
 /* ─── HORA LIBRE: verde suave, formal ───────────────────────── */
@@ -188,6 +188,51 @@
 /* ─── UNSCHEDULED COURSES ──────────────────────────────────── */
 .unscheduled-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14);border-radius:10px;text-decoration:none;color:rgba(255,255,255,.8) !important;font-size:.78rem;transition:background .18s}
 .unscheduled-chip:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.35);color:#fff !important}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODO CLARO — Rejilla del horario (Observación jurado).
+   La rejilla nace en blanco con texto slate-900; las celdas quedan
+   limpias y los bloques verdes de "Horas Libres" adoptan verde suave
+   sobre texto verde oscuro legible. Las tarjetas de clase conservan su
+   color saturado de asignatura con texto blanco (alto contraste).
+   ══════════════════════════════════════════════════════════════════ */
+[data-theme="light"] .ht-wrap *{color:#0f172a}
+[data-theme="light"] .ht-title,[data-theme="light"] .week-label{color:#0f172a}
+[data-theme="light"] .ht-nav-btn{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3);color:#4338ca}
+[data-theme="light"] .ht-nav-btn:hover{background:rgba(99,102,241,.18);color:#312e81}
+[data-theme="light"] .week-arrow{background:rgba(15,23,42,.04);border-color:rgba(15,23,42,.12);color:#334155}
+[data-theme="light"] .week-arrow:hover{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.35);color:#4338ca}
+[data-theme="light"] .week-label{background:rgba(15,23,42,.03);border-color:rgba(15,23,42,.1)}
+[data-theme="light"] .week-today-btn{background:rgba(99,102,241,.14);color:#4338ca}
+
+/* Contenedor + celdas limpias */
+[data-theme="light"] .ht-table-wrap{background:#ffffff;border-color:rgba(15,23,42,.12)}
+[data-theme="light"] .ht-table th,[data-theme="light"] .ht-table td{border-color:rgba(15,23,42,.08);color:#0f172a !important}
+[data-theme="light"] .ht-th-time{background:#f1f5f9;color:#64748b !important}
+[data-theme="light"] .ht-th-day,[data-theme="light"] .ht-th-day .day-name{color:#0f172a !important}
+[data-theme="light"] .ht-th-day .day-date{color:#64748b !important}
+[data-theme="light"] .ht-th-day.today-col .day-name{color:#4338ca !important;text-shadow:none}
+[data-theme="light"] .ht-th-day.today-col .day-date{color:#6366f1 !important}
+[data-theme="light"] .ht-td-time{background:#f8fafc;color:#64748b !important}
+[data-theme="light"] .ht-td:hover{background:rgba(99,102,241,.05)}
+[data-theme="light"] .ht-tr.break-row .ht-td-time{color:#b45309 !important}
+
+/* La tarjeta de clase conserva su fondo de asignatura saturado → texto blanco.
+   Sólo reforzamos el contraste del subtítulo de grado ("Lenguaje 2A"). */
+[data-theme="light"] .clase-chip .cc-grado{color:rgba(255,255,255,.95) !important}
+
+/* HORA LIBRE — verde suave / texto verde oscuro (WCAG en fondo claro) */
+[data-theme="light"] .clase-chip.libre{background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(52,211,153,.1));border-color:rgba(5,150,105,.45)}
+[data-theme="light"] .clase-chip.libre:hover{background:linear-gradient(135deg,rgba(16,185,129,.24),rgba(52,211,153,.16))}
+[data-theme="light"] .clase-chip.libre .cc-title{color:#065f46 !important;text-shadow:none}
+[data-theme="light"] .clase-chip.libre .cc-time{color:rgba(6,95,70,.8) !important}
+[data-theme="light"] .clase-chip.libre .cc-nota-icon{color:#047857}
+[data-theme="light"] .clase-chip.libre .cc-nota-preview{color:rgba(6,95,70,.85) !important}
+
+/* Tarjetas/stats inferiores y cursos sin programar */
+[data-theme="light"] .stat-mini-lbl{color:#64748b !important}
+[data-theme="light"] .unscheduled-chip{background:rgba(15,23,42,.03);border-color:rgba(15,23,42,.18);color:#334155 !important}
+[data-theme="light"] .unscheduled-chip:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.35);color:#4338ca !important}
 </style>
 
 <!-- Page header -->

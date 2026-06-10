@@ -1,6 +1,7 @@
 import calendar
 import json
 import logging
+import re
 from datetime import date, timedelta
 from functools import wraps
 
@@ -3182,6 +3183,53 @@ def lab_guardar_recurso(request):
 
 # ==================== EXPORTACIÓN A PDF ====================
 
+# Rangos Unicode de emoji / pictogramas / dingbats / símbolos técnicos que
+# xhtml2pdf no sabe renderizar (salen como cajas negras) y que el jurado pidió
+# eliminar de los documentos editoriales. NO incluye puntuación general
+# (— … • « » “ ”) ni letras acentuadas: el texto académico se conserva intacto.
+_PDF_ICON_RE = re.compile(
+    "["
+    "\U0001F000-\U0001FAFF"   # Emoji y pictogramas suplementarios
+    "\U00002600-\U000026FF"   # Símbolos misceláneos (☀ ⚠ ⚡ …)
+    "\U00002700-\U000027BF"   # Dingbats (✅ ✔ ✏ ✂ ➜ …)
+    "\U00002300-\U000023FF"   # Técnicos misceláneos (⏰ ⌚ ⏳ …)
+    "\U00002B00-\U00002BFF"   # Símbolos y flechas misceláneos (⭐ ⬆ …)
+    "\U0000FE00-\U0000FE0F"   # Selectores de variación (estiliza emoji)
+    "\U0000200D"              # Zero-width joiner (une secuencias de emoji)
+    "\U000024C2"              # Ⓜ
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def _strip_pdf_icons(value):
+    """Quita emoji/iconos decorativos de una cadena para el render PDF.
+    Limpia los espacios dobles que deja el borrado. No-cadenas pasan sin tocar."""
+    if not isinstance(value, str):
+        return value
+    cleaned = _PDF_ICON_RE.sub('', value)
+    # Colapsa los espacios sobrantes que deja el icono retirado (p. ej. "Tema 📐 ")
+    # y limpia el espacio que queda pegado a un signo de puntuación.
+    cleaned = re.sub(r'[ \t]{2,}', ' ', cleaned)
+    cleaned = re.sub(r' +([,.;:!?])', r'\1', cleaned)
+    cleaned = re.sub(r'[ \t]+(\n|$)', r'\1', cleaned)  # quita espacios al final de línea
+    return cleaned.strip()
+
+
+def _deep_strip_pdf_icons(obj):
+    """Aplica _strip_pdf_icons recursivamente sobre dicts/listas/cadenas.
+    Se usa para depurar el contenido generado por IA (guías, talleres, quizzes)
+    antes de convertirlo a PDF, de modo que el documento quede limpio de
+    componentes de UI / emoji y sea puramente editorial."""
+    if isinstance(obj, str):
+        return _strip_pdf_icons(obj)
+    if isinstance(obj, dict):
+        return {k: _deep_strip_pdf_icons(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_deep_strip_pdf_icons(v) for v in obj]
+    return obj
+
+
 def _render_pdf_from_html(html_source):
     """HTML → PDF en memoria usando xhtml2pdf (Python puro).
     Returns (ok, bytes_or_error_msg)."""
@@ -3266,6 +3314,10 @@ def clase_pdf(request, id):
     if clase.es_hora_libre:
         messages.info(request, 'Una hora libre no genera plan de clase en PDF.')
         return redirect('horario')
+    # Documento editorial limpio: sin emoji/iconos de UI (instancia no persistida).
+    clase.titulo = _strip_pdf_icons(clase.titulo)
+    clase.objetivos = _strip_pdf_icons(clase.objetivos)
+    clase.notas = _strip_pdf_icons(clase.notas)
     horario_obj = getattr(request.user, 'horario_academico', None)
     duracion_total = _session_duration_min(request.user)
 
@@ -3317,6 +3369,10 @@ def clase_pdf_guardar(request, id):
     from django.core.files.base import ContentFile
 
     clase = get_object_or_404(Clase, id=id, usuario=request.user)
+    # Documento editorial limpio: sin emoji/iconos de UI (instancia no persistida).
+    clase.titulo = _strip_pdf_icons(clase.titulo)
+    clase.objetivos = _strip_pdf_icons(clase.objetivos)
+    clase.notas = _strip_pdf_icons(clase.notas)
     duracion_total = _session_duration_min(request.user)
     def _round5(n):
         return int(round(n / 5.0) * 5) or 5
@@ -3378,6 +3434,10 @@ def _build_lab_pdf_html(modo, data, ctx, mostrar_respuestas=True):
     """Construye el HTML que xhtml2pdf convertirá a PDF.
     mostrar_respuestas=False genera la versión limpia para el estudiante."""
     from django.template.loader import render_to_string
+    # Depura emoji/iconos de UI del contenido (IA) para que el PDF quede
+    # puramente editorial — Observación jurado: "Arreglar guía iconos / quitar en PDF".
+    data = _deep_strip_pdf_icons(data)
+    ctx = {k: (_strip_pdf_icons(v) if isinstance(v, str) else v) for k, v in ctx.items()}
     return render_to_string('lab/pdf_documento.html', {
         'modo': modo,
         'data': data,
