@@ -135,6 +135,10 @@ try:
             'AUTH_PARAMS': {'access_type': 'offline', 'prompt': 'consent'},
         }
     }
+    # django-allauth >=65 NO guarda los OAuth tokens por defecto. Sin esto se
+    # crean SocialAccounts pero 0 SocialTokens, y la sincronización con Google
+    # Calendar falla en silencio ('no_google_account'). Imprescindible activarlo.
+    SOCIALACCOUNT_STORE_TOKENS = True
     SOCIALACCOUNT_LOGIN_ON_GET = True
     SOCIALACCOUNT_AUTO_SIGNUP = True
     SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # vincular por email si ya existe
