@@ -38,21 +38,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initTheme() {
-    // Default 'dark': coincide con base.html (data-theme="dark"), el default
-    // del modelo ConfiguracionUsuario.tema y el diseño dark-glass de la app.
-    const savedTheme = prefGet('skedyclass-theme', 'dark');
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.body.setAttribute('data-theme', savedTheme);
+    // IMPORTANTE: el tema ya queda fijado por el script anti-flash de base.html
+    // (clave localStorage 'sk-theme') ANTES del primer paint, y por el valor que
+    // renderiza el servidor desde ConfiguracionUsuario.tema. NO lo volvemos a
+    // sobrescribir aquí: hacerlo con una clave/َformato distintos ('skedyclass-theme')
+    // pisaba la preferencia del usuario en cada navegación (volvía a oscuro).
+    // Solo reflejamos el valor vigente en <body> y sincronizamos botones legacy.
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    document.body.setAttribute('data-theme', current);
 
     document.querySelectorAll('.theme-btn').forEach(function(btn) {
-        btn.classList.toggle('active', btn.getAttribute('data-theme') === savedTheme);
+        btn.classList.toggle('active', btn.getAttribute('data-theme') === current);
     });
 }
 
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     document.body.setAttribute('data-theme', theme);
-    prefSet('skedyclass-theme', theme);
+    // Misma clave/formato que el toggle del header y el script anti-flash.
+    try { localStorage.setItem('sk-theme', theme); } catch (_) {}
 
     document.querySelectorAll('.theme-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
