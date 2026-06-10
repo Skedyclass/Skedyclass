@@ -66,6 +66,11 @@
 .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s,background .25s}
 .toggle-checkbox:checked + .toggle-slider{background:linear-gradient(135deg,#9d4edd,#f72585)}
 .toggle-checkbox:checked + .toggle-slider::before{transform:translateX(20px)}
+details > summary{list-style:none}
+details > summary::-webkit-details-marker{display:none}
+details > summary::marker{content:''}
+details[open] > summary svg{transform:rotate(90deg)}
+details > summary svg{transition:transform .18s}
 
 /* Color palette */
 .color-palette{display:flex;gap:12px;flex-wrap:wrap}
@@ -439,13 +444,9 @@
       </div>
 
       {% if gcal_conectado %}
-      <!-- Sync all button -->
+      <!-- Acción principal: sincronizar -->
       <div class="aj-section">
-        <div class="aj-section-label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
-          Sincronización masiva
-        </div>
-        <p style="font-size:.83rem;color:#9ca3af;margin-bottom:16px;font-family:'Lora',serif">Sincroniza todas las clases que aún no tienen evento en Google Calendar. Incluye recordatorios automáticos 15 y 30 minutos antes.</p>
+        <p style="font-size:.83rem;color:#9ca3af;margin-bottom:14px;font-family:'Lora',serif">Cada clase que crees se añade sola a tu calendario, con recordatorio automático antes de empezar. Usa este botón para sincronizar de una vez las clases que ya tenías.</p>
         <button type="button" id="btnSyncAll" onclick="gcalSyncAll()" class="btn-save" style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 5px 18px rgba(16,185,129,.3)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
           Sincronizar todas las clases
@@ -453,39 +454,26 @@
         <div id="syncAllStatus" style="display:none;margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);font-size:.82rem;color:#6ee7b7"></div>
       </div>
 
-      <!-- Calendar ID config -->
-      <div class="aj-section">
-        <div class="aj-section-label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Calendario destino
+      <!-- Opciones avanzadas (colapsadas, fuera del flujo principal) -->
+      <details class="aj-section" style="margin-top:4px">
+        <summary style="cursor:pointer;list-style:none;font-size:.78rem;font-weight:700;color:#9ca3af;display:flex;align-items:center;gap:8px;padding:6px 0;user-select:none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          Opciones avanzadas
+        </summary>
+        <div style="padding:8px 2px 2px">
+          <form method="POST" action="{% url 'ajustes' %}">
+            {% csrf_token %}
+            <input type="hidden" name="seccion" value="google_calendar">
+            <div class="fg">
+              <label>Calendario destino</label>
+              <input type="text" name="google_calendar_id" class="form-input" value="{{ config.google_calendar_id }}" placeholder="Déjalo vacío para usar tu calendario principal">
+            </div>
+            <p style="font-size:.74rem;color:#6b7280;margin:-8px 0 14px;font-family:'Lora',serif">Recomendado: <strong style="color:#9ca3af">déjalo vacío</strong> y los eventos irán a tu calendario principal. Solo escribe un ID si quieres enviarlos a un calendario secundario.</p>
+            <button type="submit" class="btn-save" style="font-size:.82rem;padding:8px 14px">Guardar</button>
+          </form>
+          <p style="font-size:.74rem;color:#6b7280;margin:14px 0 0;line-height:1.6;font-family:'Lora',serif">SkedyClass solo crea y actualiza tus eventos (permiso <code style="color:#a5b4fc;background:rgba(99,102,241,.1);padding:1px 5px;border-radius:4px">calendar.events</code>). Revoca el acceso cuando quieras en <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" style="color:#a5b4fc">myaccount.google.com/permissions</a>.</p>
         </div>
-        <form method="POST" action="{% url 'ajustes' %}">
-          {% csrf_token %}
-          <input type="hidden" name="seccion" value="google_calendar">
-          <div class="fg">
-            <label>ID del Calendario (dejar vacío para usar el principal)</label>
-            <input type="text" name="google_calendar_id" class="form-input" value="{{ config.google_calendar_id }}" placeholder="Ej: tu@gmail.com o xxx@group.calendar.google.com">
-          </div>
-          <p style="font-size:.74rem;color:#6b7280;margin:-8px 0 14px;font-family:'Lora',serif">Encuentra el ID en Google Calendar → Configuración del calendario → ID del calendario. Deja vacío para usar el calendario principal.</p>
-          <button type="submit" class="btn-save">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-            Guardar calendario
-          </button>
-        </form>
-      </div>
-
-      <!-- Permissions info -->
-      <div class="aj-section">
-        <div class="aj-section-label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Permisos y privacidad
-        </div>
-        <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:14px 16px;font-size:.82rem;line-height:1.7;color:#9ca3af;border:1px solid rgba(255,255,255,.06)">
-          <p style="margin:0 0 8px">SkedyClass solicita el permiso <code style="color:#a5b4fc;background:rgba(99,102,241,.1);padding:1px 5px;border-radius:4px">calendar.events</code> para crear, actualizar y eliminar eventos en tu nombre.</p>
-          <p style="margin:0 0 8px">Cada clase creada genera un evento con recordatorio automático a los <strong style="color:#f5f3ff">15 minutos</strong> (pop-up) y <strong style="color:#f5f3ff">30 minutos</strong> (correo) antes del inicio.</p>
-          <p style="margin:0">Para revocar el acceso: <a href="https://myaccount.google.com/permissions" target="_blank" style="color:#a5b4fc">myaccount.google.com/permissions</a> → elimina SkedyClass.</p>
-        </div>
-      </div>
+      </details>
       {% endif %}
     </div>
     {% endif %}
