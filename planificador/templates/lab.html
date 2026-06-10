@@ -205,6 +205,63 @@
   body.printing-estudiante #paneEstudiante{display:block!important}
   body.printing-docente #paneDocente{display:block!important}
 }
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .lab-hero{background:radial-gradient(circle at 20% 0%,rgba(157,78,221,.1),transparent 55%),radial-gradient(circle at 80% 100%,rgba(16,185,129,.08),transparent 55%),#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 12px 32px -10px rgba(15,23,42,.12)}
+[data-theme="light"] .lab-hero h1,[data-theme="light"] .lab-output-title{background:linear-gradient(135deg,#059669,#7c3aed 55%,#db2777);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+[data-theme="light"] .lab-hero p,[data-theme="light"] .lab-modo p{color:#475569}
+/* Step indicator */
+[data-theme="light"] .lab-steps{background:#ffffff;border-color:#e2e8f0}
+[data-theme="light"] .step-num{background:#f1f5f9;border-color:#e2e8f0;color:#64748b}
+[data-theme="light"] .lab-step.active .step-label{color:#0f172a}
+[data-theme="light"] .step-connector{background:#e2e8f0}
+/* Secciones, modos, output: blanco + sombra suave, sin glow */
+[data-theme="light"] .lab-section,[data-theme="light"] .lab-modo,[data-theme="light"] .lab-output{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .lab-section::before,[data-theme="light"] .lab-output::before{display:none}
+[data-theme="light"] .lab-modo{border-color:#e2e8f0;color:#0f172a}
+[data-theme="light"] .lab-section-title,[data-theme="light"] .lab-modo h3,[data-theme="light"] .lab-guia-seccion-h .lbl,[data-theme="light"] .lab-q-text,[data-theme="light"] .lab-ex-text,[data-theme="light"] .lab-desafio-prob{color:#0f172a}
+[data-theme="light"] .lab-opt-badge{background:#f1f5f9;border-color:#e2e8f0;color:#64748b}
+[data-theme="light"] .lab-upload-zone p{color:#64748b}
+[data-theme="light"] .lab-upload-btn{color:#6d28d9}
+/* Guía */
+[data-theme="light"] .lab-guia-sub{color:#7c3aed}
+[data-theme="light"] .lab-guia-extra h4{color:#4338ca}
+[data-theme="light"] .lab-guia-extra ul{color:#334155}
+[data-theme="light"] .lab-guia-seccion-h{border-bottom-color:#e2e8f0}
+[data-theme="light"] .lab-guia-seccion-h .num{color:#6d28d9}
+[data-theme="light"] .lab-tabla th{background:rgba(157,78,221,.12);color:#4c1d95;border-color:#ddd6fe}
+[data-theme="light"] .lab-tabla td{color:#1e293b;background:#ffffff;border-color:#e2e8f0}
+[data-theme="light"] .lab-tabla tr:nth-child(even) td{background:#f8fafc}
+[data-theme="light"] .lab-guia-conceptual{background:#f8fafc;border-color:#e2e8f0;color:#1e293b}
+[data-theme="light"] .lab-guia-ejemplo{border-color:#e2e8f0}
+[data-theme="light"] .lab-guia-ejemplo-body .enunciado{color:#0f172a}
+[data-theme="light"] .lab-guia-ejemplo-body .resolucion{color:#1e293b;background:#f1f5f9}
+[data-theme="light"] .lab-guia-repr{color:#065f46;background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)}
+/* Formularios del Lab */
+[data-theme="light"] .lab-field label{color:#7c3aed}
+[data-theme="light"] .lab-field input,[data-theme="light"] .lab-field select,[data-theme="light"] .lab-field textarea{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .lab-field input:focus,[data-theme="light"] .lab-field select:focus,[data-theme="light"] .lab-field textarea:focus{border-color:#f72585;box-shadow:0 0 0 3px rgba(247,37,133,.14)}
+[data-theme="light"] .lab-field select option{background:#ffffff;color:#0f172a}
+[data-theme="light"] .lab-btn-ghost{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .lab-btn-ghost:hover{background:rgba(157,78,221,.12);color:#5b21b6}
+[data-theme="light"] .lab-loading{background:#ffffff;border-color:#e2e8f0;color:#475569}
+/* Renderers de salida */
+[data-theme="light"] .lab-q,[data-theme="light"] .lab-opt{background:#f8fafc;border-color:#e2e8f0;color:#1e293b}
+[data-theme="light"] .lab-q-num{color:#7c3aed}
+[data-theme="light"] .lab-opt.correct{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.4);color:#065f46}
+[data-theme="light"] .lab-just{background:rgba(99,102,241,.08);color:#3730a3}
+[data-theme="light"] .lab-just strong{color:#1e1b4b}
+[data-theme="light"] .lab-ex-hint,[data-theme="light"] .lab-intro,[data-theme="light"] .lab-desafio-pista,[data-theme="light"] .lab-reveal-info{color:#334155}
+[data-theme="light"] .lab-intro{background:#f8fafc}
+[data-theme="light"] .lab-ex-sol,[data-theme="light"] .lab-desafio-sol{color:#065f46;background:rgba(16,185,129,.08)}
+[data-theme="light"] .lab-desafio{background:rgba(157,78,221,.06);border-color:rgba(157,78,221,.25)}
+/* Tabs y control de revelación */
+[data-theme="light"] .lab-tabs{border-bottom-color:#e2e8f0}
+[data-theme="light"] .lab-tab.is-active{color:#0f172a}
+[data-theme="light"] .lab-tab:hover{color:#6d28d9}
+[data-theme="light"] .lab-reveal-control{background:#f8fafc;border-color:#e2e8f0}
+[data-theme="light"] .lab-reveal-info strong{color:#0f172a}
+[data-theme="light"] .lab-opt-marker{background:#f1f5f9;border-color:#e2e8f0;color:#64748b}
 </style>
 
 <div class="lab-wrap">

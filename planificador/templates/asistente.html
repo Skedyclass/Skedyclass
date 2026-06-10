@@ -108,6 +108,29 @@
   .msg-bubble{font-size:.82rem;padding:10px 13px}
   .ctx-info{font-size:.72rem}
 }
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .chat-hero-title,[data-theme="light"] .welcome-msg h3{color:#0f172a}
+[data-theme="light"] .chat-hero-sub,[data-theme="light"] .welcome-msg p{color:#64748b}
+[data-theme="light"] .ctx-bar,[data-theme="light"] .ctx-detail{background:#ffffff;border-color:#e2e8f0}
+[data-theme="light"] .ctx-label,[data-theme="light"] .ctx-section-label{color:#64748b}
+[data-theme="light"] .ctx-info{color:#475569}
+[data-theme="light"] .ctx-info strong,[data-theme="light"] .ctx-row strong{color:#0f172a}
+[data-theme="light"] .ctx-toggle{color:#94a3b8}
+[data-theme="light"] .ctx-row{color:#475569}
+[data-theme="light"] .ctx-empty{color:#94a3b8}
+/* Solo la burbuja de la IA cambia; la del usuario conserva su fondo de color + texto blanco. */
+[data-theme="light"] .msg-ia .msg-bubble{background:#f8fafc;border-color:#e2e8f0;color:#1e293b}
+[data-theme="light"] .msg-ia .msg-bubble strong{color:#0f172a}
+[data-theme="light"] .msg-ia .msg-bubble em{color:#6d28d9}
+[data-theme="light"] .msg-ia .msg-bubble code{background:#eef2ff;color:#3730a3}
+[data-theme="light"] .msg-ia .msg-bubble hr{border-top-color:#e2e8f0}
+[data-theme="light"] .msg-time{color:#94a3b8}
+[data-theme="light"] .chip-btn{color:#6d28d9}
+[data-theme="light"] .chat-input-area{border-top-color:#e2e8f0}
+[data-theme="light"] .chat-input{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .chat-input::placeholder{color:#94a3b8}
+[data-theme="light"] .chat-hint{color:#94a3b8}
 </style>
 
 <div class="chat-wrap">

@@ -64,6 +64,22 @@
 .ed-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(247,37,133,.5)}
 .ed-btn-ghost{background:rgba(255,255,255,.05);color:#c4b5fd;border:1px solid rgba(255,255,255,.12)}
 .ed-btn-ghost:hover{background:rgba(157,78,221,.12);color:#f5f3ff}
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .ed-card{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 12px 32px -10px rgba(15,23,42,.12)}
+[data-theme="light"] .ed-card::before{display:none}
+[data-theme="light"] .ed-card-head h2,[data-theme="light"] .tipo-hint strong{color:#0f172a}
+[data-theme="light"] .ed-field label{color:#7c3aed}
+[data-theme="light"] .ed-field input,[data-theme="light"] .ed-field select,[data-theme="light"] .ed-field textarea{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .ed-field input:focus,[data-theme="light"] .ed-field select:focus,[data-theme="light"] .ed-field textarea:focus{border-color:#f72585;box-shadow:0 0 0 3px rgba(247,37,133,.14)}
+[data-theme="light"] .ed-field select option{background:#ffffff;color:#0f172a}
+[data-theme="light"] .tipo-pill label{background:#ffffff;border-color:#e2e8f0;color:#334155}
+[data-theme="light"] .tipo-pill label:hover{color:#0f172a}
+[data-theme="light"] .estado-pill label{background:#f8fafc;border-color:#e2e8f0;color:#334155}
+[data-theme="light"] .tipo-hint{color:#334155;background:rgba(157,78,221,.06)}
+[data-theme="light"] .ed-divider{background:#e2e8f0}
+[data-theme="light"] .ed-btn-ghost{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .ed-btn-ghost:hover{background:rgba(157,78,221,.12);color:#5b21b6}
 </style>
 
 <div class="edit-wrap">

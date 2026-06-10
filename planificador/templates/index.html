@@ -107,6 +107,16 @@
 /* El kanban es SIEMPRE dark liquid glass: sin overrides de tema claro,
    así el texto (título, fecha, curso, profesor) queda siempre legible. */
 [data-theme="light"] .dash-input { background:#fff; border-color:rgba(0,0,0,.1); color:#1e1b4b; }
+
+/* ══ MODO CLARO — Kanban: paneles blancos con texto oscuro legible (Professional Slate) ══ */
+[data-theme="light"] .kanban-column{background:#ffffff;border-color:#e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .kanban-card{background:#f8fafc;border-color:#e2e8f0}
+[data-theme="light"] .kanban-column[data-status="pending"] .kanban-card:hover,[data-theme="light"] .kanban-column[data-status="vencidas"] .kanban-card:hover,[data-theme="light"] .kanban-column[data-status="completed"] .kanban-card:hover{background:#ffffff}
+[data-theme="light"] .kanban-card h4{color:#0f172a}
+[data-theme="light"] .kc-meta{border-bottom-color:#e2e8f0}
+[data-theme="light"] .kc-meta span{color:#475569}
+[data-theme="light"] .btn-small-dash{background:#ffffff;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .empty-column{color:#64748b}
 </style>
 
 <!-- Page Header -->
@@ -195,6 +205,13 @@
 .proxima-grado{font-size:.7rem;color:#9d95c4;background:rgba(157,78,221,.12);border:1px solid rgba(157,78,221,.2);padding:2px 8px;border-radius:12px}
 .planning-empty{text-align:center;padding:28px 20px;color:#9ca3af;position:relative;z-index:1}
 
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .planning-widget{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .planning-widget::before{display:none}
+[data-theme="light"] .planning-title,[data-theme="light"] .curso-hoy-nombre,[data-theme="light"] .proxima-titulo{color:#0f172a}
+[data-theme="light"] .planning-dia-badge,[data-theme="light"] .clase-proxima-chip{color:#4338ca}
+[data-theme="light"] .proxima-row{background:#f8fafc;border-color:#e2e8f0}
+[data-theme="light"] .proxima-row:hover{background:rgba(157,78,221,.07)}
 </style>
 
 <div class="planning-widget">
@@ -276,6 +293,14 @@
 .wl-legend{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:.7rem;color:var(--muted);position:relative;z-index:1}
 .wl-legend-scale{display:flex;gap:3px}
 .wl-legend-scale span{width:11px;height:11px;border-radius:3px}
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .workload-widget{background:#ffffff;border-color:#e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .wl-title h3{color:#0f172a}
+[data-theme="light"] .wl-stat-num{color:#7c3aed}
+[data-theme="light"] .wl-cell{color:#94a3b8;background:#f1f5f9;border-color:#e2e8f0}
+[data-theme="light"] .wl-cell.l0{background:#f1f5f9;color:#94a3b8}
+[data-theme="light"] .wl-cell.l1{color:#6d28d9}
 </style>
 <div class="workload-widget">
   <div class="wl-head">

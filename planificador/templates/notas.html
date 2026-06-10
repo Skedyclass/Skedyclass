@@ -32,6 +32,16 @@
 .new-note-card .fg{margin-bottom:14px}
 .btn-save-note{width:100%;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff;font-size:.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 22px rgba(157,78,221,.3);transition:transform .18s,box-shadow .18s}
 .btn-save-note:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(247,37,133,.35)}
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"] .postit{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.1)}
+[data-theme="light"] .postit:hover{box-shadow:0 14px 36px -8px rgba(15,23,42,.18)}
+[data-theme="light"] .postit h4,[data-theme="light"] .new-note-card h3{color:#0f172a}
+[data-theme="light"] .postit p{color:#334155;opacity:1}
+[data-theme="light"] .postit-empty{color:#64748b;background:#f8fafc;border-color:#cbd5e1}
+[data-theme="light"] .new-note-card label{color:#7c3aed}
+[data-theme="light"] .new-note-card input[type=text],[data-theme="light"] .new-note-card textarea{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .new-note-card input[type=text]:focus,[data-theme="light"] .new-note-card textarea:focus{border-color:#9d4edd;box-shadow:0 0 0 3px rgba(157,78,221,.16)}
 </style>
 
 <div class="page-header">

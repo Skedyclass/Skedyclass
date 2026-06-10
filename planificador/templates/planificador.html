@@ -85,6 +85,27 @@
 .pl-sec{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0}
 .pl-sec-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#f5f3ff}
 .pl-sec-count{font-size:.78rem;color:var(--muted);font-weight:600;background:rgba(255,255,255,.07);padding:3px 10px;border-radius:50px}
+
+/* ── MODO CLARO (Professional Slate) — solo overrides, el oscuro queda intacto ── */
+[data-theme="light"] .pl-glass{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .pl-glass::before{display:none}
+[data-theme="light"] .btn-cal{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3);color:#4f46e5}
+[data-theme="light"] .btn-cal:hover{background:rgba(99,102,241,.16)}
+[data-theme="light"] .btn-export{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .btn-export:hover{background:#f1f5f9;color:#0f172a}
+[data-theme="light"] .pl-search,[data-theme="light"] .pl-select{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .pl-search:focus{border-color:#9d4edd;box-shadow:0 0 0 3px rgba(157,78,221,.16)}
+[data-theme="light"] .pl-select option{background:#ffffff;color:#0f172a}
+[data-theme="light"] .pl-clear-btn{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .pl-clear-btn:hover{background:#f1f5f9;color:#0f172a}
+[data-theme="light"] .pl-table th{color:#64748b;border-bottom-color:#e2e8f0}
+[data-theme="light"] .pl-table td{color:#1e293b;border-bottom-color:#f1f5f9}
+[data-theme="light"] .pl-table tbody tr:hover td{background:rgba(157,78,221,.05)}
+[data-theme="light"] .pl-actions{background:#f8fafc;border-color:#e2e8f0}
+[data-theme="light"] .pl-act-btn{color:#64748b}
+[data-theme="light"] .pl-act-sep{background:#e2e8f0}
+[data-theme="light"] .pl-sec-title{color:#0f172a}
+[data-theme="light"] .pl-sec-count{color:#64748b;background:#f1f5f9}
 </style>
 
 <!-- ═══ HEADER ═══ -->

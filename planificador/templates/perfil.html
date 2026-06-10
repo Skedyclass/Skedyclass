@@ -136,6 +136,24 @@
   .p-hero-top{flex-direction:column;align-items:center;text-align:center}
   .p-hero-meta{justify-content:center}
 }
+
+/* ══ MODO CLARO (Professional Slate) — solo overrides; el modo oscuro intacto ══ */
+[data-theme="light"]{--p-border:#e2e8f0;--p-hover:#f1f5f9;--p-muted:#64748b}
+/* El hero conserva texto blanco → fondo de marca saturado para mantener contraste. */
+[data-theme="light"] .p-hero{background:linear-gradient(135deg,#6366f1 0%,#9d4edd 50%,#f72585 100%);border-color:rgba(157,78,221,.4)}
+/* Paneles de sección: blanco, borde slate, sombra suave, sin glow. */
+[data-theme="light"] .p-glass{background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
+[data-theme="light"] .p-glass::before{display:none}
+[data-theme="light"] .p-sec-title h3,[data-theme="light"] .p-info-value,[data-theme="light"] .p-act-title,[data-theme="light"] .p-quick-item{color:#0f172a}
+[data-theme="light"] .p-fgroup label{color:#475569}
+[data-theme="light"] .p-finput,[data-theme="light"] .p-fselect{background:#ffffff;border-color:#cbd5e1;color:#0f172a}
+[data-theme="light"] .p-finput:focus,[data-theme="light"] .p-fselect:focus{border-color:#9d4edd;box-shadow:0 0 0 3px rgba(157,78,221,.16)}
+[data-theme="light"] .p-fselect{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")}
+[data-theme="light"] .p-fselect option{background:#ffffff;color:#0f172a}
+[data-theme="light"] .p-btn-ghost{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+[data-theme="light"] .p-btn-ghost:hover{background:#f1f5f9;color:#0f172a}
+[data-theme="light"] .p-info-empty{color:#94a3b8}
+[data-theme="light"] .p-prog-bar{background:#f1f5f9}
 </style>
 
 <!-- ═══════ HERO ═══════ -->
