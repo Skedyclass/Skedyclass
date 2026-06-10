@@ -99,7 +99,12 @@
 [data-theme="light"] .pl-clear-btn{background:#f8fafc;border-color:#e2e8f0;color:#475569}
 [data-theme="light"] .pl-clear-btn:hover{background:#f1f5f9;color:#0f172a}
 [data-theme="light"] .pl-table th{color:#64748b;border-bottom-color:#e2e8f0}
-[data-theme="light"] .pl-table td{color:#1e293b;border-bottom-color:#f1f5f9}
+/* Las celdas traen color en estilos inline (color:#f5f3ff, #c4b5fd, #a5b4fc),
+   que solo se pueden vencer con !important — aplicado únicamente en claro. */
+[data-theme="light"] .pl-table td{color:#1e293b!important;border-bottom-color:#f1f5f9}
+[data-theme="light"] .pl-table td strong{color:#0f172a!important}
+[data-theme="light"] .pl-table td>div[style*="9d95c4"]{color:#64748b!important}
+[data-theme="light"] .pl-table td span[style*="6b7280"]{color:#64748b!important}
 [data-theme="light"] .pl-table tbody tr:hover td{background:rgba(157,78,221,.05)}
 [data-theme="light"] .pl-actions{background:#f8fafc;border-color:#e2e8f0}
 [data-theme="light"] .pl-act-btn{color:#64748b}
