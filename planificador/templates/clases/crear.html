@@ -134,6 +134,14 @@
 [data-theme="light"] .ia-spinner{border-color:rgba(157,78,221,.18);border-top-color:#9d4edd}
 /* Chip de tema precargado (color inline #e9d5ff) */
 [data-theme="light"] [style*="color:#e9d5ff"]{color:#5b21b6!important}
+/* Tarjetas SELECCIONADAS (plantilla, metodologia IA, curso): el estado checked
+   ponia texto blanco sobre un degradado pastel claro = ilegible en claro.
+   Lo pasamos a slate oscuro. El fondo de seleccion identifica la opcion. */
+[data-theme="light"] .tpl-card.is-selected,
+[data-theme="light"] .tpl-card.is-selected h3,
+[data-theme="light"] .ia-meta-opt input:checked + label,
+[data-theme="light"] .crs-chip input:checked + label{color:#0f172a !important}
+[data-theme="light"] .ia-meta-opt input:checked + label small{color:#475569 !important}
 </style>
 
 <div class="wz-wrap">
