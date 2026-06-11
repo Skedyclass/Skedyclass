@@ -97,6 +97,11 @@
     text-transform: uppercase; letter-spacing: 0.5pt;
   }
   ul, ol { margin: 4pt 0 8pt 18pt; padding: 0; }
+  /* xhtml2pdf dibuja el bullet de disco (•) con un glifo inexistente en la
+     fuente y sale como una cajita/ícono en todas las páginas. Lo quitamos:
+     las listas quedan con sangría limpia. Las ordenadas (ol) conservan su
+     numeración, que sí se renderiza correctamente. */
+  ul { list-style-type: none; margin-left: 14pt; }
   li { margin-bottom: 3pt; }
   .item {
     border: 0.4pt solid #888; padding: 6pt 8pt; margin-bottom: 6pt;
