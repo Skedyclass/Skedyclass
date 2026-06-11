@@ -298,9 +298,15 @@
 [data-theme="light"] .workload-widget{background:#ffffff;border-color:#e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,.05),0 8px 24px -6px rgba(15,23,42,.08)}
 [data-theme="light"] .wl-title h3{color:#0f172a}
 [data-theme="light"] .wl-stat-num{color:#7c3aed}
+/* Solo las celdas vacias/l0 van en gris claro; l1..l4 conservan la ESCALA de
+   intensidad (mas especificas, ganan a la regla de arriba). Sin esto el heatmap
+   se veia plano en claro. */
 [data-theme="light"] .wl-cell{color:#94a3b8;background:#f1f5f9;border-color:#e2e8f0}
 [data-theme="light"] .wl-cell.l0{background:#f1f5f9;color:#94a3b8}
-[data-theme="light"] .wl-cell.l1{color:#6d28d9}
+[data-theme="light"] .wl-cell.l1{background:rgba(157,78,221,.2);color:#6d28d9}
+[data-theme="light"] .wl-cell.l2{background:rgba(157,78,221,.42);color:#3b0764}
+[data-theme="light"] .wl-cell.l3{background:linear-gradient(135deg,rgba(157,78,221,.62),rgba(224,64,251,.5));color:#fff}
+[data-theme="light"] .wl-cell.l4{background:linear-gradient(135deg,#9d4edd,#f72585);color:#fff}
 </style>
 <div class="workload-widget">
   <div class="wl-head">

@@ -167,8 +167,11 @@
 .ht-config-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;color:#fff !important}
 .fl{display:flex;flex-direction:column;gap:10px}
 .fl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Sin min-width:0 los <input type=time> no pueden encoger y el campo "Fin
+   jornada" se desborda del panel de 268px. Arregla el layout en ambos temas. */
+.fl-row>div{min-width:0}
 .fl-label{font-size:.68rem;font-weight:700;color:rgba(255,255,255,.6) !important;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;display:block}
-.gl-input{width:100%;padding:9px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff !important;font-size:.85rem;font-family:inherit;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none}
+.gl-input{width:100%;min-width:0;box-sizing:border-box;padding:9px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff !important;font-size:.85rem;font-family:inherit;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none}
 .gl-input:focus{outline:none;border-color:rgba(99,102,241,.55);box-shadow:0 0 0 3px rgba(99,102,241,.14)}
 .gl-input option{background:#1a1630;color:#fff}
 .btn-save{width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff !important;font-size:.85rem;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .18s,transform .14s;margin-top:4px}
@@ -223,7 +226,24 @@
    gana una sombra suave para "flotar" sobre el fondo claro. */
 [data-theme="light"] .clase-chip{box-shadow:0 1px 2px rgba(15,23,42,.12),0 4px 12px -4px rgba(15,23,42,.22)}
 [data-theme="light"] .clase-chip:hover{box-shadow:0 6px 18px -4px rgba(15,23,42,.3)}
-[data-theme="light"] .clase-chip .cc-grado{color:rgba(255,255,255,.95) !important}
+/* En claro los chips quedan en pastel: el texto blanco sobre pastel claro era
+   ilegible, lo pasamos a slate oscuro (la asignatura se identifica por el color
+   del fondo y el borde saturado). */
+[data-theme="light"] .clase-chip:not(.libre),
+[data-theme="light"] .clase-chip:not(.libre) .cc-title{color:#0f172a !important;text-shadow:none}
+[data-theme="light"] .clase-chip:not(.libre) .cc-time{color:#475569 !important}
+[data-theme="light"] .clase-chip:not(.libre) .cc-grado{color:#334155 !important;text-shadow:none}
+/* Fondo de asignatura un punto mas presente en claro para que el color se note
+   sin perder la legibilidad del texto oscuro. */
+[data-theme="light"] .clase-chip.mat-matematicas{background:rgba(99,102,241,.3)}
+[data-theme="light"] .clase-chip.mat-lenguaje{background:rgba(236,72,153,.28)}
+[data-theme="light"] .clase-chip.mat-ciencias-naturales{background:rgba(16,185,129,.3)}
+[data-theme="light"] .clase-chip.mat-ciencias-sociales{background:rgba(245,158,11,.32)}
+[data-theme="light"] .clase-chip.mat-educacion-fisica{background:rgba(239,68,68,.28)}
+[data-theme="light"] .clase-chip.mat-artes{background:rgba(168,85,247,.28)}
+[data-theme="light"] .clase-chip.mat-musica{background:rgba(6,182,212,.3)}
+[data-theme="light"] .clase-chip.mat-ingles{background:rgba(34,197,94,.3)}
+[data-theme="light"] .clase-chip.mat-default{background:rgba(139,92,246,.28)}
 
 /* HORA LIBRE — verde pastel con borde definido (no se pierde contra el blanco)
    y texto verde oscuro legible (WCAG AA). */
