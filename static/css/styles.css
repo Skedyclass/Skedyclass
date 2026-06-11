@@ -1796,6 +1796,20 @@ h1, h2, h3, .page-header h1 {
     border: 1px solid rgba(255,255,255,.45) !important;
     box-shadow: 0 8px 28px rgba(99,102,241,.12) !important;
 }
+/* FIX modo claro: la regla base de arriba dejaba la tarjeta de "próxima clase"
+   con fondo blanco translúcido, y su texto es blanco → blanco sobre blanco
+   (invisible). En claro restauramos el banner de marca: gradiente saturado +
+   texto blanco legible. El modo oscuro tiene su propio override y no se toca. */
+[data-theme="light"] .next-class-card {
+    background: linear-gradient(135deg, #7b2ff7, #9d4edd, #f72585) !important;
+    border: none !important;
+    box-shadow: 0 8px 28px rgba(157,78,221,.25) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #ffffff !important;
+}
+[data-theme="light"] .next-class-card .next-class-content h3,
+[data-theme="light"] .next-class-card .next-class-details p { color: #ffffff !important; }
 
 /* ═══════════════════════════════════════════════════════════
    DARK MODE GLOBAL — forced always-on (data-theme="dark")
